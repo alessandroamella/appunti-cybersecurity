@@ -190,17 +190,13 @@ Siano $A_1$ e $A_2$ due eventi.
         axis line style={maintext},
     ]
     % Formula approssimata per il paradosso del compleanno P(n) ~ 1 - exp(-n^2 / (2*|U|))
-    \addplot[smooth, thick, color=cyan, domain=0:4500, samples=100] {1 - exp(-x^2 / (2*1000000))};
+    \addplot[smooth, thick, color=cyan, domain=0:4500, samples=100] {1 - exp(-x^2 / 2000000)};
     \addlegendentry{$P(n) \approx 1 - e^{-n^2/(2|U|)}$}
     
     % Punto n ~ 1.2 * sqrt(|U|)
-    \pgfmathsetmacro{\Nval}{1000000}
-    \pgfmathsetmacro{\nstar}{1.2*sqrt(\Nval)} % Circa 1183, useremo 1200 per l'esempio
-    \pgfmathsetmacro{\pstar}{1 - exp(-\nstar^2 / (2*\Nval))}
-    
-    \draw[dashed, color=red!70!maintext] (axis cs:1200,0) -- (axis cs:1200,\pstar);
-    \draw[dashed, color=red!70!maintext] (axis cs:0,\pstar) -- (axis cs:1200,\pstar);
-    \node[red!70!maintext, above right, font=\tiny] at (axis cs:1200,\pstar) {$(1200, \approx 0.5)$};
+    \draw[dashed, color=red!70!maintext] (axis cs:1200,0) -- (axis cs:1200,0.5);
+    \draw[dashed, color=red!70!maintext] (axis cs:0,0.5) -- (axis cs:1200,0.5);
+    \node[red!70!maintext, above right, font=\tiny] at (axis cs:1200,0.5) {$(1200, \approx 0.5)$};
     \end{axis}
     \end{tikzpicture}
     \end{center}

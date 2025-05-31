@@ -98,7 +98,7 @@ Modello per DAC, con domini/soggetti come righe e oggetti come colonne. Ogni cel
     \label{tab:acm_base}
     \begin{tabular}{|l|l|l|l|l|}
         \hline
-        \rowcolor{black!80}\textbf{SOGGETTI / OGGETTI} & \textbf{File 1} & \textbf{File 2} & \textbf{File 3} & \textbf{File 4} \\ \hline
+        \rowcolor{bg_custom}\textbf{SOGGETTI / OGGETTI} & \textbf{File 1} & \textbf{File 2} & \textbf{File 3} & \textbf{File 4} \\ \hline
         \textbf{User A} & \texttt{Own,R,W} & & \texttt{Own,R,W} & \\ \hline
         \textbf{User B} & \texttt{R} & \texttt{Own,R,W} & \texttt{W} & \texttt{R} \\ \hline
         \textbf{User C} & \texttt{R,W} & \texttt{R} & & \texttt{Own,R,W} \\ \hline
@@ -114,7 +114,7 @@ Per implementare il principio del minimo privilegio, si possono usare domini spe
     \label{tab:acm_switch_slide15}
     \begin{tabular}{|l|l|l|l|l|l|}
         \hline
-        \rowcolor{black!80}\textbf{Dominio/Soggetto} & \textbf{File1} & \textbf{File2} & \textbf{File3} & \textbf{File4} & \textbf{D4 (dominio)} \\ \hline
+        \rowcolor{bg_custom}\textbf{Dominio/Soggetto} & \textbf{File1} & \textbf{File2} & \textbf{File3} & \textbf{File4} & \textbf{D4 (dominio)} \\ \hline
         D1 (es. A)          & \texttt{read}  &                &                &               &                       \\ \hline
         A (in D2)           &                & \texttt{R,W}   & \texttt{R}     &               & \texttt{switch}       \\ \hline
         B (in D3)           &                &                & \texttt{R,W}   &               & \texttt{switch}       \\ \hline

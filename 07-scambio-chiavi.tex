@@ -161,7 +161,7 @@ Come si scambiano le chiavi quando si usa la crittografia simmetrica?
                     \item Invia a Bob (o ad Alice che lo inoltra a Bob) un "ticket": $E(k_B, \text{"Alice, Bob"} \parallel K_{AB})$
                 \end{itemize}
             \item Alice e Bob decifrano i messaggi e ottengono $K_{AB}$.
-        \end{itemize}
+        \end{enumerate}
         \begin{itemize}
             \item Un intercettatore vede solo messaggi cifrati; se la cifratura è CPA-secure (Chosen Plaintext Attack secure), non impara nulla su $K_{AB}$.
             \item \textbf{Note:}
@@ -307,8 +307,8 @@ Un metodo elegante ed efficiente per stabilire una chiave segreta condivisa su u
         \begin{figure}[H]
         \centering
             \begin{tikzpicture}[node distance=2cm and 4cm]
-                \node[user] (alice) {Alice \\ \footnotesize Sceglie $a$ \\ Calcola $A=g^a \pmod p$};
-                \node[user, right=of alice] (bob) {Bob \\ \footnotesize Sceglie $b$ \\ Calcola $B=g^b \pmod p$};
+                \node[user, align=center] (alice) {Alice \\ \footnotesize Sceglie $a$ \\ Calcola $A=g^a \pmod p$};
+                \node[user, right=of alice, align=center] (bob) {Bob \\ \footnotesize Sceglie $b$ \\ Calcola $B=g^b \pmod p$};
 
                 \draw[comm_arrow] (alice.east) -- (bob.west) node[midway, above, font=\sffamily\scriptsize] {$A=g^a \pmod p$};
                 \draw[comm_arrow] (bob.west) -- (alice.east) node[midway, below, font=\sffamily\scriptsize] {$B=g^b \pmod p$};
