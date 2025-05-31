@@ -123,7 +123,7 @@ $HYPERSETUP
 
 % Titolo del documento unificato
 \title{Appunti Completi di Cybersecurity\\\\
-  \large Basati sulle dispense del Prof. Luciano Bononi}
+  \large Basati sulle dispense della Prof.ssa Jocelyne Elias}
 \author{Alessandro Amella, Gemini e Claude}
 \date{\today}
 
