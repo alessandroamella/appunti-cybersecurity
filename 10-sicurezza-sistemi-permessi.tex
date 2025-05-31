@@ -1,76 +1,7 @@
-\documentclass{article}
+\input{preambolo_comune}
 
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz} % per disegni
-\usepackage{graphicx} % per immagini
-\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, fit, backgrounds}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti su Sicurezza dei Sistemi e Permessi (Access Control), Linux},
-    colorlinks=true,
-    linkcolor=cyan,
-    filecolor=magenta,
-    urlcolor=green,
-    citecolor=yellow,
-    bookmarksopen=true,
-    bookmarksnumbered=true
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\pagecolor{black}
-\color{white}
-
-% Stile per i nodi TikZ
-\tikzstyle{genericNodeStyle}=[rectangle, rounded corners, draw=white, fill=gray!20!black, text=white, minimum height=2em, minimum width=3em, text centered]
-\tikzstyle{userNodeStyle}=[ellipse, draw=white, fill=blue!50!black, text=white, minimum height=2.5em, text centered]
-\tikzstyle{roleNodeStyle}=[rectangle, draw=white, fill=green!50!black, text=white, minimum height=2em, minimum width=5em, text centered]
-\tikzstyle{resourceNodeStyle}=[cylinder, shape border rotate=90, aspect=0.3, draw=white, fill=red!50!black, text=white, minimum height=2.5em, text centered, alias=cyl]
-\tikzstyle{arrowStyle}=[->, >=latex, draw=white, thick]
-\tikzstyle{labelStyle}=[text=white, font=\footnotesize]
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-% Compilare con: pdflatex -shell-escape nomefile.tex
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai, % Stile di highlighting adatto per sfondo scuro
-    bgcolor=black!80 % Sfondo per i blocchi minted
-}
-\newminted{bash}{bgcolor=black!80, textcolor=white}
-\newminted{text}{bgcolor=black!80, textcolor=white}
-\newminted{c}{bgcolor=black!80, textcolor=white}
-
-
-% --- Titolo ---
-\title{Appunti su Sicurezza dei Sistemi e Permessi (Access Control), Linux}
-\author{Basato sulle slide della Prof.ssa Jocelyne Elias (Cybersecurity 2024/2025)}
+\title{Sicurezza dei Sistemi e Permessi, Linux}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
 \begin{document}
@@ -125,6 +56,41 @@ Il controllo degli accessi si basa su politiche e meccanismi.
         \begin{figure}[H]
         \centering
         \begin{tikzpicture}[node distance=0mm, text=white]
+            % Define the genericNodeStyle with align=center
+            \tikzset{
+                genericNodeStyle/.style={
+                    draw=white,
+                    align=center,
+                    minimum width=2.5cm
+                },
+                userNodeStyle/.style={
+                    draw=white,
+                    fill=gray!20!black,
+                    minimum width=2cm,
+                    align=center
+                },
+                roleNodeStyle/.style={
+                    draw=white,
+                    fill=gray!30!black,
+                    minimum width=2cm,
+                    align=center
+                },
+                resourceNodeStyle/.style={
+                    draw=white,
+                    fill=gray!40!black,
+                    minimum width=2cm,
+                    align=center
+                },
+                labelStyle/.style={
+                    text=white
+                },
+                arrowStyle/.style={
+                    ->,
+                    white,
+                    thick
+                }
+            }
+
             % Header
             \node[genericNodeStyle, minimum width=2.5cm, fill=black!70] (subjects_h) at (0,0) {\textbf{SUBJECTS}};
             \node[genericNodeStyle, minimum width=2.5cm, fill=black!70, right=of subjects_h] (objects_h) {\textbf{OBJECTS}};
@@ -181,16 +147,16 @@ Il controllo degli accessi si basa su politiche e meccanismi.
         \begin{figure}[H]
         \centering
         \begin{tikzpicture}[text=white, node distance=1.5cm and 2.5cm]
-            % Titles
-            \node (users_title) [labelStyle, above=0.1cm of U1] {Users};
-            \node (roles_title) [labelStyle, right=3.5cm of users_title] {Roles};
-            \node (resources_title) [labelStyle, right=3cm of roles_title] {Resources};
-
             % Users
             \node (U1) [userNodeStyle] {User 1};
             \node (U2) [userNodeStyle, below=1cm of U1] {User 2};
             \node (U3) [userNodeStyle, below=1cm of U2] {User 3};
             \node (U4) [userNodeStyle, below=1cm of U3] {User 4};
+            
+            % Titles
+            \node (users_title) [labelStyle, above=0.1cm of U1] {Users};
+            \node (roles_title) [labelStyle, right=3.5cm of users_title] {Roles};
+            \node (resources_title) [labelStyle, right=3cm of roles_title] {Resources};
 
             % Roles
             \node (Role1) [roleNodeStyle, right=of U1, yshift=-0.5cm] {Role 1};
@@ -273,9 +239,9 @@ Il controllo degli accessi si basa su politiche e meccanismi.
     \end{enumerate}
     \item Identificatori: \textbf{User ID (UID)} da \texttt{/etc/passwd}, \textbf{Group ID (GID)} da \texttt{/etc/group}.
     \item Esempio output \texttt{ls -la /etc/passwd}:
-    \begin{bashcode}
+    \begin{minted}{bash}
 -rw-r--r-- 1 root root 2083 Mar  9 17:23 /etc/passwd
-    \end{bashcode}
+    \end{minted}
     Interpretazione:
     \begin{itemize}
         \item \texttt{-}: tipo file (regolare)
@@ -319,14 +285,15 @@ Unix/Linux usa un sistema misto: ACL per file non aperti, Capabilities per file 
         \textbf{Access Control Lists (ACLs)} \\
         \textit{Encode columns of an access control matrix}
         \begin{tikzpicture}[scale=0.7, transform shape, text=white]
-            \matrix[matrix of nodes, nodes={draw, white, minimum size=1.2cm, anchor=center, fill=yellow!30!black},
+            \matrix (matrix_acl) [matrix of nodes,
+                    nodes={draw, white, minimum size=1.2cm, anchor=center, fill=yellow!30!black},
                     column 1/.style={nodes={fill=black!70}},
-                    row 1/.style={nodes={fill=black!70}}] (matrix_acl)
+                    row 1/.style={nodes={fill=black!70}}]
             {
-                 & O1 & O2 & O3 \\
-            S1   & RW & RX &    \\
-            S2   & R  & RWX& RW \\
-            S3   &    & RWX&    \\
+                {} & O1 & O2 & O3 \\
+                S1 & RW & RX & {} \\
+                S2 & R  & RWX & RW \\
+                S3 & {} & RWX & {} \\
             };
             \node[draw=blue, thick, inner sep=0pt, fit=(matrix_acl-1-3) (matrix_acl-4-3), label={[blue, yshift=0.3cm, labelStyle]ACL for O2}] {};
         \end{tikzpicture}
@@ -337,16 +304,17 @@ Unix/Linux usa un sistema misto: ACL per file non aperti, Capabilities per file 
         \textbf{Capabilities} \\
         \textit{Encode rows of an access control matrix}
         \begin{tikzpicture}[scale=0.7, transform shape, text=white]
-            \matrix[matrix of nodes, nodes={draw, white, minimum size=1.2cm, anchor=center, fill=yellow!30!black},
+            \matrix (matrix_cap) [matrix of nodes,
+                    nodes={draw, white, minimum size=1.2cm, anchor=center, fill=yellow!30!black},
                     column 1/.style={nodes={fill=black!70}},
-                    row 1/.style={nodes={fill=black!70}}] (matrix_cap)
+                    row 1/.style={nodes={fill=black!70}}]
             {
-                 & O1 & O2 & O3 \\
-            S1   & RW & RX &    \\
-            S2   & R  & RWX& RW \\
-            S3   &    & RWX&    \\
+                {} & O1 & O2 & O3 \\
+                S1 & RW & RX & {} \\
+                S2 & R  & RWX & RW \\
+                S3 & {} & RWX & {} \\
             };
-            \node[draw=blue, thick, inner sep=0pt, fit=(matrix_cap-2-1) (matrix_cap-2-4), label={[blue, xshift=1cm, labelStyle]Capabilities for S1}] {};
+            \node[draw=blue, thick, inner sep=0pt, fit=(matrix_cap-2-1) (matrix_cap-2-4), label={[blue, xshift=1cm, labelStyle]Capabilities for S2}] {};
         \end{tikzpicture}
     \end{minipage}
     \caption{ACLs vs Capabilities in relazione alla Matrice di Accesso}
@@ -461,7 +429,7 @@ Utente può appartenere a più gruppi. Utili per accesso condiviso (es. \texttt{
             \item \texttt{ls -l}: \texttt{---s--x--x} (o \texttt{S} se non c'è \texttt{x} per owner).
             \item \textbf{ESTREMAMENTE PERICOLOSO} se eseguibile è di \texttt{root}.
             \item \textit{Esempio vulnerabilità:} Programma C SUID root che esegue \texttt{system("whoami");}. Manipolando \texttt{PATH}, \texttt{whoami} può puntare a script malevolo eseguito come \texttt{root}.
-            \begin{ccode}
+            \begin{minted}{c}
 // Esempio vulnerabile (semplificato)
 #include <stdio.h>
 #include <stdlib.h>
@@ -469,7 +437,7 @@ int main() {
     system("whoami"); // Se PATH è manipolabile, questo è pericoloso
     return 0;
 }
-            \end{ccode}
+            \end{minted}
         \end{itemize}
         \item \textbf{Su directory:} Generalmente ignorato.
     \end{itemize}

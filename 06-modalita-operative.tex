@@ -1,91 +1,7 @@
-\documentclass{article}
+\input{preambolo_comune}
 
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{amsfonts} % Per \mathbb
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz}
-\usepackage{graphicx}
-\graphicspath{{images/}} % Dice a LaTeX dove cercare le immagini
-\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, fit}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Modalità Operative dei Cifrari a Blocchi},
-    pdfauthor={Basato sulle slide del Prof.},
-    colorlinks=true,
-    linkcolor=cyan,
-    filecolor=magenta,      
-    urlcolor=blue,
-    citecolor=green,
-    bookmarks=true
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\definecolor{darkbackground}{RGB}{30,30,30} % Un nero non assoluto
-\definecolor{lighttext}{RGB}{230,230,230}  % Un bianco non abbagliante
-\definecolor{codebackground}{RGB}{40,40,40}
-\definecolor{codeframecolor}{RGB}{80,80,80}
-\definecolor{tikznodefill}{RGB}{50,50,50}
-\definecolor{tikztext}{RGB}{220,220,220}
-\definecolor{tikzarrow}{RGB}{150,150,220}
-
-\pagecolor{darkbackground}
-\color{lighttext}
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai, % Stile di highlighting (monokai è buono per sfondi scuri)
-    bgcolor=codebackground,
-    rulecolor=codeframecolor
-}
-\setmintedinline{bgcolor=codebackground}
-
-% Stile per TikZ
-\tikzstyle{block} = [rectangle, draw=tikztext, fill=tikznodefill,
-    text width=6em, text centered, rounded corners, minimum height=3em]
-\tikzstyle{line} = [draw=tikzarrow, -{Stealth}]
-\tikzstyle{key} = [rectangle, draw=tikztext, fill=tikznodefill!70!black,
-    text width=3em, text centered, minimum height=2em, font=\footnotesize]
-\tikzstyle{data} = [rectangle, draw=tikztext, fill=tikznodefill!50!black,
-    text width=5em, text centered, minimum height=3em, font=\small]
-\tikzstyle{operator} = [circle, draw=tikztext, fill=blue!50!tikznodefill, text=tikztext, minimum size=1.5em, font=\Large]
-\tikzstyle{challenger} = [rectangle, draw=green!70!lighttext, fill=green!30!darkbackground, rounded corners,
-    minimum width=3cm, minimum height=2cm, text centered, text=lighttext]
-\tikzstyle{adversary} = [rectangle, draw=red!70!lighttext, fill=red!30!darkbackground, rounded corners,
-    minimum width=3cm, minimum height=2cm, text centered, text=lighttext]
-\tikzstyle{message_flow} = [draw=lighttext, -{Stealth[length=3mm, width=2mm]}]
-
-
-% --- Titolo ---
-\title{Appunti sulle Modalità Operative dei Cifrari a Blocchi}
-\author{Basato sulle slide del Professore}
+\title{Modalità Operative}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
 \begin{document}
@@ -99,7 +15,7 @@ I cifrari a blocchi (come AES, DES) operano su blocchi di dati di dimensione fis
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=2cm, auto, text=tikztext]
+    \begin{tikzpicture}[node distance=2cm, auto, text=primarytext]
         % Nodi
         \node [data] (pt) {PT Block ($n$ bits)};
         \node [block, right=of pt] (cipher) {E, D};
@@ -158,12 +74,8 @@ I cifrari a blocchi (come AES, DES) operano su blocchi di dati di dimensione fis
         \item Decrittazione: $P_i = D(K, C_i)$.
     \end{enumerate}
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{slide_5} % Assumendo che slide_5.png sia il diagramma ECB
-    \caption{Diagramma della modalità ECB (Encryption e Decryption).}
-    \label{fig:ecb_mode}
-\end{figure}
+\textbf{Descrizione del Flusso:}
+Per la \textbf{crittografia}, ogni blocco di testo in chiaro $P_i$ viene cifrato individualmente con la chiave $K$ per produrre il corrispondente blocco di testo cifrato $C_i$. Similmente, per la \textbf{decrittografia}, ogni blocco di testo cifrato $C_i$ viene decifrato individualmente con la stessa chiave $K$ per recuperare il blocco di testo in chiaro $P_i$. Non c'è dipendenza tra i blocchi, rendendo le operazioni parallelizzabili ma insicure per dati generici.
 
 \subsection{Sicurezza di ECB}
 \begin{itemize}
@@ -171,12 +83,8 @@ I cifrari a blocchi (come AES, DES) operano su blocchi di dati di dimensione fis
     \item \textbf{Determinismo:} Lo stesso blocco di dati, con la stessa chiave, produce sempre lo stesso blocco cifrato.
     \item \textbf{Rivelazione di Pattern:} Questa proprietà rivela pattern nei dati.
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{slide_7} % Assumendo che slide_7.png sia l'immagine del pinguino
-    \caption{Effetto della modalità ECB sulla crittografia di un'immagine. Da sinistra a destra: testo in chiaro, testo cifrato con ECB (pattern visibili), testo cifrato con altre modalità (rumore).}
-    \label{fig:ecb_penguin}
-\end{figure}
+\textbf{Effetto della modalità ECB sulla crittografia di un'immagine:}
+Quando si crittografa un'immagine bitmap (dove pixel identici hanno blocchi di dati identici) con la modalità ECB, i pattern visivi non vengono nascosti efficacemente. Il determinismo di ECB fa sì che blocchi identici nel testo in chiaro si traducano in blocchi identici nel testo cifrato. Questo può essere osservato nella pratica: un'immagine crittografata con ECB apparirà come una versione "rumorosa" dell'originale, ma con i contorni e le strutture riconoscibili. Al contrario, la crittografia con altre modalità operative (come CBC o CTR), che introducono casualità o dipendenza tra i blocchi, produce un output che appare come rumore casuale, nascondendo completamente i pattern originali. Questo dimostra la grave debolezza di ECB nel nascondere le proprietà statistiche del testo in chiaro.
 
 \section{Nozione di Sicurezza: Sicurezza Semantica (IND-CPA)}
 La \textbf{Sicurezza Semantica} implica che un testo cifrato non dovrebbe rivelare alcuna informazione sul testo in chiaro, a parte (eventualmente) la sua lunghezza.
@@ -185,7 +93,7 @@ La \textbf{Sicurezza Semantica} implica che un testo cifrato non dovrebbe rivela
 L'attaccante ($\text{Adv}$) osserva solo i testi cifrati (Ciphertext-Only Attack).
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=1.5cm and 2.5cm, text=tikztext]
+    \begin{tikzpicture}[node distance=1.5cm and 2.5cm, text=primarytext]
         \node[challenger] (charlie) {Charlie (Challenger)};
         \node[adversary, right=of charlie] (adv) {Adv};
 
@@ -271,23 +179,16 @@ Rende ogni blocco di testo cifrato dipendente da tutti i blocchi di testo in chi
         P_j &= D(K, C_j) \oplus C_{j-1} \quad \text{per } j > 1
     \end{align*}
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{slide_28} % Diagramma CBC Encryption
-    \caption{Diagramma della modalità CBC - Crittografia.}
-    \label{fig:cbc_encryption}
-\end{figure}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{slide_30} % Diagramma CBC Decryption
-    \caption{Diagramma della modalità CBC - Decrittografia.}
-    \label{fig:cbc_decryption}
-\end{figure}
+\textbf{Descrizione del Flusso di Crittografia CBC:}
+Il processo di \textbf{crittografia CBC} inizia con un Vettore di Inizializzazione (IV), un blocco di bit univoco per ogni operazione di crittografia. Il primo blocco di testo in chiaro $P_1$ viene sottoposto a un'operazione XOR con l'IV, e il risultato è poi cifrato con la chiave $K$ per produrre il primo blocco di testo cifrato $C_1$. Per i blocchi successivi ($j > 1$), il blocco di testo in chiaro corrente $P_j$ viene sottoposto a XOR con il blocco di testo cifrato precedente $C_{j-1}$, e il risultato è poi cifrato con la chiave $K$ per ottenere $C_j$.
+
+\textbf{Descrizione del Flusso di Decrittografia CBC:}
+La \textbf{decrittografia CBC} è il processo inverso. Per il primo blocco, il testo cifrato $C_1$ viene decifrato con la chiave $K$, e il risultato è poi sottoposto a XOR con l'IV per recuperare $P_1$. Per i blocchi successivi ($j > 1$), il testo cifrato corrente $C_j$ viene decifrato con la chiave $K$, e il risultato è poi sottoposto a XOR con il blocco di testo cifrato precedente $C_{j-1}$ per ottenere il blocco di testo in chiaro $P_j$.
 \subsection{Sicurezza CBC}
 \begin{itemize}
     \item Se l'IV è scelto correttamente, CBC è IND-CPA sicuro.
     \item \textbf{Attenzione:} Se un attaccante può \textbf{prevedere} l'IV, CBC perde la sicurezza IND-CPA. Esempio: bug in SSL/TLS 1.0 dove l'IV per il record $i$ era l'ultimo blocco cifrato del record $i-1$.
-    \item L'OpenSSL `AES_cbc_encrypt` richiede che l'utente fornisca l'IV. Se questo IV non è casuale, deve essere crittografato prima dell'uso per mantenere la sicurezza CPA.
+    \item L'OpenSSL \texttt{AES\_cbc\_encrypt} richiede che l'utente fornisca l'IV. Se questo IV non è casuale, deve essere crittografato prima dell'uso per mantenere la sicurezza CPA.
 \end{itemize}
 \begin{minted}{c}
 void AES_cbc_encrypt(
@@ -315,12 +216,8 @@ CFB, OFB e CTR trasformano un cifrario a blocchi in un cifrario a flusso, elimin
         I_{j+1} &= \text{LSB}_{b-s}(I_j) || C_j
     \end{align*}
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{slide_35a} % Parte (a) Encryption del diagramma CFB
-    \caption{Diagramma della modalità CFB - Crittografia.}
-    \label{fig:cfb_encryption}
-\end{figure}
+\textbf{Descrizione del Flusso di Crittografia CFB:}
+Nella modalità \textbf{CFB}, l'operazione avviene $s$ bit alla volta (dove $s$ è tipicamente 1, 8, o la dimensione del blocco). Il processo inizia con un registro a scorrimento $I_j$ inizializzato con un IV. Questo registro $I_j$ viene cifrato con la chiave $K$ per produrre un blocco di output $O_j$. I primi $s$ bit di $O_j$ (MSB$_s(O_j)$) vengono sottoposti a XOR con i $s$ bit del testo in chiaro corrente $P_j$ per generare i $s$ bit del testo cifrato $C_j$. Il registro a scorrimento $I_{j+1}$ viene poi aggiornato: gli $s$ bit più a sinistra vengono scartati, e i $s$ bit di $C_j$ vengono inseriti come $s$ bit più a destra (LSB$_{b-s}(I_j) || C_j$). La decrittografia segue un processo speculare.
 
 \subsection{Output FeedBack (OFB) Mode}
 \begin{itemize}
@@ -334,12 +231,8 @@ CFB, OFB e CTR trasformano un cifrario a blocchi in un cifrario a flusso, elimin
     \end{align*}
     \item Gli errori di trasmissione non si propagano.
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{slide_36a} % Parte (a) Encryption del diagramma OFB
-    \caption{Diagramma della modalità OFB - Crittografia.}
-    \label{fig:ofb_encryption}
-\end{figure}
+\textbf{Descrizione del Flusso di Crittografia OFB:}
+La modalità \textbf{OFB} genera un keystream in modo simile a CFB, ma con una differenza chiave nel feedback. Il processo inizia con un registro $I_j$ inizializzato con un Nonce (IV). Questo registro $I_j$ viene cifrato con la chiave $K$ per produrre un blocco di output $O_j$. Questo $O_j$ è sia il keystream da sottoporre a XOR con il blocco di testo in chiaro corrente $P_j$ per ottenere $C_j$, sia il nuovo valore per il registro $I_{j+1}$ (cioè, $I_{j+1} = O_j$). Questo significa che il testo cifrato non viene mai reimmesso nell'algoritmo di cifratura a blocchi, a differenza di CFB, rendendo la propagazione degli errori nel testo cifrato limitata.
 
 \subsection{Counter (CTR) Mode}
 \begin{itemize}
@@ -349,12 +242,8 @@ CFB, OFB e CTR trasformano un cifrario a blocchi in un cifrario a flusso, elimin
     \item \textbf{Decrittografia:} $P_j = C_j \oplus E(K, T_j)$
     \item Altamente parallelizzabile. Mai riutilizzare una coppia $(K, T_j)$.
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{slide_37a} % Parte (a) Encryption del diagramma CTR
-    \caption{Diagramma della modalità CTR - Crittografia.}
-    \label{fig:ctr_encryption}
-\end{figure}
+\textbf{Descrizione del Flusso di Crittografia/Decrittografia CTR:}
+La modalità \textbf{CTR} opera generando un keystream crittografando un contatore $T_j$ con la chiave $K$. Il contatore $T_j$ è tipicamente composto da un Nonce (o IV) concatenato con un numero di sequenza del blocco, che viene incrementato per ogni blocco. L'output di $E(K, T_j)$ viene quindi sottoposto a XOR con il blocco di testo in chiaro $P_j$ per produrre il blocco di testo cifrato $C_j$. La decrittografia è identica, poiché l'operazione XOR è simmetrica: $P_j = C_j \oplus E(K, T_j)$. Questa caratteristica consente una facile parallelizzazione delle operazioni di crittografia e decrittografia e un accesso casuale ai blocchi.
 
 \section{XTS-AES Mode}
 \begin{itemize}

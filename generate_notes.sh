@@ -173,6 +173,9 @@ Sentiti libero di utilizzare, condividere o contribuire a questi appunti attrave
 \chapter{Crittografia Asimmetrica}
 \input{07-crittografia-pk-content}
 
+\chapter{Scambio di Chiavi}
+\input{07-scambio-chiavi-content}
+
 \chapter{Network Security}
 \input{08-network-security-content}
 

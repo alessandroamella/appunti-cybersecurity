@@ -1,78 +1,7 @@
-\documentclass{article}
+\input{preambolo_comune}
 
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz} % per disegni
-\usepackage{graphicx} % per immagini
-\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, backgrounds}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti sulla Sicurezza delle Reti Wireless},
-    colorlinks=true,
-    linkcolor=cyan,
-    filecolor=magenta,      
-    urlcolor=green,
-    citecolor=red,
-    bookmarksopen=true,
-    bookmarksnumbered=true
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\definecolor{darkbg}{RGB}{30,30,30} % Un nero non assoluto
-\definecolor{lighttext}{RGB}{230,230,230} % Un bianco non accecante
-\definecolor{highlight}{RGB}{100,150,255} % Un blu per evidenziare
-
-\pagecolor{darkbg}
-\color{lighttext}
-
-% Stili per TikZ (Dark Theme)
-\tikzstyle{block_dark} = [rectangle, draw=lighttext, fill=gray!60!darkbg, text=lighttext, 
-    minimum height=2em, minimum width=6em, text centered, rounded corners]
-\tikzstyle{arrow_dark} = [-{Stealth[length=3mm, width=2mm]}, draw=lighttext, thick]
-\tikzstyle{line_dark} = [draw=lighttext, thick]
-\tikzstyle{node_dark} = [circle, draw=lighttext, fill=gray!40!darkbg, text=lighttext, minimum size=7mm]
-\tikzstyle{label_dark} = [text=lighttext, font=\footnotesize]
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-% Compilare con: pdflatex -shell-escape nomefile.tex
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai, % Stile di highlighting dark-friendly
-    bgcolor=black!80 % Sfondo leggermente diverso per i blocchi minted
-}
-\usemintedstyle{monokai}
-
-
-% --- Titolo ---
-\title{Appunti sulla Sicurezza delle Reti Wireless}
-\author{Basato sulle slide del Prof. Jocelyne Elias}
+\title{Sicurezza delle Reti Wireless}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
 \begin{document}
@@ -80,8 +9,6 @@
 \maketitle
 \tableofcontents
 \newpage
-
-% Contenuto qui
 
 \section{L'Ambiente Wireless/Radio}
 L'ambiente wireless è intrinsecamente più vulnerabile di quello cablato. I punti di attacco principali sono tre:

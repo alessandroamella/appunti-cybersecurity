@@ -1,92 +1,7 @@
-\documentclass{article}
+\input{preambolo_comune}
 
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{amsfonts} % Per \mathbb
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz}
-\usepackage{graphicx}
-\graphicspath{{images/}} % Specifica la cartella per le immagini
-\usetikzlibrary{shapes.geometric, positioning, calc, arrows.meta, fit, backgrounds, shadows}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti sui Cifrari a Flusso},
-    colorlinks=true,
-    linkcolor=cyan,
-    filecolor=magenta,
-    urlcolor=teal,
-    citecolor=green,
-    bookmarksopen=true,
-    bookmarksnumbered=true
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\definecolor{darkbg}{RGB}{23, 23, 23} % Un nero non assoluto
-\definecolor{lighttext}{RGB}{220, 220, 220}
-\definecolor{highlight}{RGB}{100, 180, 255} % Un blu per evidenziare
-\definecolor{codebg}{RGB}{40, 42, 54} % Colore sfondo per minted (Monokai)
-\definecolor{codenumber}{RGB}{120,120,120}
-
-\pagecolor{darkbg}
-\color{lighttext}
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-% Compilare con: pdflatex -shell-escape nomefile.tex
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    baselinestretch=1.1,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai, % Stile di highlighting (dark)
-    bgcolor=codebg,
-    numbersep=5pt,
-    linenos=false, % cambiare a true per numeri di linea
-    gobble=0 % numero di spazi da rimuovere all'inizio di ogni linea
-}
-\setmintedinline{bgcolor=codebg} % Sfondo per codice inline
-
-% --- Stili TikZ per tema scuro ---
-\tikzstyle{block_dark} = [rectangle, draw=highlight, fill=darkbg!80!codebg, thick,
-    text width=6em, text centered, minimum height=2.5em, text=lighttext, rounded corners=3pt,
-    drop shadow={opacity=0.4, shadow xshift=0.05cm, shadow yshift=-0.05cm, fill=black}]
-\tikzstyle{op_dark} = [circle, draw=highlight, fill=blue!60!darkbg, thick,
-    minimum size=1.5em, text=lighttext,
-    drop shadow={opacity=0.4, shadow xshift=0.05cm, shadow yshift=-0.05cm, fill=black}]
-\tikzstyle{data_dark} = [rectangle, draw=white, fill=gray!60!black, text=white, font=\sf\footnotesize, minimum height=1.2em, inner sep=2pt]
-\tikzstyle{arrow_dark} = [-{Stealth[length=3mm, width=2mm]}, thick, white]
-\tikzstyle{key_arrow_dark} = [-{Stealth[length=3mm, width=2mm]}, thick, white, dashed]
-\tikzstyle{label_dark} = [text=lighttext, font=\footnotesize, align=center]
-\tikzstyle{device_dark} = [rectangle, draw=highlight, fill=darkbg!70!codebg, minimum width=3cm, minimum height=1.8cm, text=lighttext, font=\sffamily\small, rounded corners=3pt, drop shadow]
-\tikzstyle{attacker_dark} = [cloud, draw=red!70!white, fill=red!40!darkbg, cloud puffs=10, minimum width=2.5cm, text=white, font=\sffamily\small, drop shadow]
-
-
-% --- Titolo ---
-\title{\textbf{Appunti sui Cifrari a Flusso}}
-\author{Basato sulle slide del Prof. Luciano Bononi}
+\title{Cifrari a Flusso}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
 \begin{document}
@@ -231,7 +146,7 @@ Per superare il problema della lunghezza della chiave dell'OTP, si introducono i
             \item \textbf{Next-bit test:} Se un algoritmo, dati i primi $k$ bit dell'output, non può predire il $(k+1)$-esimo bit con probabilità significativamente maggiore di $1/2$.
         \end{itemize}
         \item \textbf{Requisiti per il Seed:} Deve essere segreto e imprevedibile (generato da un True Random Number Generator - TRNG).
-    \end{itemize}
+    \end{enumerate}
     \item \textbf{Esempi di PRNG:}
     \begin{itemize}
         \item \textit{Deboli (NON usare per crittografia):} Linear Congruential Generator (LCG), \texttt{glibc random()}.
@@ -326,7 +241,7 @@ Per superare il problema della lunghezza della chiave dell'OTP, si introducono i
     \begin{enumerate}
         \item \textbf{Inizializzazione (Key Scheduling Algorithm - KSA):}
         Usa una chiave (seed) di lunghezza variabile per permutare un array $S$ di 256 byte.
-        \begin{minted}{pseudocode}
+        \begin{minted}{text}
 /* Inizializzazione S e T */
 for i = 0 to 255 do
     S[i] = i;
@@ -342,7 +257,7 @@ endfor
         \end{minted}
         \item \textbf{Generazione del Keystream (Pseudo-Random Generation Algorithm - PRGA):}
         Genera un byte di keystream alla volta.
-        \begin{minted}{pseudocode}
+        \begin{minted}{text}
 i = 0;
 j = 0;
 while (generating_keystream)
@@ -497,52 +412,54 @@ OTP e cifrari a flusso simili forniscono confidenzialità ma \textbf{NON integri
     Mallory crea $c^* = c \oplus p_{diff}$.
     Bob decifra $m^* = c^* \oplus KS = (c \oplus p_{diff}) \oplus KS = (m \oplus KS \oplus p_{diff}) \oplus KS = m \oplus p_{diff}$.
     \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}[scale=0.8, transform shape,
-        node distance=1.5cm and 2.5cm,
-        user/.style={rectangle, draw=white, fill=blue!60!black, minimum width=2.5cm, minimum height=1.5cm, text=white, font=\sffamily\bfseries},
-        process/.style={rectangle, draw=white, fill=green!50!black, minimum width=2cm, minimum height=1cm, text=white, font=\sffamily\bfseries},
-        data/.style={text=white, font=\sffamily\textit},
-        attacker/.style={cloud, draw=red!70!white, fill=red!30!black, cloud puffs=10, minimum width=2cm, text=white, font=\sffamily\small},
-        arrow/.style={->, thick, white},
-        key_arrow/.style={->, thick, white, dashed},
-        label/.style={text=white, font=\sffamily\scriptsize, align=center}]
-
-        \node[user] (alice) {Alice};
-        \node[data, left=1cm of alice] (m_in) {$m$}; \draw[arrow_dark] (m_in) -- (alice);
-        \node[process, below=of alice] (enc) {E};
-        \node[data, left=0.5cm of enc, yshift=-0.2cm] (k_alice) {$k$}; \draw[key_arrow_dark] (k_alice) -- (enc);
-        \draw[arrow_dark] (alice) -- (enc);
-
-        \node[data, right=1cm of enc] (c_orig_label) {$c = m \oplus k$};
-        \draw[arrow_dark] (enc.east) -- (c_orig_label.west);
-
-        \coordinate (c_path_mid) at ($(c_orig_label.east) + (1.5,0)$);
-        \node[attacker_dark, below=0.5cm of c_path_mid] (mallory) {Mallory};
-        \node[data, above=0.1cm of mallory] (c_to_mallory) {$c$};
-        \draw[arrow_dark, dotted] (c_orig_label.east) |- (c_to_mallory);
-        \node[data, below=0.1cm of mallory, text width=6em] (c_star_mod) {$c^* = c \oplus p_{diff}$};
-        \draw[arrow_dark, dotted] (mallory) -- (c_star_mod);
-
-        \node[user, right=4cm of alice] (bob) {Bob};
-        \node[process, below=of bob] (dec) {D};
-        \node[data, right=0.5cm of dec, yshift=-0.2cm] (k_bob) {$k$}; \draw[key_arrow_dark] (k_bob) -- (dec);
-        \draw[arrow_dark] (bob) -- (dec);
-
-        \node[data, left=1cm of dec] (c_star_label) {$c^*$};
-        \draw[arrow_dark, dotted] (c_star_mod) -| (c_star_label.west);
-        \draw[arrow_dark] (c_star_label) -- (dec);
-
-        \node[data, right=1cm of bob] (m_star_out) {$m^*$};
-        \draw[arrow_dark] (dec) -- (m_star_out.west);
-
-        \node[label, below=0.3cm of dec, text width=10cm, fill=gray!20!darkbg, rounded corners, draw=white, inner sep=2mm] (m_star_expl) {
-        $k \oplus c^* = k \oplus (c \oplus p_{diff}) = k \oplus (m \oplus k \oplus p_{diff})$ \\
-        $= (k \oplus k) \oplus m \oplus p_{diff} = \mathbf{0} \oplus m \oplus p_{diff} = m \oplus p_{diff}$ \\
-        Quindi Bob riceve $m^* = m \oplus p_{diff}$
-        };
-    \end{tikzpicture}
-    \caption{Attacco di malleabilità}
+        \centering
+        \begin{tikzpicture}[node distance=2cm]
+            % Alice
+            \node[user] (alice) {Alice};
+            \node[above=0.5cm of alice] (msg) {$m$};
+            
+            % Encryption
+            \node[block, below=1.5cm of alice] (encrypt) {$\oplus$};
+            \node[left=1cm of encrypt] (key1) {$k$};
+            
+            % Ciphertext
+            \node[right=3cm of encrypt] (cipher) {$c = m \oplus k$};
+            
+            % Mallory (attacker)
+            \node[attacker, below=1cm of cipher] (mallory) {Mallory};
+            
+            % Modified ciphertext
+            \node[right=2cm of mallory] (modified) {$c^* = c \oplus p_{diff}$};
+            
+            % Bob
+            \node[user, right=4cm of cipher] (bob) {Bob};
+            
+            % Decryption
+            \node[block, below=1.5cm of bob] (decrypt) {$\oplus$};
+            \node[right=1cm of decrypt] (key2) {$k$};
+            
+            % Result
+            \node[below=1cm of decrypt] (result) {$m^* = m \oplus p_{diff}$};
+            
+            % Arrows
+            \draw[arrow] (msg) -- (alice);
+            \draw[arrow] (alice) -- (encrypt);
+            \draw[keyline] (key1) -- (encrypt);
+            \draw[arrow] (encrypt) -- (cipher);
+            \draw[arrow, dashed] (cipher) -- (mallory);
+            \draw[arrow] (mallory) -- (modified);
+            \draw[arrow, dashed] (modified) -| (bob);
+            \draw[arrow] (bob) -- (decrypt);
+            \draw[keyline] (key2) -- (decrypt);
+            \draw[arrow] (decrypt) -- (result);
+            
+            % Labels
+            \node[below=2.5cm of encrypt, text width=8cm, align=center] {
+                \small Mallory intercetta $c$ e lo modifica in $c^*$ senza conoscere $k$ o $m$
+            };
+            
+        \end{tikzpicture}
+        \caption{Attacco di malleabilità su OTP/Stream Cipher}
     \end{figure}
     \item \textbf{Contromisura:} Usare un \textbf{Message Authentication Code (MAC)} o cifrari autenticati (Authenticated Encryption - AEAD, es. AES-GCM, ChaCha20-Poly1305).
 \end{itemize}

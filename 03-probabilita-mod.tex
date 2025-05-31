@@ -1,80 +1,7 @@
-\documentclass{article}
+\input{preambolo_comune}
 
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{amsfonts} % Per \mathbb
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz} % per disegni
-\usepackage{pgfplots} % per grafici
-\pgfplotsset{compat=1.18}
-\usepackage{graphicx} % per immagini
-\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti di Probabilità Discreta e Teoria dei Numeri per Cybersecurity},
-    pdfauthor={Basato sulle slide del Prof.},
-    colorlinks=true,
-    linkcolor=cyan,
-    urlcolor=magenta,
-    citecolor=green
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\definecolor{bgcolor}{RGB}{30,30,30} % Sfondo grigio scuro
-\definecolor{maintext}{RGB}{230,230,230} % Testo bianco sporco
-\definecolor{headercolor}{RGB}{100,180,255} % Blu chiaro per titoli
-\definecolor{codebg}{RGB}{40,40,40} % Sfondo per blocchi di codice
-
-\pagecolor{bgcolor}
-\color{maintext}
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-% Compilare con: pdflatex -shell-escape nomefile.tex
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai, % Stile di highlighting (dark)
-    bgcolor=codebg % Sfondo personalizzato per minted
-}
-\newminted{text}{bgcolor=codebg} % Per testo semplice con sfondo
-
-% --- Stile TikZ per diagrammi su sfondo scuro ---
-\tikzstyle{block} = [rectangle, draw=cyan, fill=bgcolor!80!maintext,
-    text width=8em, text centered, rounded corners, minimum height=3em, line width=0.5pt]
-\tikzstyle{diamond_block} = [diamond, draw=cyan, fill=bgcolor!80!maintext,
-    text width=6em, text centered, minimum height=2.5em, aspect=2, line width=0.5pt, inner sep=0pt]
-\tikzstyle{line} = [draw=maintext, -Latex, line width=0.5pt]
-\tikzstyle{startend} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=cyan, fill=bgcolor!60!maintext, line width=0.5pt]
-
-
-% --- Titolo ---
-\title{\color{headercolor}Appunti di Probabilità Discreta e Teoria dei Numeri per Cybersecurity}
-\author{Basato sulle slide del Professore}
+\title{Probabilità Discreta e Teoria dei Numeri}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
 \begin{document}
@@ -258,7 +185,7 @@ Siano $A_1$ e $A_2$ due eventi.
         legend style={fill=bgcolor, draw=maintext, text=maintext},
         tick label style={color=maintext},
         label style={color=maintext},
-        title style={color=headercolor},
+        title style={color=primarytext},
         title={Probabilità di Collisione (es. $|U|=10^6$)},
         axis line style={maintext},
     ]

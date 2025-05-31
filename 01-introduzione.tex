@@ -1,82 +1,7 @@
-\documentclass{article}
-
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz}
-\usepackage{graphicx}
-\graphicspath{{images/}} % Specifica la cartella per le immagini
-\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, decorations.pathreplacing}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti di Fondamenti di Cybersecurity},
-    colorlinks=true,
-    linkcolor=cyan, % Colore per link interni (es. \ref, \tableofcontents)
-    urlcolor=green!60!black, % Colore per URL (\url, \href)
-    citecolor=magenta % Colore per citazioni bibliografiche (se usate)
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\definecolor{darkergray}{rgb}{0.1,0.1,0.1} % Un grigio molto scuro per alcuni fill
-\definecolor{lightgray}{rgb}{0.8,0.8,0.8} % Grigio chiaro per testo su sfondi scuri in tikz
-\definecolor{nodegray}{rgb}{0.3,0.3,0.3} % Grigio per i nodi tikz
-\pagecolor{black}
-\color{white}
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-% Compilare con: pdflatex -shell-escape nomefile.tex
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai, % Adatto per sfondi scuri
-    bgcolor=darkergray % Sfondo leggermente diverso per i blocchi minted
-}
-
-% --- Tabelle ---
-\usepackage{array} % Per opzioni colonne tabelle
-\usepackage{longtable} % Per tabelle che possono spezzarsi su più pagine
-\usepackage{booktabs} % Per linee tabelle più professionali (ma su sfondo nero potrebbero non vedersi bene)
-
-% Stili TikZ per tema scuro
-\tikzstyle{block_white} = [rectangle, draw=white, fill=nodegray, text=white,
-    text width=6em, text centered, rounded corners, minimum height=3em, line width=1pt]
-\tikzstyle{block_wide_white} = [rectangle, draw=white, fill=nodegray, text=white,
-    text width=10em, text centered, rounded corners, minimum height=3em, line width=1pt]
-\tikzstyle{cloud_white} = [ellipse, draw=white, fill=blue!70!black, text=white, % Un blu scuro ma visibile
-    minimum height=2em, minimum width=3em, line width=1pt]
-\tikzstyle{sensor_white} = [circle, draw=white, fill=green!60!black, text=white, % Un verde scuro ma visibile
-    minimum size=1.5em, line width=1pt]
-\tikzstyle{line_white} = [draw=white, -{Stealth[length=2mm, width=1.5mm]}, line width=1pt]
-\tikzstyle{line_double_white} = [draw=white, {Stealth[length=2mm, width=1.5mm]}-{Stealth[length=2mm, width=1.5mm]}, line width=1pt]
-\tikzstyle{label_white} = [text=white, font=\footnotesize]
+\input{preambolo_comune}
 
 % --- Titolo ---
-\title{Appunti di Fondamenti di Cybersecurity (FdC)}
+\title{Introduzione}
 \author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
@@ -297,14 +222,14 @@ La cybersecurity riguarda i \textbf{Cyber Systems}, che integrano:
     \item \textbf{Grafico - Zero Days of 2022 by Vendor (Placeholder):}
     \begin{figure}[H]
         \centering
-        \includegraphics[width=0.7\textwidth]{zero_days_by_vendor_2022.png}
+        \includegraphics[width=0.7\textwidth]{images/zero_days_by_vendor_2022.png}
         \caption{Zero Days of 2022 by Vendor (Fonte: Slide 20, da generare con Python).}
         \label{fig:zero_days_vendor}
     \end{figure}
     \item \textbf{Grafico - Zero-Day Vulnerabilities by Year (Placeholder):}
     \begin{figure}[H]
         \centering
-        \includegraphics[width=0.9\textwidth]{zero_day_vulnerabilities_by_year.png}
+        \includegraphics[width=0.9\textwidth]{images/zero_day_vulnerabilities_by_year.png}
         \caption{Zero-Day Vulnerabilities by Year (Fonte: Slide 21, Google Project Zero, da generare con Python).}
         \label{fig:zero_days_year}
     \end{figure}

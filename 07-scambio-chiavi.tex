@@ -1,68 +1,8 @@
-\documentclass{article}
+\input{preambolo_comune}
 
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz}
-\usepackage{graphicx}
-\usetikzlibrary{shapes.geometric, positioning, calc, arrows.meta}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti su Scambio di Chiavi (Key Exchange)},
-    pdfauthor={Basato sulle slide del Prof.},
-    colorlinks=true,
-    linkcolor=cyan,
-    urlcolor=cyan,
-    citecolor=green
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\definecolor{darkbg}{RGB}{20,20,20} % Un nero non assoluto per minor affaticamento
-\definecolor{lighttext}{RGB}{230,230,230} % Un bianco non assoluto
-\definecolor{darknodefill}{RGB}{50,50,50}
-\definecolor{darkarrow}{RGB}{180,180,180}
-\definecolor{highlight}{RGB}{100,180,255} % Blu chiaro per highlight
-
-\pagecolor{darkbg}
-\color{lighttext}
-
-% --- Titolo ---
-\title{Appunti su Scambio di Chiavi (Key Exchange)}
-\author{Basato sulle slide del Professore}
+\title{Crittografia a Chiave Pubblica}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
-
-% Stili TikZ per diagrammi dark theme
-\tikzstyle{user} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, text centered, draw=lighttext, fill=darknodefill, text=lighttext, font=\sffamily]
-\tikzstyle{entity} = [rectangle, minimum width=2.5cm, minimum height=1cm, text centered, draw=lighttext, fill=blue!60!darknodefill, text=lighttext, font=\sffamily]
-\tikzstyle{attacker} = [ellipse, minimum width=2cm, minimum height=1cm, text centered, draw=red!80!lighttext, fill=red!40!darknodefill, text=lighttext, font=\sffamily]
-\tikzstyle{authority} = [cylinder, shape border rotate=90, aspect=0.5, minimum height=1.5cm, text width=2cm, text centered, draw=lighttext, fill=green!40!darknodefill, text=lighttext, font=\sffamily]
-\tikzstyle{data} = [rectangle, draw=lighttext, fill=gray!50!darknodefill, text=lighttext, font=\sffamily\footnotesize, inner sep=2pt]
-\tikzstyle{arrow} = [draw=darkarrow, -{Latex[length=2mm, width=1.5mm]}, thick]
-\tikzstyle{comm_arrow} = [draw=highlight, -{Latex[length=2mm, width=1.5mm]}, thick]
-\tikzstyle{key_exchange_line} = [draw=highlight, <->, dashed, thick]
-
 
 \begin{document}
 

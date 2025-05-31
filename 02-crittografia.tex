@@ -1,81 +1,8 @@
-\documentclass{article}
-
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{amsfonts} % Per Z_n
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-\setlist{nosep} % Rimuove spazio verticale extra nelle liste
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz}
-\usepackage{graphicx}
-\graphicspath{{images/}} % Specifica la cartella per le immagini
-\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, fit, backgrounds}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti di Introduzione alla Crittografia},
-    colorlinks=true,
-    linkcolor=cyan,
-    urlcolor=cyan,
-    citecolor=green,
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\definecolor{darkbg}{RGB}{20,20,20} % Un nero non assoluto, leggermente più morbido
-\definecolor{lighttext}{RGB}{240,240,240}
-\definecolor{highlight}{RGB}{100,180,255} % Blu chiaro per evidenziare
-\definecolor{codebg}{RGB}{40,40,40} % Sfondo per blocchi di codice (se usati con TikZ)
-\definecolor{codetxt}{RGB}{220,220,200}
-
-\pagecolor{darkbg}
-\color{lighttext}
-
-% Stili TikZ per dark theme
-\tikzstyle{block} = [rectangle, draw=lighttext, fill=darkbg!80!lighttext,
-    text width=6em, text centered, rounded corners, minimum height=3em, line width=0.5pt]
-\tikzstyle{key_block} = [rectangle, draw=highlight, fill=darkbg!60!highlight,
-    text width=4em, text centered, rounded corners, minimum height=2em, line width=0.5pt, text=lighttext]
-\tikzstyle{line} = [draw=lighttext, -{Stealth[length=2mm, width=1.5mm]}, line width=0.5pt]
-\tikzstyle{actor} = [circle, draw=lighttext, fill=darkbg!70!lighttext, minimum size=2em, text=darkbg]
-\tikzstyle{data_flow} = [->, >=Stealth, thick, color=lighttext]
-\tikzstyle{comm_channel} = [dashed, color=gray]
-
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai, % Stile di highlighting che si adatta bene a sfondi scuri
-    bgcolor=codebg, % Sfondo per minted
-    % Per minted, il colore del testo è gestito dallo stile 'monokai'
-}
+\input{preambolo_comune}
 
 % --- Titolo ---
-\title{\textbf{Appunti di Introduzione alla Crittografia}}
-\author{Basato sulle slide della Lezione}
+\title{Introduzione alla Crittografia}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
 \begin{document}
@@ -400,7 +327,7 @@ Chiave $\pi$: una permutazione dell'alfabeto.
 \end{itemize}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{freq_analysis_chart.png} % Placeholder
+    \includegraphics[width=0.8\textwidth]{images/freq_analysis_chart.png} % Placeholder
     \caption{Tipica distribuzione di frequenza delle lettere in Inglese (Placeholder).}
     \label{fig:freq_analysis}
 \end{figure}
@@ -440,7 +367,7 @@ Ciphertext:Y Y Y I T B K T C S T M V F B P R
 Ogni lettera del plaintext è cifrata con uno shift diverso, basato sulla corrispondente lettera della chiave.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{vigenere_square.png} % Placeholder
+    \includegraphics[width=\textwidth]{images/vigenere_square.png} % Placeholder
     \caption{Tabula Recta o Quadrato di Vigenère (Placeholder).}
     \label{fig:vigenere_square}
 \end{figure}

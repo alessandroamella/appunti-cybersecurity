@@ -1,0 +1,489 @@
+\input{preambolo_comune}
+
+\title{Network Security}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Fondamenti di Sicurezza Informatica}
+La sicurezza informatica si basa su due insiemi di principi fondamentali: \textbf{AAA} e \textbf{CIA}.
+
+\subsection{AAA: Authentication, Authorization, Accounting}
+
+\subsubsection{Authentication (Autenticazione)}
+\begin{description}
+    \item[Definizione] È la capacità di un sistema di garantire che un utente possa essere identificato correttamente.
+    \item[Come avviene?] Tramite informazioni che l'utente possiede, sa, o è. Questi fattori possono essere usati da soli o in combinazione.
+\end{description}
+
+\begin{itemize}
+    \item \textbf{Qualcosa che si ha (Something you have)}: Oggetti fisici.
+        \begin{itemize}
+            \item \textit{Esempio}: Badge aziendale, smart card (Bancomat), token OTP fisico. Definito \texttt{token}.
+        \end{itemize}
+    \item \textbf{Qualcosa che si sa (Something you know)}: Informazioni conosciute solo dall'utente.
+        \begin{itemize}
+            \item \textit{Esempio}: Password, PIN, risposte a domande di sicurezza.
+        \end{itemize}
+    \item \textbf{Qualcosa che si è (Something you are)}: Caratteristiche biometriche uniche.
+        \begin{itemize}
+            \item \textit{Esempio}: Impronte digitali, scansione della retina o del viso.
+        \end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \node[goodnode] (have) {Qualcosa che si HA};
+        \node[goodnode, below=0.5cm of have] (know) {Qualcosa che si SA};
+        \node[goodnode, below=0.5cm of know] (are) {Qualcosa che si È};
+        \node[mynode, right=2cm of know] (auth) {Autenticazione};
+        \draw[myarrow] (have.east) -- (auth.west);
+        \draw[myarrow] (know.east) -- (auth.west);
+        \draw[myarrow] (are.east) -- (auth.west);
+    \end{tikzpicture}
+    \caption{Fattori di Autenticazione.}
+\end{figure}
+
+\paragraph{Autenticazione Multifattore (MFA):}
+Combina \textit{diversi tipi} di fattori di autenticazione per una maggiore sicurezza.
+\textbf{Importante}: Usare più meccanismi dello \textit{stesso tipo} (es. due password) non aumenta la sicurezza quanto usare fattori di tipo diverso.
+\begin{itemize}
+    \item \textit{Esempio pratico (Online Banking)}:
+    \begin{enumerate}
+        \item Password (qualcosa che si conosce).
+        \item Codice SMS (qualcosa che si possiede).
+    \end{enumerate}
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm and 2.5cm]
+        \node[mynode] (client) {Client};
+        \node[goodnode, right=of client, align=center] (factor1) {Fattore 1 \\ (es. Password)};
+        \node[goodnode, right=of factor1, align=center] (factor2) {Fattore 2 \\ (es. SMS OTP)};
+        \node[right=1cm of factor2] (dots) {\dots};
+
+        \draw[myarrow] (client.east) -- node[above, font=\tiny]{Protocollo Auth} (factor1.west);
+        \draw[myarrow] (factor1.east) -- node[above, font=\tiny]{Pass} (factor2.west);
+        \draw[dashedarrow] (factor1.south) .. controls +(south:1cm) and +(south:1cm) .. node[below, font=\tiny]{Fail} (client.south);
+        \draw[dashedarrow] (factor2.south) .. controls +(south:1cm) and +(south:1cm) .. node[below, font=\tiny]{Fail} ($(factor1.south) + (-1,0)$) ;
+    \end{tikzpicture}
+    \caption{Flusso semplificato di Autenticazione Multifattore.}
+\end{figure}
+
+\subsubsection{Authorization (Autorizzazione)}
+\begin{description}
+    \item[Definizione] Indica \textit{cosa può effettuare} un determinato utente una volta autenticato.
+    \item[Esempio] Nel sistema X, la password di un utente può essere cambiata solo dall'utente stesso (post-autenticazione) o da un amministratore.
+\end{description}
+
+\subsubsection{Accounting (Accreditamento/Tracciabilità)}
+\begin{description}
+    \item[Definizione] Procedura con cui si registrano (logging) le operazioni effettuate da un account.
+    \item[Esempi]
+    \begin{itemize}
+        \item Traffico dati consumato dalla SIM.
+        \item Siti visitati (cronologia).
+        \item Ultima modifica password.
+    \end{itemize}
+\end{description}
+L'immagine di "Change password" nelle slide illustra un'operazione che verrebbe registrata (logged).
+
+\subsection{CIA: Confidentiality, Integrity, Availability}
+Questi tre concetti sono indipendenti; la sicurezza di un sistema si misura considerando tutti e tre.
+
+\subsubsection{Confidentiality (Confidenzialità/Riservatezza)}
+\begin{description}
+    \item[Definizione] Un messaggio è confidenziale se può essere letto \textit{solo dal destinatario predesignato}.
+    \item[Esempio] Alice invia un messaggio a Bob; solo Bob deve poterlo leggere.
+\end{description}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \node[goodnode] (alice) {Alice};
+        \node[goodnode, right=2cm of alice] (bob) {Bob};
+        \draw[myarrow] (alice.east) -- node[above, font=\tiny]{Messaggio} (bob.west);
+    \end{tikzpicture}
+    \caption{Comunicazione Confidenziale Base.}
+\end{figure}
+
+\paragraph{Man-in-the-Middle (MitM):} Un attaccante (Eve/Mallory) si interpone nella comunicazione.
+\paragraph{Attacco alla Confidenzialità: Eavesdropping (Intercettazione)}
+Eve (attaccante) cerca di leggere/ascoltare il messaggio per Bob.
+\begin{itemize}
+    \item \textit{Esempio pratico}: Eve intercetta un'email non cifrata tra Alice e Bob.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \node[goodnode] (alice) {Alice};
+        \node[attacker, right=1.5cm of alice] (eve) {Eve};
+        \node[goodnode, right=1.5cm of eve] (bob) {Bob};
+        \draw[myarrow] (alice.east) -- (eve.west);
+        \draw[myarrow] (eve.east) -- (bob.west);
+        \node[infonode, below=0.2cm of eve] {Ascolta};
+    \end{tikzpicture}
+    \caption{Eavesdropping (Attacco alla Confidenzialità).}
+\end{figure}
+
+
+\subsubsection{Integrity (Integrità)}
+\begin{description}
+    \item[Definizione] Un messaggio è integro se il destinatario è certo del mittente e che il contenuto \textit{non è stato alterato}.
+    \item[Esempio] Bob riceve un messaggio da Alice ed è sicuro che provenga da lei e sia inalterato.
+\end{description}
+
+\paragraph{Attacco all'Integrità: Manipulation (Manipolazione)}
+Mallory (attaccante) \textit{modifica} un messaggio di Alice prima di inviarlo a Bob.
+\begin{itemize}
+    \item \textit{Esempio pratico}: Mallory cambia l'IBAN su una fattura inviata da Alice a Bob.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \node[goodnode] (alice) {Alice};
+        \node[attacker, right=1.5cm of alice] (mallory) {Mallory};
+        \node[goodnode, right=1.5cm of mallory] (bob) {Bob};
+        \draw[myarrow] (alice.east) -- node[above, font=\tiny]{Msg Originale} (mallory.west);
+        \draw[myarrow] (mallory.east) -- node[above, font=\tiny, color=red!70!white]{Msg Modificato} (bob.west);
+        \node[infonode, below=0.2cm of mallory] {Modifica};
+    \end{tikzpicture}
+    \caption{Manipulation (Attacco all'Integrità).}
+\end{figure}
+
+\paragraph{Attacco all'Integrità: User Impersonation / Spoofing (Falsificazione d'Identità)}
+Mallory \textit{si spaccia per Alice} e invia un messaggio a Bob.
+\begin{itemize}
+    \item \textit{Esempio pratico}: Mallory invia un'email a Bob fingendosi il suo capo (Alice) per chiedere un bonifico.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \node[goodnode, opacity=0.5] (alice_ghost) {Alice (vera)}; % Ghost Alice
+        \node[attacker, right=1.5cm of alice_ghost] (mallory) {Mallory (come Alice)};
+        \node[goodnode, right=1.5cm of mallory] (bob) {Bob};
+        \draw[myarrow, color=red!70!white] (mallory.east) -- node[above, font=\tiny]{Messaggio Falso} (bob.west);
+         \node[infonode, below=0.2cm of mallory] {Impersona};
+    \end{tikzpicture}
+    \caption{User Impersonation / Spoofing.}
+\end{figure}
+
+\subsubsection{Availability (Disponibilità)}
+\begin{description}
+    \item[Definizione] Capacità di un sistema di rispondere a richieste autorizzate entro un tempo ragionevole.
+    \item[Esempio] Il servizio WhatsApp è funzionante e permette ad Alice di inviare un messaggio a Bob.
+\end{description}
+
+\paragraph{Attacco alla Disponibilità: Denial of Service (DoS)}
+Rende un servizio non disponibile, esaurendo le risorse del sistema target.
+\begin{itemize}
+    \item \textit{Esempio schematico}: Mallory elimina il messaggio di Alice per Bob.
+    \item \textit{Esempio pratico (Ristorante)}:
+    \begin{enumerate}
+        \item \textbf{DoS semplice}: Attaccante prenota tutti i coperti.
+        \item \textbf{DoS + Spoofing}: Attaccante chiama N volte, prenotando tavoli per 2 con nomi falsi diversi.
+        \item \textbf{Distributed DoS (DDoS)}: Attaccante e N amici chiamano, rendendo più difficile il blocco.
+    \end{enumerate}
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \node[goodnode] (alice) {Alice};
+        \node[attacker, right=1.5cm of alice] (mallory) {Mallory};
+        \node[goodnode, right=1.5cm of mallory, opacity=0.5] (bob_unreached) {Bob};
+        \draw[myarrow] (alice.east) -- (mallory.west);
+        \path (mallory.east) edge[myarrow, red!70!white] node[midway, transform shape, scale=2, color=red!70!white] {$\times$} (bob_unreached.west);
+        \node[infonode, below=0.2cm of mallory] {Blocca/Elimina};
+    \end{tikzpicture}
+    \caption{Denial of Service (Attacco alla Disponibilità).}
+\end{figure}
+
+\section{Anonimato e Protocolli Internet}
+\begin{description}
+    \item[Anonimato] Proprietà che garantisce l'uso di una risorsa/servizio senza rivelare la propria identità. Non è parte della CIA, ma elude l'accounting.
+    \item[Spoiler] Navigando online \textit{non siete anonimi} (profilazione da ISP, social, cookies, ecc.).
+\end{description}
+
+\subsection{Protocolli e Attacchi Correlati}
+
+\subsubsection{Internet Protocol (IP)}
+Protocollo per identificare dispositivi su Internet.
+\begin{itemize}
+    \item \textbf{IPv4}: Indirizzi a 32 bit (es. \texttt{1.1.1.1}).
+    \item \textbf{IPv6}: Indirizzi a 128 bit.
+\end{itemize}
+Il server \textit{deve} conoscere l'IP pubblico per rispondere (no anonimato intrinseco).
+
+\paragraph{Attacco a IP: IP Address Spoofing}
+Gli indirizzi IP \textit{NON} sono protetti da integrità. Chiunque può modificare l'IP sorgente.
+\begin{itemize}
+    \item \textit{Esempio (DDoS Reflection/Amplification)}:
+    \begin{enumerate}
+        \item "Bot" (attaccante) invia richiesta a un Server con IP sorgente falsificato (quello della Vittima).
+        \item Server invia una (grande) risposta alla Vittima, causando DoS.
+    \end{enumerate}
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1cm and 1.5cm]
+        \node[attacker] (bot) {Bot};
+        \node[goodnode, below=2cm of bot, align=center] (victim) {Vittima \\ (\texttt{1.1.1.1})};
+        \node[neutralnode, right=2cm of $(bot)!0.5!(victim)$] (server) {Server};
+
+        \draw[myarrow] (bot.east) -- (server.west) node[midway, above, font=\tiny, align=center] {Richiesta \\ Da: \texttt{1.1.1.1} (spoofed)};
+        \draw[myarrow, red!70!white, line width=1.5pt] (server.south) .. controls +(east:1cm) and +(east:1cm) .. (victim.east) node[midway, right, font=\tiny, align=center] {Risposta Amplificata \\ A: \texttt{1.1.1.1}};
+    \end{tikzpicture}
+    \caption{IP Address Spoofing per DDoS Reflection.}
+\end{figure}
+
+\subsubsection{Routing}
+I pacchetti attraversano router, potenziali Man in the Middle. La figura nelle slide mostra Computer A -> Rete1 -> Rete3 -> Rete5 -> Computer B.
+
+\subsubsection{Transmission Control Protocol (TCP)}
+Servizi identificati da "porte". Esempi:
+\texttt{22} SSH, \texttt{25} SMTP, \texttt{80} HTTP, \texttt{110} POP, \texttt{443} HTTPS.
+
+\paragraph{Attacco a TCP: SYN Flooding (DoS)}
+TCP usa un "three-way handshake":
+\begin{enumerate}
+    \item Client $\xrightarrow{\text{SYN}}$ Server
+    \item Server $\xrightarrow{\text{SYN-ACK}}$ Client
+    \item Client $\xrightarrow{\text{ACK}}$ Server (Connessione stabilita)
+\end{enumerate}
+\textbf{Attacco}: Attaccante invia molti \texttt{SYN} (spesso con IP spoofati). Il server risponde con \texttt{SYN-ACK} e alloca risorse, attendendo \texttt{ACK} che non arrivano mai. Il server esaurisce risorse.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.5cm and 2cm]
+    % Nodes for Client and Server states
+    \node[mynode] (c_closed) {CLIENT: CLOSED};
+    \node[mynode, below=of c_closed] (c_synsent) {SYN-SENT};
+    \node[mynode, below=of c_synsent] (c_estab) {ESTABLISHED};
+
+    \node[mynode, right=4cm of c_closed] (s_closed) {SERVER: CLOSED};
+    \node[mynode, below=of s_closed] (s_listen) {LISTEN};
+    \node[mynode, below=of s_listen] (s_synrec) {SYN-RECEIVED};
+    \node[mynode, below=of s_synrec] (s_estab) {ESTABLISHED};
+
+    % State transitions (vertical)
+    \draw[myarrow] (c_closed) -- (c_synsent);
+    \draw[myarrow] (c_synsent) -- (c_estab);
+    \draw[myarrow] (s_closed) -- (s_listen);
+    \draw[myarrow] (s_listen) -- (s_synrec);
+    \draw[myarrow] (s_synrec) -- (s_estab);
+
+    % TCP Handshake messages (horizontal)
+    \coordinate (mid_synsent_listen) at ($(c_synsent.east)!0.5!(s_listen.west)$);
+    \draw[myarrow] (c_synsent.east) -- (s_listen.west |- c_synsent.east) node[midway, above, font=\tiny,align=center] {(1) SYN \\ Active Open};
+
+    \coordinate (mid_synrec_synsent) at ($(s_synrec.west)!0.5!(c_synsent.east)$);
+     \draw[myarrow] (s_synrec.west) -- (c_synsent.east |- s_synrec.west) node[midway, above, font=\tiny,align=center] {(2) SYN-ACK \\ Passive Open};
+
+    \coordinate (mid_estab_synrec) at ($(c_estab.east)!0.5!(s_synrec.west)$);
+    \draw[myarrow] (c_estab.east) -- (s_synrec.west |- c_estab.east) node[midway, above, font=\tiny,align=center] {(3) ACK};
+
+    % Highlighting SYN Flooding
+    \node[attacker, below right=0.5cm and -1cm of c_estab, text width=3cm, font=\tiny] (attack_note)
+        {SYN Flooding: L'attaccante invia molti SYN (1), il server risponde con SYN-ACK (2) e attende ACK (3) che non arriva. Le risorse del server si esauriscono.};
+    \draw[myarrow, red!70!white, dashed] (attack_note.north west) .. controls +(west:1cm) and +(south:0.5cm) .. (c_synsent.south);
+\end{tikzpicture}
+\caption{TCP Three-Way Handshake e concetto di SYN Flooding.}
+\label{fig:tcp_handshake}
+\end{figure}
+La Figura \ref{fig:tcp_handshake} illustra il normale handshake e come l'attaccante interrompe il processo per il SYN Flooding.
+
+\subsubsection{Domain Name System (DNS)}
+Traduce nomi di dominio (es. \texttt{www.google.com}) in indirizzi IP.
+\paragraph{Attacco a DNS: Typosquatting}
+Sfrutta errori di battitura. Es: utente scrive \texttt{gmai.it} invece di \texttt{gmail.com} e finisce su un sito malevolo. Può essere usato per phishing, malware, intercettare email.
+
+\subsection{Riassunto di Reti: Sniffing}
+\begin{description}
+    \item[Sniffing] Forma di Eavesdropping; intercettazione del traffico di rete.
+    \item[Security by Obscurity] Affidarsi al fatto che un attaccante "non sappia" non è vera sicurezza.
+    \item[Esempio: Wireshark] Analizzatore di protocolli di rete per catturare e visualizzare traffico. Le slide mostrano un esempio di output di Wireshark con pacchetti ICMP.
+\end{description}
+
+\section{Anonimizzazione e Tecniche Avanzate}
+
+\subsection{Anonymous Remailer}
+Server che inoltra email rimuovendo info del mittente originale. Concetto alla base di VPN (es. NordVPN).
+
+\subsection{Proxy}
+Intermediario. Il remailer anonimo è un esempio. \textbf{Problema}: il proxy conosce identità e destinazione, può agire da eavesdropper.
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \node[goodnode] (alice) {Alice};
+        \node[neutralnode, right=2cm of alice] (proxy) {Proxy};
+        \node[goodnode, right=2cm of proxy] (bob) {Bob};
+        \draw[myarrow] (alice.east) -- (proxy.west);
+        \draw[myarrow] (proxy.east) -- (bob.west);
+        \node[infonode, below=0.2cm of proxy, text width=3cm, align=center] {Il Proxy conosce Alice e Bob. Può intercettare.};
+    \end{tikzpicture}
+    \caption{Funzionamento di un Proxy.}
+\end{figure}
+
+\subsection{Mix-based Systems (Reti MIX)}
+Introdotte da David Chaum (1981). Usano server relay (MIX) per comunicazioni anonime.
+\begin{itemize}
+    \item \textbf{Obiettivi}: Anonimato del mittente, non-linkability.
+    \item \textbf{Idea}: Messaggi dal mittente appaiono diversi (contenuto, ora, ordine) dopo il MIX.
+    \item \textbf{Operazioni MIX}:
+        \begin{itemize}
+            \item \textbf{Batching}: Raccoglie messaggi (lunghezza fissa) da più sorgenti.
+            \item \textbf{Mixing}: Trasforma crittograficamente i messaggi e li inoltra in ordine casuale.
+        \end{itemize}
+    \item \textit{Esempio MIX}: Mittenti cifrano messaggio con chiave pubblica del MIX. Il MIX decifra, riordina e inoltra.
+    \item \textbf{Svantaggi}: Crittografia a chiave pubblica costosa, alta latenza (OK per email, non per web).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=0.5cm and 1cm]
+        \node[goodnode] (u1) {u1}; \node[mynode, right=of u1, fill=red!30!black, minimum width=0.5cm] (m1) {};
+        \node[goodnode, below=of u1] (u2) {u2}; \node[mynode, right=of u2, fill=blue!30!black, minimum width=0.5cm] (m2) {};
+        \node[goodnode, below=of u2] (u3) {u3}; \node[mynode, right=of u3, fill=green!30!black, minimum width=0.5cm] (m3) {};
+        \node[goodnode, below=of u3] (u4) {u4}; \node[mynode, right=of u4, fill=yellow!30!black, minimum width=0.5cm] (m4) {};
+
+        \node[neutralnode, minimum width=4cm, minimum height=3cm, right=2cm of m2] (mix) {MIX};
+        \node[font=\tiny, text width=3.5cm, above=0.1cm of mix.north] {1. Colleziona messaggi \\ 2. Scarta duplicati (se presenti) \\ 3. Decifra e accumula in batch \\ 4. Riordina e consegna};
+
+        \draw[myarrow] (m1.east) -- (mix.west |- m1.east);
+        \draw[myarrow] (m2.east) -- (mix.west |- m2.east);
+        \draw[myarrow] (m3.east) -- (mix.west |- m3.east);
+        \draw[myarrow] (m4.east) -- (mix.west |- m4.east);
+
+        % Output messages in random order
+        \node[mynode, right=1.5cm of mix.north east, fill=green!30!black, minimum width=0.5cm] (om3) {};
+        \node[mynode, below=0.2cm of om3, fill=red!30!black, minimum width=0.5cm] (om1) {};
+        \node[mynode, below=0.2cm of om1, fill=yellow!30!black, minimum width=0.5cm] (om4) {};
+        \node[mynode, below=0.2cm of om4, fill=blue!30!black, minimum width=0.5cm] (om2) {};
+        \draw[myarrow] (mix.east |- om3.west) -- (om3.west);
+        \draw[myarrow] (mix.east |- om1.west) -- (om1.west);
+        \draw[myarrow] (mix.east |- om4.west) -- (om4.west);
+        \draw[myarrow] (mix.east |- om2.west) -- (om2.west);
+    \end{tikzpicture}
+    \caption{Funzionamento Semplificato di un MIX.}
+\end{figure}
+
+\subsection{Anonimizzazione: Routing a Cipolla (Onion Routing)}
+I dati sono incapsulati in strati multipli di crittografia.
+\textbf{Tor (The Onion Router)}: Software open source (2002) che implementa Onion Routing.
+
+\paragraph{Come funziona Tor (semplificato):}
+\begin{enumerate}
+    \item Client Tor ottiene lista nodi da directory server.
+    \item Client sceglie percorso casuale (circuito) attraverso 3 nodi Tor (entry, middle, exit).
+    \item Messaggio cifrato a strati: per exit, poi per middle, poi per entry.
+    \item Ogni nodo decifra solo il suo strato, rivelando il prossimo hop.
+        \begin{itemize}
+            \item Entry node: conosce Alice, non la destinazione finale.
+            \item Middle node: non conosce Alice né la destinazione finale.
+            \item Exit node: conosce destinazione finale, non Alice.
+        \end{itemize}
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[scale=0.8, transform shape]
+        \node (source) {Source (Alice)};
+        \node[neutralnode, label={[white]above:Relay A Key}, minimum width=3cm, minimum height=2.5cm, right=1cm of source, fill=blue!60!black, opacity=0.8] (layerA) {};
+        \node[neutralnode, label={[white]above:Relay B Key}, minimum width=2.2cm, minimum height=1.8cm, fill=green!60!black, opacity=0.8] (layerB) at (layerA.center) {};
+        \node[neutralnode, label={[white]above:Relay C Key}, minimum width=1.4cm, minimum height=1.1cm, fill=red!60!black, opacity=0.8] (layerC) at (layerB.center) {};
+        \node[font=\tiny, fill=white, text=black, inner sep=1pt] (msg) at (layerC.center) {Messaggio};
+
+        \node[below=0.8cm of layerA.south, xshift=-0.7cm] (RA) {Relay A};
+        \node[below=0.8cm of layerB.south, xshift=0cm] (RB) {Relay B};
+        \node[below=0.8cm of layerC.south, xshift=0.7cm] (RC) {Relay C};
+        \node[right=1cm of layerA] (dest) {Destinazione};
+
+        \draw[myarrow] (source.east) -- (layerA.west);
+        \draw[myarrow] ($(layerA.east)+(0,0.3cm)$) -- node[above,font=\tiny]{A decifra} ($(dest.west)+(0,0.3cm)$);
+        \draw[myarrow] ($(layerA.east)+(0,0cm)$) -- node[above,font=\tiny]{B decifra} ($(dest.west)+(0,0cm)$);
+        \draw[myarrow] ($(layerA.east)+(0,-0.3cm)$) -- node[above,font=\tiny]{C decifra} ($(dest.west)+(0,-0.3cm)$);
+
+        \node[text width=4cm, font=\tiny, anchor=west, below right=0.1cm and 0.1cm of source.south east]
+             {Il messaggio è incapsulato: \\ $E_A(E_B(E_C(M)))$. \\ Ogni relay rimuove uno strato.};
+    \end{tikzpicture}
+    \caption{Crittografia a Cipolla (Onion Encryption) concettuale.}
+    \label{fig:onion_encryption}
+\end{figure}
+La Figura \ref{fig:onion_encryption} mostra il concetto di stratificazione. La slide 44 usa una rappresentazione 3D più complessa, mentre la slide 45 "Tor Example" mostra un flusso con i relay che formano un circuito anonimo.
+
+\paragraph{Overlay Networks e Exit Node:}
+\begin{itemize}
+    \item Tor è una rete "overlay". Principio dei \textbf{servizi onion} (siti \texttt{.onion}).
+    \item \textbf{Exit Node}: Nodo Tor che permette al traffico di "uscire" su Internet normale.
+    \item \textbf{Attenzione 1}: Chi mantiene l'Exit Node vede traffico non HTTPS in chiaro.
+    \item \textbf{Attenzione 2}: Exit Node spesso bloccati da servizi (es. banche).
+\end{itemize}
+\paragraph{Mercati neri di Tor:} L'anonimato ha favorito servizi illegali.
+\paragraph{Servizi Onion (es. SecureDrop):} Permettono di ospitare servizi accessibili solo tramite Tor, con anonimato per host e visitatore. Il processo coinvolge "introduction points" e "rendezvous points" per stabilire la connessione.
+
+\section{Dataleak e Problemi di Anonimato}
+
+\subsection{Dataleak (Fuga di Dati)}
+Rilascio di informazioni private (aziende, persone).
+\begin{itemize}
+    \item \textbf{Fullz}: Collezione completa di info personali (Nome, Cognome, Data Nascita, CF, Indirizzo, Tel.) per furti d'identità.
+    \item \textbf{Password Leak}: Liste di account e password.
+\end{itemize}
+Esempio di password leak (redatto come nelle slide):
+\begin{minted}{text}
+NORD VPN Accounts:
+m********@gmail.com:c*******3
+s********02@gmail.com:1*******I
+j********@icloud.com:c*******1
+g********@gmail.com:D*******0
+p********@gmail.com:r*******0
+a********@yahoo.com:c*******3
+c********@gmail.com:1*******2
+d********@hotmail.com:f*******10
+\end{minted}
+\begin{itemize}
+    \item \textbf{HaveIBeenPwned.com}: Verifica se un account è compromesso.
+    \item \textbf{Piattaforma Ail (AIL Framework)}: Software per scandagliare la rete (crawler/spider) alla ricerca di leak. Le slide mostrano un'interfaccia con una lista di "paste" contenenti credenziali, mail, ecc.
+\end{itemize}
+
+\subsection{Leak di Anonimato (Anche usando Tor)}
+Tor non è perfetto.
+\begin{itemize}
+    \item \textbf{Geolocalizzazione}: Se il browser accede alla posizione, può bypassare l'anonimato IP di Tor.
+    \item \textbf{DNS Leaks}: Se richieste DNS non passano per Tor, rivelano siti visitati all'ISP. (Tor Browser è configurato per evitarlo).
+    \item \textbf{Side Channel}: Info "laterali" possono compromettere l'anonimato.
+        \begin{itemize}
+            \item \textit{Esempio}: Dimensione finestra browser precisa + altre info (font, plugin) $\rightarrow$ fingerprinting.
+        \end{itemize}
+\end{itemize}
+
+\section{Concetti di Sicurezza e Strumenti}
+
+\subsection{Concetto di Sicurezza: Privilegio Minimo ("Least Privilege")}
+Limitare capacità di software/utente al minimo indispensabile.
+\begin{itemize}
+    \item \textit{Esempio}: Proprietario hotel non usa sempre passe-partout se deve aprire una singola porta.
+\end{itemize}
+
+\subsection{Tor Browser}
+Versione Firefox modificata per non rilasciare info non necessarie e usare rete Tor. Le slide mostrano la schermata di benvenuto di Tor Browser 6.0.5.
+
+\subsection{Tails (The Amnesic Incognito Live System)}
+Distribuzione Linux "live" (da USB) che forza traffico via Tor e non lascia tracce ("amnesic"). Le slide mostrano il logo di Tails.
+
+\subsection{Distribuzioni Linux}
+Linux (Kernel) + software configurato per uno scopo.
+\begin{itemize}
+    \item \textit{Esempi}: Debian (server), Ubuntu (desktop), Tails (anonimato). Le slide mostrano una schermata di DistroWatch.com.
+\end{itemize}
+
+\end{document}

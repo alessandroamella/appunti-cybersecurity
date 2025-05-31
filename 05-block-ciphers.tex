@@ -1,70 +1,7 @@
-\documentclass{article}
+\input{preambolo_comune}
 
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{amsfonts} % Per \mathbb
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini ---
-\usepackage{float}
-\usepackage{tikz}
-\usepackage{graphicx}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, decorations.pathreplacing}
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti sui Cifrari a Blocchi: DES e AES},
-    pdfauthor={Basato sulle slide del Prof. Luciano Bononi},
-    colorlinks=true,
-    linkcolor=cyan,
-    urlcolor=magenta,
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\pagecolor{black}
-\color{white}
-
-% Stili TikZ per dark theme
-\tikzstyle{block} = [rectangle, draw=cyan, fill=blue!20!black, text width=8em, text centered, rounded corners, minimum height=3em]
-\tikzstyle{ioblock} = [rectangle, draw=green, fill=green!20!black, text width=6em, text centered, minimum height=3em]
-\tikzstyle{keyblock} = [rectangle, draw=orange, fill=orange!20!black, text width=5em, text centered, minimum height=2em]
-\tikzstyle{sum} = [circle, draw=yellow, fill=yellow!30!black, minimum size=1.5em, inner sep=0pt]
-\tikzstyle{line} = [draw=white, -{Stealth}]
-\tikzstyle{dataline} = [draw=cyan, thick, -{Stealth}]
-\tikzstyle{keyline} = [draw=orange, thick, dashed, -{Stealth}]
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-% Compilare con: pdflatex -shell-escape nomefile.tex
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai
-}
-
-% --- Titolo ---
-\title{Appunti sui Cifrari a Blocchi: DES e AES}
-\author{Basato sulle slide del Prof. Luciano Bononi}
+\title{Cifrari a Blocchi}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
 \begin{document}
@@ -136,7 +73,7 @@ I cifrari a blocchi sono algoritmi crittografici che operano su blocchi di dati 
     \node (ri) [block, text width=2cm, below=0.5cm of ki] {$R(k_I,m_{I-1})$};
     \node [text=white, right=0.3cm of r3] (dots_block) {\dots \dots};
     \node (c_out) [right=3cm of r2, yshift=1.5cm, below=1cm of ri] {ciphertext $c$};
-    \node [text=white, right=0.5cm of ki, yshift=1cm] {nbr. of \\ iterations = $I$};
+    \node [text=white, right=0.5cm of ki, yshift=1cm, align=left] {nbr. of \\ iterations = $I$};
 
 
     \draw [keyline] (key_exp.south) |- (k1.north);
@@ -617,45 +554,53 @@ Input: blocco 128 bit (16 byte) = matrice 4x4 \textbf{State}.
 Output: ciphertext.
 
 \begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=1cm and 0.5cm, scale=0.9, transform shape, every node/.style={text=white}]
-    \node (plaintext) [ioblock, text width=5cm] {Plaintext (16 bytes)};
-    \node (add_key0) [block, text width=5cm, below=0.5cm of plaintext] {AddRoundKey (w[0-3])};
-    \node (key_expand) [keyblock, text width=3cm, right=1cm of plaintext, yshift=-0.75cm] {Key (16 bytes) $\rightarrow$ Expand Key};
-    \draw[keyline] (key_expand.south) -| (add_key0.east);
-
-    \node (round1_box) [rectangle, draw=yellow, rounded corners, fit=(sub_bytes1)(shift_rows1)(mix_cols1)(add_key1), inner sep=0.3cm, label={[xshift=0.4cm, yshift=-0.2cm, color=yellow, font=\small]Round 1..$N_r-1$}] {};
-    \node (sub_bytes1) [block, text width=5cm, below=0.8cm of add_key0] {SubBytes};
-    \node (shift_rows1) [block, text width=5cm, below=0.5cm of sub_bytes1] {ShiftRows};
-    \node (mix_cols1) [block, text width=5cm, below=0.5cm of shift_rows1] {MixColumns};
-    \node (add_key1) [block, text width=5cm, below=0.5cm of mix_cols1] {AddRoundKey (w[4-7], etc.)};
-    \draw[keyline] ($(key_expand.south) + (0,-1.5cm)$) -| (add_key1.east);
-
-    \draw[dataline, very thick] (plaintext) -- (add_key0);
-    \draw[dataline, very thick] (add_key0) -- (sub_bytes1);
-    \draw[dataline, very thick] (sub_bytes1) -- (shift_rows1);
-    \draw[dataline, very thick] (shift_rows1) -- (mix_cols1);
-    \draw[dataline, very thick] (mix_cols1) -- (add_key1);
+    \centering
+    \begin{tikzpicture}[node distance=1cm and 0.5cm, scale=0.9, transform shape, every node/.style={text=white}]
+        \node (plaintext) [ioblock, text width=5cm] {Plaintext (16 bytes)};
+        \node (add_key0) [block, text width=5cm, below=0.5cm of plaintext] {AddRoundKey (w[0-3])};
+        \node (key_expand) [keyblock, text width=3cm, right=1cm of plaintext, yshift=-0.75cm] {Key (16 bytes) $\rightarrow$ Expand Key};
+        \draw[keyline] (key_expand.south) -| (add_key0.east);
     
-    \node (dots_rounds) [below=0.3cm of add_key1, yshift=-0.2cm, font=\Large] {$\vdots$};
-
-    \node (final_round_box) [rectangle, draw=orange, rounded corners, fit=(sub_bytes_f)(shift_rows_f)(add_key_f), inner sep=0.3cm, label={[xshift=0.4cm, yshift=-0.2cm, color=orange, font=\small]Final Round ($N_r$)}] {};
-    \node (sub_bytes_f) [block, text width=5cm, below=0.3cm of dots_rounds, yshift=-0.2cm] {SubBytes};
-    \node (shift_rows_f) [block, text width=5cm, below=0.5cm of sub_bytes_f] {ShiftRows};
-    % NO MixColumns in final round
-    \node (add_key_f) [block, text width=5cm, below=0.5cm of shift_rows_f] {AddRoundKey (last w)};
-    \draw[keyline] ($(key_expand.south) + (0,-4cm)$) -| (add_key_f.east);
-
-    \draw[dataline, very thick] (add_key1) -- (dots_rounds);
-    \draw[dataline, very thick] (dots_rounds) -- (sub_bytes_f);
-    \draw[dataline, very thick] (sub_bytes_f) -- (shift_rows_f);
-    \draw[dataline, very thick] (shift_rows_f) -- (add_key_f);
-
-    \node (ciphertext) [ioblock, text width=5cm, below=0.5cm of add_key_f] {Ciphertext (16 bytes)};
-    \draw[dataline, very thick] (add_key_f) -- (ciphertext);
-\end{tikzpicture}
-\caption{Schema della cifratura AES.}
-\end{figure}
+        % Define the round nodes first
+        \node (sub_bytes1) [block, text width=5cm, below=0.8cm of add_key0] {SubBytes};
+        \node (shift_rows1) [block, text width=5cm, below=0.5cm of sub_bytes1] {ShiftRows};
+        \node (mix_cols1) [block, text width=5cm, below=0.5cm of shift_rows1] {MixColumns};
+        \node (add_key1) [block, text width=5cm, below=0.5cm of mix_cols1] {AddRoundKey (w[4-7], etc.)};
+        
+        % Now define the box that fits around them
+        \node (round1_box) [rectangle, draw=yellow, rounded corners, fit=(sub_bytes1)(shift_rows1)(mix_cols1)(add_key1), inner sep=0.3cm, label={[xshift=0.4cm, yshift=-0.2cm, color=yellow, font=\small]Round 1..$N_r-1$}] {};
+        
+        \draw[keyline] ($(key_expand.south) + (0,-1.5cm)$) -| (add_key1.east);
+    
+        \draw[dataline, very thick] (plaintext) -- (add_key0);
+        \draw[dataline, very thick] (add_key0) -- (sub_bytes1);
+        \draw[dataline, very thick] (sub_bytes1) -- (shift_rows1);
+        \draw[dataline, very thick] (shift_rows1) -- (mix_cols1);
+        \draw[dataline, very thick] (mix_cols1) -- (add_key1);
+        
+        \node (dots_rounds) [below=0.3cm of add_key1, yshift=-0.2cm, font=\Large] {$\vdots$};
+    
+        % Define the final round nodes first
+        \node (sub_bytes_f) [block, text width=5cm, below=0.3cm of dots_rounds, yshift=-0.2cm] {SubBytes};
+        \node (shift_rows_f) [block, text width=5cm, below=0.5cm of sub_bytes_f] {ShiftRows};
+        % NO MixColumns in final round
+        \node (add_key_f) [block, text width=5cm, below=0.5cm of shift_rows_f] {AddRoundKey (last w)};
+        
+        % Now define the final round box
+        \node (final_round_box) [rectangle, draw=orange, rounded corners, fit=(sub_bytes_f)(shift_rows_f)(add_key_f), inner sep=0.3cm, label={[xshift=0.4cm, yshift=-0.2cm, color=orange, font=\small]Final Round ($N_r$)}] {};
+        
+        \draw[keyline] ($(key_expand.south) + (0,-4cm)$) -| (add_key_f.east);
+    
+        \draw[dataline, very thick] (add_key1) -- (dots_rounds);
+        \draw[dataline, very thick] (dots_rounds) -- (sub_bytes_f);
+        \draw[dataline, very thick] (sub_bytes_f) -- (shift_rows_f);
+        \draw[dataline, very thick] (shift_rows_f) -- (add_key_f);
+    
+        \node (ciphertext) [ioblock, text width=5cm, below=0.5cm of add_key_f] {Ciphertext (16 bytes)};
+        \draw[dataline, very thick] (add_key_f) -- (ciphertext);
+    \end{tikzpicture}
+    \caption{Schema della cifratura AES.}
+    \end{figure}
 
 \subsection{Trasformazioni di Round AES}
 \begin{itemize}

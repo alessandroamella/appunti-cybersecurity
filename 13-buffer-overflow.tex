@@ -1,74 +1,7 @@
-\documentclass{article}
+\input{preambolo_comune}
 
-% --- Encoding e lingua ---
-\usepackage[utf8]{inputenc}
-\usepackage[italian]{babel}
-
-% --- Margini e layout ---
-\usepackage{geometry}
-\geometry{a4paper, margin=1in}
-
-% --- Font sans-serif ---
-\usepackage[scaled]{helvet}
-\renewcommand{\familydefault}{\sfdefault}
-\usepackage[T1]{fontenc}
-
-% --- Matematica ---
-\usepackage{amsmath}
-\usepackage{amssymb}
-
-% --- Liste personalizzate ---
-\usepackage{enumitem}
-
-% --- Immagini e Disegni ---
-\usepackage{float}
-\usepackage{graphicx} % per immagini
-\usepackage{tikz} % per disegni
-\usetikzlibrary{shapes.geometric, positioning, calc, arrows.meta, shapes.multipart}
-% Stile per i nodi TikZ su sfondo nero
-\tikzstyle{memblock} = [rectangle, draw=white, fill=blue!20!white, text=black, minimum height=2em, minimum width=6em, text centered]
-\tikzstyle{memblock_red} = [memblock, fill=red!40!white]
-\tikzstyle{memblock_orange} = [memblock, fill=orange!60!white]
-\tikzstyle{memblock_green} = [memblock, fill=green!40!black, text=white]
-\tikzstyle{mem_label} = [text=white, font=\footnotesize]
-\tikzstyle{stack_arrow} = [-{Stealth[length=3mm, width=2mm]}, white, thick]
-
-
-% --- Hyperlink ---
-\usepackage{hyperref}
-\hypersetup{
-    pdftitle={Appunti su Attacchi di Buffer Overflow},
-    pdfauthor={Basato sulle slide del Prof.},
-    colorlinks=true,
-    linkcolor=cyan,
-    urlcolor=magenta,
-    citecolor=green
-}
-
-% --- Colori e sfondo nero ---
-\usepackage{xcolor}
-\definecolor{darkbackground}{RGB}{30,30,30} % Un nero non assoluto, più riposante
-\definecolor{lighttext}{RGB}{240,240,240}
-\pagecolor{darkbackground}
-\color{lighttext}
-
-% --- Evidenziazione del codice (richiede -shell-escape) ---
-% Compilare con: pdflatex -shell-escape nomefile.tex
-\usepackage{minted}
-\setminted{
-    frame=lines,
-    framesep=2mm,
-    fontsize=\small,
-    breaklines=true,
-    style=monokai, % Stile adatto a sfondo scuro
-    bgcolor=darkbackground!80!black % Sfondo del blocco minted leggermente diverso
-}
-\newminted{c}{bgcolor=black!80, textcolor=white}
-\newminted{asm}{bgcolor=black!80, textcolor=white}
-
-% --- Titolo ---
-\title{\textbf{Appunti su Attacchi di Buffer Overflow}}
-\author{Basato sulle slide del Professore}
+\title{Attacchi di Buffer Overflow}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
 \date{\today}
 
 \begin{document}

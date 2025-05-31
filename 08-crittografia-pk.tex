@@ -1,0 +1,614 @@
+\input{preambolo_comune}
+
+\title{Crittografia a Chiave Pubblica/Asimmetrica}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Principi Generali dei Crittosistemi a Chiave Pubblica}
+
+\subsection{Problemi con la Crittografia Simmetrica}
+La crittografia simmetrica (es. 3DES, AES) utilizza la \textbf{stessa chiave segreta} sia per cifrare che per decifrare.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=2.5cm and 1.5cm, auto, every node/.style={text=lighttext}]
+        % Alice
+        \node[document, label=above:Alice] (alice_pt) {Testo Chiaro};
+        \node[process, right=of alice_pt] (encrypt) {E};
+        \node[key_shape, below=0.5cm of encrypt, label=left:\scriptsize Chiave Segreta] (key_a) {Key};
+        \node[data, right=of encrypt] (alice_ct) {Testo Cifrato};
+        
+        % Network
+        \node[cloud, right=1cm of alice_ct, text width=5em] (network) {Rete o Storage};
+        
+        % Bob
+        \node[data, right=1cm of network] (bob_ct) {Testo Cifrato};
+        \node[process, right=of bob_ct] (decrypt) {D};
+        \node[key_shape, below=0.5cm of decrypt, label=right:\scriptsize Chiave Segreta] (key_b) {Key};
+        \node[document, right=of decrypt, label=above:Bob] (bob_pt) {Testo Chiaro};
+        
+        % Frecce
+        \draw[arrow] (alice_pt) -- (encrypt);
+        \draw[arrow] (encrypt) -- (alice_ct);
+        \draw[arrow] (alice_ct) -- (network);
+        \draw[arrow] (network) -- (bob_ct);
+        \draw[arrow] (bob_ct) -- (decrypt);
+        \draw[arrow] (decrypt) -- (bob_pt);
+        
+        % Key sharing path
+        \draw[dashed_arrow, red!70!white, thick, bend right=45] (key_a.south) to node[midway, below, font=\tiny\sffamily, text=red!70!white] {Scambio sicuro necessario} (key_b.south);
+    \end{tikzpicture}
+    \caption{Flusso della Crittografia Simmetrica.}
+    \label{fig:simmetrica}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Scambio della Chiave:} Come fanno Alice e Bob a scambiarsi la chiave segreta in modo sicuro la prima volta, specialmente se non si sono mai incontrati? Questo è il problema della \textit{distribuzione della chiave}.
+    \item \textbf{Gestione delle Chiavi:} Se Alice volesse comunicare con 100 persone diverse in modo sicuro, dovrebbe gestire 100 chiavi segrete diverse. In un sistema con $n$ utenti che vogliono comunicare tutti con tutti, servono $n(n-1)/2$ chiavi.
+\end{itemize}
+
+\subsection{Motivazione della Crittografia Asimmetrica}
+\begin{itemize}
+    \item \textbf{Domanda Fondamentale:} È possibile per Alice e Bob, che non hanno mai condiviso una chiave segreta, comunicare in modo sicuro?
+    \item \textbf{Soluzione:} La crittografia asimmetrica.
+\end{itemize}
+
+\subsection{Funzionamento della Crittografia Asimmetrica}
+Ogni utente genera una \textbf{coppia di chiavi} matematicamente correlate:
+\begin{itemize}
+    \item Una \textbf{Chiave Pubblica (\texttt{pk})}: Può essere distribuita liberamente.
+    \item Una \textbf{Chiave Privata (\texttt{sk})}: Deve essere mantenuta \textbf{segreta}. È computazionalmente infattibile derivare \texttt{sk} da \texttt{pk}.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm and 2.5cm, auto, every node/.style={text=lighttext, font=\sffamily\small}]
+        % Alice
+        \node[person] (alice) {Alice};
+        \node[key_shape, fill=red!60!darkbg, text=white, below left=0.5cm and 0.2cm of alice, label={[xshift=-0.5cm, yshift=-0.1cm]\scriptsize Alice Privata}] (alice_priv) {Priv K};
+        \node[key_shape, fill=green!60!darkbg, text=white, below right=0.5cm and 0.2cm of alice, label={[xshift=0.5cm, yshift=-0.1cm]\scriptsize Alice Pubblica}] (alice_pub) {Pub K};
+        
+        % Public Repository
+        \node[repo, right=2cm of alice, label=above:Public Repository] (repo) {};
+        \node[font=\tiny\sffamily, text=lighttext, text width=2cm, align=center, yshift=0.5cm] at (repo.center) {Bob's PUBLIC KEY\\Alice's PUBLIC KEY\\Jocelyne's PUBLIC KEY\\...};
+        \node[key_shape, fill=green!60!darkbg, text=white, yshift=-0.8cm, xshift=-0.2cm, scale=0.7] at (repo.center) {Pub K}; % Simbolo chiave nel repo
+
+        % Bob
+        \node[person, right=2cm of repo] (bob) {Bob};
+        \node[key_shape, fill=red!60!darkbg, text=white, below left=0.5cm and 0.2cm of bob, label={[xshift=-0.5cm, yshift=-0.1cm]\scriptsize Bob Privata}] (bob_priv) {Priv K};
+        \node[key_shape, fill=green!60!darkbg, text=white, below right=0.5cm and 0.2cm of bob, label={[xshift=0.5cm, yshift=-0.1cm]\scriptsize Bob Pubblica}] (bob_pub) {Pub K};
+        
+        % Frecce
+        \draw[dashed_arrow] (alice_pub.east) .. controls +(east:1cm) and +(west:1cm) .. (repo.west);
+        \draw[dashed_arrow] (repo.east) .. controls +(east:1cm) and +(west:1cm) .. (bob_pub.west); % Bob ottiene chiave pubblica di Alice
+        % Simmetricamente per Bob
+        \draw[dashed_arrow, bend right=20] (bob_pub.west) to (repo.east);
+    \end{tikzpicture}
+    \caption{Generazione e distribuzione delle chiavi asimmetriche.}
+    \label{fig:asimmetrica_keys}
+\end{figure}
+
+\subsection{Utilizzi Principali delle Chiavi Pubbliche/Private}
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Confidenzialità (Cifratura):}
+    \begin{itemize}
+        \item Bob vuole inviare un messaggio segreto ad Alice.
+        \item Bob cifra il messaggio usando la \textbf{chiave pubblica di Alice}.
+        \item Alice usa la sua \textbf{chiave privata} per decifrare.
+    \end{itemize}
+    \textit{Esempio:} La chiave pubblica è un lucchetto aperto. Chiunque può usarlo per chiudere una scatola, ma solo chi ha la chiave (privata) può aprirla.
+
+    \item \textbf{Autenticazione (e Firma Digitale):}
+    \begin{itemize}
+        \item Alice vuole inviare un messaggio a Bob, e Bob vuole essere sicuro che provenga da Alice.
+        \item Alice cifra (o "firma") un messaggio (o il suo hash) usando la sua \textbf{chiave privata}.
+        \item Bob usa la \textbf{chiave pubblica di Alice} per decifrare (o "verificare") la firma.
+    \end{itemize}
+    \textit{Esempio:} Alice "sigilla" un documento con un timbro (chiave privata) unico. Chiunque con la lente (chiave pubblica) può verificare l'autenticità del timbro.
+\end{enumerate}
+
+Relazioni tra le chiavi:
+\begin{itemize}
+    \item Firma: $D(\texttt{pk}_{\text{Alice}}, E(\texttt{sk}_{\text{Alice}}, \text{messaggio})) = \text{messaggio}$
+    \item Confidenzialità: $D(\texttt{sk}_{\text{Alice}}, E(\texttt{pk}_{\text{Alice}}, \text{messaggio})) = \text{messaggio}$
+\end{itemize}
+
+\subsection{Differenze Chiave con la Crittografia Simmetrica}
+\begin{itemize}
+    \item La chiave pubblica è diversa (ma correlata) dalla chiave privata.
+    \item Infattibile trovare la chiave privata dalla pubblica.
+    \item Non serve distribuire una chiave segreta condivisa in anticipo.
+    \item Una sola coppia di chiavi (pubblica/privata) per utente.
+\end{itemize}
+
+\subsection{Applicazioni dei Crittosistemi a Chiave Pubblica}
+\begin{enumerate}
+    \item \textbf{Cifratura/Decifratura:} Per confidenzialità.
+    \item \textbf{Scambio di Chiavi (Key Exchange):} Per scambiare in modo sicuro una chiave di sessione simmetrica.
+    \item \textbf{Firma Digitale:} Garantisce autenticazione, integrità e non ripudio.
+\end{enumerate}
+
+\subsection{Definizioni Formali}
+Un sistema di crittografia a chiave pubblica è una tripla di algoritmi: $(G, E, D)$
+\begin{itemize}
+    \item $G()$: Algoritmo \textbf{randomizzato} che genera $(\texttt{pk}, \texttt{sk})$.
+    \item $E(\texttt{pk}, m)$: Algoritmo (spesso \textbf{randomizzato}) che produce un testo cifrato $c$.
+    \item $D(\texttt{sk}, c)$: Algoritmo \textbf{deterministico} che produce il messaggio $m$.
+    \item \textbf{Consistenza:} $\forall (\texttt{pk}, \texttt{sk}) \leftarrow G(), \forall m \in M: D(\texttt{sk}, E(\texttt{pk}, m)) = m$.
+\end{itemize}
+
+\subsection{Funzioni One-Way a Trapdoor (TDF)}
+\begin{itemize}
+    \item \textbf{Definizione:} Una funzione facile da calcolare in una direzione, ma infattibile da invertire senza una "trapdoor" (chiave segreta).
+    \begin{itemize}
+        \item $Y = f_k(X)$: facile se $k$ (pubblico) e $X$ sono noti.
+        \item $X = f_k^{-1}(Y)$: infattibile con solo $Y$ (e $k$ pubblico), facile con la trapdoor.
+    \end{itemize}
+    \item \textbf{Sicurezza di una TDF $(G, F, F^{-1})$:} $F(\texttt{pk}, x)$ è "one-way" senza $\texttt{sk}$.
+    $\text{Pr}[\mathcal{A}(\texttt{pk}, F(\texttt{pk},x)) = x ] < \text{trascurabile}$ per un avversario $\mathcal{A}$.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=3cm and 1cm, auto]
+        \node[block, text width=7em, fill=blue!50!darkbg] (chal) {Challenger (Chal)\\ $(\texttt{pk},\texttt{sk}) \leftarrow G()$\\ $x \xleftarrow{R} X$};
+        \node[block, text width=7em, right=4cm of chal, fill=red!50!darkbg] (adv) {Adversary (Adv A)};
+        \node[right=1cm of adv] (x_prime) {$x'$};
+        
+        \draw[arrow] (chal.east) -- node[midway, above, font=\scriptsize] {$\texttt{pk}, y \leftarrow F(\texttt{pk}, x)$} (adv.west);
+        \draw[arrow] (adv.east) -- (x_prime);
+    \end{tikzpicture}
+    \caption{Modello di sicurezza per una funzione one-way (inversione).}
+    \label{fig:tdf_security}
+\end{figure}
+\textbf{Importante:} Non si deve \textbf{mai} cifrare applicando direttamente la funzione $F$ al testo in chiaro ($c \leftarrow F(\texttt{pk}, m)$), poiché sarebbe deterministico e non semanticamente sicuro.
+
+\section{Funzioni Hash}
+\begin{itemize}
+    \item \textbf{Definizione:} Prende un input di lunghezza arbitraria e produce un output di lunghezza fissa (valore hash o digest).
+    \item \textbf{Algoritmo Hash One-Way:}
+    \begin{itemize}
+        \item Input: $m$ (stringa binaria di qualsiasi lunghezza).
+        \item Output: $H(m)$ (stringa binaria di $L$ bit, es. 256 bit).
+        \item Esempi: MD5 (insicuro), SHA-1 (deprecato), SHA-256, SHA-512.
+    \end{itemize}
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm, auto]
+        \node[document, label=above:Input] (doc_in) {Documento (lunghezza arbitraria)};
+        \node[process, below=of doc_in, fill=orange!50!darkbg, text width=7em] (hash_func) {Funzione Hash};
+        \node[data, below=of hash_func, label=below:Output, text width=7em, fill=green!50!darkbg] (hash_out) {Valore Hash (lunghezza fissa, es. 256 bit)};
+        
+        \draw[arrow] (doc_in) -- (hash_func);
+        \draw[arrow] (hash_func) -- (hash_out);
+    \end{tikzpicture}
+    \caption{Funzionamento di una Funzione Hash.}
+    \label{fig:hash_function}
+\end{figure}
+\textbf{Proprietà di una Buona Funzione Hash One-Way:}
+\begin{enumerate}
+    \item \textbf{Facile da Calcolare:} Algoritmo veloce.
+    \item \textbf{Resistenza alla Preimmagine (Preimage Resistance):} Dato $h$, infattibile trovare $m$ t.c. $H(m)=h$.
+    \item \textbf{Resistenza alla Seconda Preimmagine (Second Preimage Resistance):} Dato $m_1$, infattibile trovare $m_2 \neq m_1$ t.c. $H(m_1)=H(m_2)$.
+    \item \textbf{Resistenza alle Collisioni (Collision Resistance):} Infattibile trovare $m_1 \neq m_2$ t.c. $H(m_1)=H(m_2)$.
+    \item \textbf{Effetto Valanga (Avalanche Effect):} Piccola modifica in input $\Rightarrow$ drastico cambiamento in output.
+\end{enumerate}
+
+\section{Algoritmo RSA}
+Sviluppato da \textbf{R}ivest, \textbf{S}hamir e \textbf{A}dleman (1977). Basato sulla difficoltà di fattorizzare grandi numeri.
+
+\subsection{Permutazioni a Trapdoor}
+RSA è un esempio. Tre algoritmi: $(G, F, F^{-1})$.
+\begin{itemize}
+    \item $G$: genera $(\texttt{pk}, \texttt{sk})$.
+    \item $\texttt{pk}$ definisce $F(\texttt{pk}, \cdot): X \to X$.
+    \item $F(\texttt{pk}, x)$: valuta la funzione.
+    \item $F^{-1}(\texttt{sk}, y)$: inverte la funzione usando $\texttt{sk}$.
+\end{itemize}
+\textbf{Permutazione a Trapdoor Sicura:} $F(\texttt{pk}, \cdot)$ è one-way senza la trapdoor $\texttt{sk}$.
+
+\subsection{Basi Matematiche di RSA}
+\begin{itemize}
+    \item $N = p \cdot q$, con $p, q$ primi grandi.
+    \item $Z_N = \{0, 1, \dots, N-1\}$.
+    \item $(Z_N)^* = \{x \in Z_N \mid \text{mcd}(x, N) = 1\}$.
+    \item Funzione Totiente di Eulero: $\phi(N) = (p-1)(q-1) = N - p - q + 1$.
+    \item Teorema di Eulero: $\forall x \in (Z_N)^*, x^{\phi(N)} \equiv 1 \pmod N$.
+\end{itemize}
+
+\subsection{Generazione delle Chiavi RSA (Algoritmo $G$)}
+\begin{enumerate}
+    \item Scegliere $p, q$ primi grandi e distinti.
+    \item Calcolare $N = p \cdot q$.
+    \item Calcolare $\phi(N) = (p-1)(q-1)$.
+    \item Scegliere $e$ (esponente pubblico) t.c. $1 < e < \phi(N)$ e $\text{mcd}(e, \phi(N)) = 1$. (Es. $e=65537$).
+    \item Calcolare $d$ (esponente privato) t.c. $e \cdot d \equiv 1 \pmod{\phi(N)}$. ($d$ è l'inverso moltiplicativo di $e \pmod{\phi(N)}$).
+\end{enumerate}
+\begin{itemize}
+    \item \textbf{Chiave Pubblica:} $\texttt{pk} = (N, e)$.
+    \item \textbf{Chiave Privata:} $\texttt{sk} = (N, d)$ (o $(p, q, d)$). $p, q, \phi(N)$ segreti.
+\end{itemize}
+
+\subsection{Cifratura e Decifratura RSA ("Textbook RSA")}
+Sia $m$ il messaggio ($0 \le m < N$).
+\begin{itemize}
+    \item \textbf{Cifratura:} $c = m^e \pmod N$.
+    \item \textbf{Decifratura:} $m = c^d \pmod N$.
+\end{itemize}
+\textit{Perché funziona:} $c^d \equiv (m^e)^d \equiv m^{ed} \pmod N$. Poiché $ed \equiv 1 \pmod{\phi(N)}$, $ed = k \cdot \phi(N) + 1$.
+Quindi $m^{ed} \equiv m^{k\phi(N)+1} \equiv (m^{\phi(N)})^k \cdot m^1 \equiv 1^k \cdot m \equiv m \pmod N$ (per il Teorema di Eulero).
+
+\subsection{Esempio RSA (Piccolo)}
+\begin{enumerate}
+    \item \textbf{Generazione Chiavi (Bob):}
+    \begin{itemize}
+        \item $p=5, q=11 \Rightarrow N = 55, \phi(N) = (5-1)(11-1) = 40$.
+        \item Sceglie $e=3$ (mcd(3, 40)=1).
+        \item Calcola $d$ t.c. $3d \equiv 1 \pmod{40} \Rightarrow d=27$ (poiché $3 \cdot 27 = 81 \equiv 1 \pmod{40}$).
+        \item $\texttt{pk}_{\text{Bob}} = (55, 3)$, $\texttt{sk}_{\text{Bob}} = (55, 27)$.
+    \end{itemize}
+    \item \textbf{Cifratura (Alice invia $m=13$ a Bob):}
+    \begin{itemize}
+        \item $c = 13^3 \pmod{55} = 2197 \pmod{55}$.
+        \item $2197 = 39 \cdot 55 + 52 \Rightarrow c=52$. Alice invia $c=52$.
+    \end{itemize}
+    \item \textbf{Decifratura (Bob riceve $c=52$):}
+    \begin{itemize}
+        \item $m = 52^{27} \pmod{55}$.
+        \item $52 \equiv -3 \pmod{55}$.
+        \item $m \equiv (-3)^{27} \pmod{55}$.
+        \item $m \equiv (-3^{3})^9 \equiv (-27)^9 \equiv (28)^9 \pmod{55}$.
+        \item $28^2 = 784 \equiv 14 \pmod{55}$.
+        \item $28^3 \equiv 14 \cdot 28 = 392 \equiv 7 \pmod{55}$.
+        \item $28^9 = (28^3)^3 \equiv 7^3 = 343 \equiv 13 \pmod{55}$.
+        \item Bob ottiene $m=13$.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Sicurezza di RSA}
+\begin{itemize}
+    \item \textbf{Assunzione RSA:} Difficile calcolare $m$ da $c=m^e \pmod N$ senza conoscere $d$ o la fattorizzazione di $N$.
+    \item Rompere RSA è comunemente legato alla \textbf{fattorizzazione di $N$}.
+    \item \textbf{"Textbook RSA" è insicuro per la cifratura diretta:}
+    \begin{itemize}
+        \item \textbf{Deterministico:} Non semanticamente sicuro.
+        \item Vulnerabile a vari attacchi (es. se $m$ è piccolo).
+        \item \textbf{Soluzione:} Usare schemi di padding (es. OAEP) o schemi ibridi.
+        La permutazione a trapdoor RSA \textbf{non è} uno schema di cifratura di per sé.
+    \end{itemize}
+\end{itemize}
+Schema di cifratura RSA (ISO standard) usando una funzione hash $H$ e uno schema di cifratura simmetrica $(E_s, D_s)$:
+\begin{itemize}
+    \item $G()$: genera parametri RSA $\texttt{pk}=(N,e), \texttt{sk}=(N,d)$.
+    \item $E(\texttt{pk}, m)$:
+        \begin{enumerate}
+            \item Scegli $x \in Z_N$ casuale.
+            \item $y \leftarrow \text{RSA}(x) = x^e \pmod N$.
+            \item $k \leftarrow H(x)$.
+            \item Output $(y, E_s(k,m))$.
+        \end{enumerate}
+    \item $D(\texttt{sk}, (y,c))$:
+        \begin{enumerate}
+            \item $x \leftarrow \text{RSA}^{-1}(y) = y^d \pmod N$.
+            \item $k \leftarrow H(x)$.
+            \item Output $D_s(k,c)$.
+        \end{enumerate}
+\end{itemize}
+
+
+\subsection{Prestazioni e Pratica di RSA}
+\begin{itemize}
+    \item \textbf{Scelta di $e$ piccolo} (es. $e=65537 = 2^{16}+1$) per cifratura veloce.
+    \item \textbf{Non scegliere $d$ troppo piccolo:}
+    \begin{itemize}
+        \item Wiener'87: Se $d < N^{0.25}$, RSA insicuro.
+        \item BD'98: Se $d < N^{0.292}$, RSA insicuro.
+    \end{itemize}
+    \item \textbf{Lunghezze delle Chiavi RSA vs. Simmetriche (Sicurezza Equivalente):}
+    \begin{table}[H]
+        \centering
+        \begin{tabular}{|l|l|}
+            \hline
+            \textbf{\sffamily Forza Simmetrica (bit)} & \textbf{\sffamily Dimensione Modulo RSA (bit)} \\ \hline \hline
+            80                               & 1024                              \\ \hline
+            128                              & 3072                              \\ \hline
+            256 (AES)                        & 15360                             \\ \hline
+        \end{tabular}
+        \caption{Lunghezze di chiave RSA raccomandate.}
+        \label{tab:rsa_keys}
+    \end{table}
+    \item \textbf{Attacchi di Implementazione (Side-channel):}
+    \begin{itemize}
+        \item \textit{Timing attack}: Il tempo di decifratura può rivelare $d$.
+        \item \textit{Power attack}: Il consumo energetico può rivelare $d$.
+        \item \textit{Fault attack}: Errori indotti nel calcolo possono rivelare $d$.
+        \item \textit{Difese:} Blinding, verifica output.
+    \end{itemize}
+    \item \textbf{Problemi nella Generazione delle Chiavi (es. OpenSSL):}
+    Se il PRNG ha poca entropia, diversi dispositivi possono generare lo stesso primo $p$.
+    Se $N_1 = p \cdot q_1$ e $N_2 = p \cdot q_2$, allora $\text{mcd}(N_1, N_2) = p$, rompendo entrambe le chiavi.
+    \textbf{Lezione:} Assicurare buona entropia per il PRNG.
+\end{itemize}
+
+\section{Firma Digitale}
+Fornisce autenticazione, integrità e non ripudio.
+
+\subsection{Processo Generale di Firma Digitale}
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[node distance=2cm and 1.5cm, auto, >=Stealth, every node/.style={font=\sffamily\scriptsize}]
+        % Bob (Signer)
+        \node[person, label=above:Bob (Firmatario)] (bob) {Bob};
+        \node[document, below left=0.8cm and 0.2cm of bob] (msg_m) {Messaggio M};
+        \node[process, fill=orange!50!darkbg, right=of msg_m] (hash1) {$H(\cdot)$};
+        \node[data, text width=3em, right=of hash1] (h_val) {$h$};
+        \node[key_shape, fill=red!60!darkbg, text=white, below=0.3cm of h_val, label=left:$\texttt{sk}_{\text{Bob}}$] (bob_sk) {Priv K};
+        \node[process, fill=purple!50!darkbg, text width=4em, right=of h_val] (sign_algo) {Sign};
+        \node[data, text width=3em, fill=purple!20!darkbg, right=of sign_algo] (signature_s) {$S$};
+        
+        \draw[arrow] (msg_m) -- (hash1);
+        \draw[arrow] (hash1) -- (h_val);
+        \draw[arrow] (h_val) -- (sign_algo);
+        \draw[arrow] (bob_sk) -| (sign_algo.south);
+        \draw[arrow] (sign_algo) -- (signature_s);
+        
+        \node[cloud, right=2cm of signature_s, label=above:Rete] (network) {$(M, S)$};
+        \draw[arrow] (msg_m.east) -| ($(network.west)+(-0.5,0.3)$);
+        \draw[arrow] (signature_s.east) -| ($(network.west)+(-0.5,-0.3)$);
+
+        % Alice (Verifier)
+        \node[person, label=above:Alice (Verificatore), right=2cm of network] (alice) {Alice};
+        \node[document, below left=0.8cm and -0.5cm of alice] (msg_m_recv) {Messaggio M};
+        \node[data, text width=3em, fill=purple!20!darkbg, below right=0.8cm and -0.5cm of alice] (signature_s_recv) {$S$};
+        
+        \node[process, fill=orange!50!darkbg, right=of msg_m_recv] (hash2) {$H(\cdot)$};
+        \node[data, text width=3em, right=of hash2] (h_prime_val) {$h'$};
+        
+        \node[process, fill=green!50!darkbg, text width=4em, right=of signature_s_recv] (verify_algo) {Verify};
+        \node[key_shape, fill=green!60!darkbg, text=white, below=0.3cm of signature_s_recv, label=left:$\texttt{pk}_{\text{Bob}}$] (bob_pk) {Pub K};
+        \node[data, text width=3em, right=of verify_algo] (h_verified) {$h_{\text{ver}}$};
+        
+        \node[process, diamond, draw=yellow!70!white, fill=yellow!20!darkbg, aspect=1.5, right=of h_prime_val, yshift=-0.8cm, minimum  width=3em, minimum height=3em] (compare) {$h' == h_{\text{ver}}?$};
+        \node[data, fill=green!70!darkbg, text width=3em, below=0.8cm of compare, xshift=-1cm] (valid) {Valida};
+        \node[data, fill=red!70!darkbg, text width=3em, below=0.8cm of compare, xshift=1cm] (invalid) {Non Valida};
+
+        \draw[arrow] (msg_m_recv) -- (hash2);
+        \draw[arrow] (hash2) -- (h_prime_val);
+        \draw[arrow] (signature_s_recv) -- (verify_algo);
+        \draw[arrow] (bob_pk) -| (verify_algo.south);
+        \draw[arrow] (verify_algo) -- (h_verified);
+        
+        \draw[arrow] (h_prime_val.east) -- (compare.west);
+        \draw[arrow] (h_verified.east) |- (compare.north);
+        \draw[arrow] (compare.south) -- node[midway, left, font=\tiny] {Sì} (valid);
+        \draw[arrow] (compare.south) -- node[midway, right, font=\tiny] {No} (invalid);
+        
+        \draw[dashed_arrow] ($(network.east)+(0.5,0.3)$) |- (msg_m_recv.west);
+        \draw[dashed_arrow] ($(network.east)+(0.5,-0.3)$) |- (signature_s_recv.west);
+
+    \end{tikzpicture}
+    }
+    \caption{Processo di Firma e Verifica Digitale.}
+    \label{fig:digital_signature}
+\end{figure}
+\begin{enumerate}
+    \item \textbf{Mittente (Bob):}
+    \begin{itemize}
+        \item Calcola $h = H(M)$ (hash del messaggio $M$).
+        \item "Cifra" $h$ con la sua chiave privata $\texttt{sk}_{\text{Bob}}$: $S = \text{Sign}(\texttt{sk}_{\text{Bob}}, h)$.
+        \item Invia $(M, S)$.
+    \end{itemize}
+    \item \textbf{Destinatario (Alice):}
+    \begin{itemize}
+        \item Calcola $h' = H(M_{\text{ricevuto}})$.
+        \item "Decifra" $S$ con la chiave pubblica $\texttt{pk}_{\text{Bob}}$: $h_{\text{verificato}} = \text{Verify}(\texttt{pk}_{\text{Bob}}, S)$.
+        \item Se $h' == h_{\text{verificato}}$, la firma è valida.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Firma Digitale basata su RSA}
+\begin{itemize}
+    \item \textbf{Firma (Bob):}
+    \begin{enumerate}
+        \item Calcola $h = H(M)$.
+        \item Calcola $S = h^d \pmod N$ (dove $(N,d)$ è $\texttt{sk}_{\text{Bob}}$).
+        (Nota: in pratica si usa padding su $h$, es. PSS).
+    \end{enumerate}
+    \item \textbf{Verifica (Alice):}
+    \begin{enumerate}
+        \item Ottiene $\texttt{pk}_{\text{Bob}} = (N,e)$.
+        \item Calcola $h_{\text{recuperato}} = S^e \pmod N$.
+        \item Calcola $h_{\text{locale}} = H(M_{\text{ricevuto}})$.
+        \item Se $h_{\text{recuperato}} == h_{\text{locale}}$, firma valida.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Esempio di Firma RSA (Piccolo)}
+$\texttt{pk}_{\text{Bob}} = (55, 3)$, $\texttt{sk}_{\text{Bob}} = (55, 27)$.
+\begin{enumerate}
+    \item \textbf{Bob firma $m_{\text{doc}}=19$ (direttamente, per semplicità):}
+    \begin{itemize}
+        \item $S = 19^{27} \pmod{55} = 24$.
+        \item Bob invia $(m_{\text{doc}}=19, S=24)$.
+    \end{itemize}
+    \item \textbf{Cathy verifica $(m_{\text{doc}}=19, S=24)$:}
+    \begin{itemize}
+        \item $t = S^e \pmod N = 24^3 \pmod{55} = 13824 \pmod{55} = 19$.
+        \item Poiché $t=19 == m_{\text{doc}}=19$, la firma è valida.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Perché Firmare l'Hash e non l'Intero Documento?}
+\begin{enumerate}
+    \item \textbf{Efficienza:} Firmare $H(M)$ (piccolo) è più veloce che firmare $M$ (grande).
+    \item \textbf{Compatibilità:} $M$ potrebbe essere $>N$. $H(M)$ è più gestibile.
+    \item \textbf{Sicurezza:} Firmare l'hash (con padding) è più robusto.
+\end{enumerate}
+\begin{figure}[H]
+    \centering
+    \resizebox{0.9\textwidth}{!}{%
+    \begin{tikzpicture}[node distance=1.5cm and 1cm, auto, >=Stealth]
+        % Plain Text input
+        \node[document, label=above:Testo in Chiaro] (plain_text) {};
+        
+        % Hashing
+        \node[process, fill=orange!50!darkbg, below=of plain_text, xshift=-1.5cm, label=left:1-way hash] (hash_h) {H};
+        \draw[arrow] (plain_text) -- (hash_h);
+        \node[data, text width=3em, fill=green!50!darkbg, right=0.5cm of hash_h, yshift=-0.5cm, label=below:Hash Value] (hash_val) {256 bit};
+        \draw[arrow] (hash_h) -- (hash_val);
+        
+        % Signing
+        \node[process, fill=purple!50!darkbg, right=1cm of hash_val, yshift=0.5cm] (sign_e) {E (Firma)};
+        \node[key_shape, fill=red!60!darkbg, text=white, below=0.3cm of sign_e, label=left:Bob's Private Key] (priv_key) {Priv K};
+        \draw[arrow] (hash_val) -- (sign_e);
+        \draw[arrow] (priv_key) -| (sign_e.south);
+        
+        % Signature output
+        \node[data, pattern=north east lines, pattern color=lighttext!50, text width=4em, right=0.5cm of sign_e] (signature) {Firma};
+        \draw[arrow] (sign_e) -- (signature);
+
+        % Network transmission
+        \node[cloud, text width=4em, right=2cm of signature, yshift=-1cm] (network) {Rete};
+        \draw[arrow] (plain_text.east) -| node[pos=0.25, above, font=\tiny] {Testo} (network.west |- plain_text);
+        \draw[arrow] (signature.east) -| node[pos=0.25, below, font=\tiny] {Firma} (network.west |- signature);
+
+        % Receiving end
+        \node[document, right=2cm of network, yshift=1cm, label=above:Testo in Chiaro] (recv_plain_text) {};
+        \node[data, pattern=north east lines, pattern color=lighttext!50, text width=4em, right=2cm of network, yshift=-1cm, label=above:Firma] (recv_signature) {};
+        
+        % Hashing received text
+        \node[process, fill=orange!50!darkbg, right=1cm of recv_plain_text, label=left:1-way hash] (recv_hash_h) {H};
+        \draw[arrow] (recv_plain_text) -- (recv_hash_h);
+        \node[data, text width=3em, fill=green!50!darkbg, below=of recv_hash_h, xshift=0.5cm] (recv_hash_val1) {256 bit};
+        \draw[arrow] (recv_hash_h) -- (recv_hash_val1);
+        
+        % Verifying signature
+        \node[process, fill=blue!50!darkbg, right=1cm of recv_signature, label=left:Verifica] (recv_verify_d) {D (Verifica)};
+        \node[key_shape, fill=green!60!darkbg, text=white, below=0.3cm of recv_verify_d, label=left:Bob's Public Key] (pub_key) {Pub K};
+        \draw[arrow] (recv_signature) -- (recv_verify_d);
+        \draw[arrow] (pub_key) -| (recv_verify_d.south);
+        \node[data, text width=3em, fill=green!50!darkbg, below=of recv_verify_d, xshift=0.5cm] (recv_hash_val2) {256 bit};
+        \draw[arrow] (recv_verify_d) -- (recv_hash_val2);
+        
+        % Comparison
+        \node[process, diamond, draw=yellow!70!white, fill=yellow!20!darkbg, aspect=1.2, right=1cm of recv_hash_val1, yshift=0.2cm, minimum size=1.5cm] (compare) {?};
+        \node[font=\tiny, below=0.1cm of compare] (accept_label) {Accetta se uguali};
+        \draw[arrow] (recv_hash_val1) -- (compare.west);
+        \draw[arrow] (recv_hash_val2) -- (compare.south);
+        
+        % Bob and Cathy labels
+        \node[person, below=2.5cm of hash_h, label=below:Bob] (bob_label) {};
+        \node[person, below=2.5cm of recv_verify_d, label=below:Cathy] (cathy_label) {};
+        
+    \end{tikzpicture}
+    }
+    \caption{Firma Digitale per Documenti Lunghi (con Hash).}
+    \label{fig:long_doc_signature}
+\end{figure}
+\textbf{NB (Slide):} L'algoritmo di cifratura $E$ (es. RSA$^{-1}$) per la firma, in pratica prende in input un digest di messaggio di lunghezza fissa, chiamato messaggio codificato. Questo è generato dal messaggio originale $m$ usando padding, salting e funzioni hash.
+
+\subsection{Vantaggi della Firma Digitale}
+\begin{itemize}
+    \item \textbf{Non Falsificabile (Unforgeable).}
+    \item \textbf{Non Ripudiabile (Undeniable).}
+    \item \textbf{Verificabile Universalmente (Universally Verifiable).}
+    \item \textbf{Specifica per il Documento.}
+\end{itemize}
+
+\subsection{Riassunto Passaggi Firma Digitale}
+\begin{enumerate}
+    \item \textbf{Setup delle Chiavi Pubbliche e Private} (una tantum).
+    \item \textbf{Firma di un Documento} (con chiave privata).
+    \item \textbf{Verifica di una Firma} (con chiave pubblica del firmatario; il verificatore non necessita di proprie chiavi).
+\end{enumerate}
+
+\section{Certificati Digitali}
+(Brevemente accennato nelle slide)
+\begin{itemize}
+    \item \textbf{Problema:} Come sapere se una $\texttt{pk}$ appartiene veramente ad Alice?
+    \item \textbf{Soluzione: Certificati Digitali (es. X.509).}
+    Un certificato lega un'identità a una $\texttt{pk}$, ed è firmato da una \textbf{Certificate Authority (CA)} fidata.
+    Questo crea una catena di fiducia (Public Key Infrastructure - PKI).
+\end{itemize}
+
+\section{Altri Crittosistemi Asimmetrici}
+
+\subsection{ElGamal Cryptosystem}
+Basato sul protocollo Diffie-Hellman e sulla difficoltà del logaritmo discreto.
+\begin{itemize}
+    \item \textbf{Parametri Pubblici:} Primo $p$, generatore $g \pmod p$.
+    \item \textbf{Generazione Chiavi (Bob):}
+    \begin{itemize}
+        \item Sceglie privato $a \in [0, p-2]$. Calcola $A = g^a \pmod p$.
+        \item $\texttt{pk}_{\text{Bob}} = (p, g, A)$, $\texttt{sk}_{\text{Bob}} = a$.
+    \end{itemize}
+    \item \textbf{Cifratura (Alice invia $m$ a Bob):}
+    \begin{itemize}
+        \item Sceglie $b \in [0, p-2]$ casuale (effimero).
+        \item Calcola $B = g^b \pmod p$.
+        \item Calcola $c = A^b \cdot m \pmod p$.
+        \item Testo cifrato: $(B, c)$.
+    \end{itemize}
+    \item \textbf{Decifratura (Bob riceve $(B,c)$):}
+    \begin{itemize}
+        \item Calcola $x = p-1-a$.
+        \item $m = B^x \cdot c \pmod p$.
+    \end{itemize}
+    \textit{Perché funziona:} $B^x c \equiv (g^b)^{p-1-a} (g^a)^b m \equiv g^{b(p-1)-ab+ab} m \equiv (g^{p-1})^b m \equiv 1^b m \equiv m \pmod p$.
+    \item \textbf{Caratteristiche:} Randomizzato, espansione del messaggio (testo cifrato doppio del chiaro). Sicurezza basata sul logaritmo discreto.
+\end{itemize}
+
+\subsection{Rabin Cryptosystem}
+Basato sulla difficoltà di calcolare radici quadrate modulo $N=pq$.
+\begin{itemize}
+    \item \textbf{Generazione Chiavi (Bob):}
+    \begin{itemize}
+        \item $p, q$ primi (spesso $p, q \equiv 3 \pmod 4$). $N = pq$.
+        \item $\texttt{pk}_{\text{Bob}} = N$, $\texttt{sk}_{\text{Bob}} = (p, q)$.
+    \end{itemize}
+    \item \textbf{Cifratura (Alice invia $m$):}
+    \begin{itemize}
+        \item $c = m^2 \pmod N$.
+    \end{itemize}
+    \item \textbf{Decifratura (Bob riceve $c$):}
+    \begin{itemize}
+        \item Calcola le 4 radici quadrate di $c \pmod N$ usando $p,q$ e il Teorema Cinese del Resto. Una di queste è $m$.
+        Se $p \equiv 3 \pmod 4$, radici $\pmod p$ sono $\pm c^{(p+1)/4} \pmod p$. Simile per $q$.
+    \end{itemize}
+    \item \textbf{Caratteristiche:} Cifratura efficiente. Rompere Rabin è provabilmente difficile quanto fattorizzare $N$. Ambiguità nella decifratura.
+\end{itemize}
+
+\subsection{Elliptic Curve Cryptography (ECC)}
+Utilizza curve ellittiche su campi finiti.
+\begin{itemize}
+    \item Sicurezza comparabile a RSA con chiavi \textbf{molto più piccole}.
+    \item Ideale per dispositivi con risorse limitate.
+\end{itemize}
+
+\subsection{Tabella Comparativa delle Dimensioni delle Chiavi (NIST SP-800-57)}
+Per un livello di sicurezza computazionale equivalente:
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.2} % Aumenta lo spazio tra le righe
+    \begin{tabular}{|p{2.5cm}|p{3.5cm}|p{2.5cm}|p{2.5cm}|}
+        \hline
+        \textbf{\sffamily Symmetric Key Algorithms (bits)} & \textbf{\sffamily Diffie-Hellman, Digital Signature Algorithm (L=pk, N=sk bits)} & \textbf{\sffamily RSA (size of $n$ in bits)} & \textbf{\sffamily ECC (modulus size in bits)} \\ \hline \hline
+        80  & L = 1024 \newline N = 160 & 1024  & 160-223 \\ \hline
+        112 & L = 2048 \newline N = 224 & 2048  & 224-255 \\ \hline
+        128 & L = 3072 \newline N = 256 & 3072  & 256-383 \\ \hline
+        192 & L = 7680 \newline N = 384 & 7680  & 384-511 \\ \hline
+        256 & L = 15,360 \newline N = 512 & 15,360 & 512+    \\ \hline
+    \end{tabular}
+    \caption{Dimensioni comparabili delle chiavi per diversi algoritmi.}
+    \label{tab:key_sizes_comparison}
+    \small\textit{Note: L = size of public key, N = size of private key (per DH/DSA).}
+\end{table}
+
+\end{document}
