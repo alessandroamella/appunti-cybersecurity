@@ -1,0 +1,516 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts} % Per Z_n
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+\setlist{nosep} % Rimuove spazio verticale extra nelle liste
+
+% --- Immagini ---
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{graphicx}
+\graphicspath{{images/}} % Specifica la cartella per le immagini
+\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, fit, backgrounds}
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Appunti di Introduzione alla Crittografia},
+    colorlinks=true,
+    linkcolor=cyan,
+    urlcolor=cyan,
+    citecolor=green,
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\definecolor{darkbg}{RGB}{20,20,20} % Un nero non assoluto, leggermente più morbido
+\definecolor{lighttext}{RGB}{240,240,240}
+\definecolor{highlight}{RGB}{100,180,255} % Blu chiaro per evidenziare
+\definecolor{codebg}{RGB}{40,40,40} % Sfondo per blocchi di codice (se usati con TikZ)
+\definecolor{codetxt}{RGB}{220,220,200}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+% Stili TikZ per dark theme
+\tikzstyle{block} = [rectangle, draw=lighttext, fill=darkbg!80!lighttext,
+    text width=6em, text centered, rounded corners, minimum height=3em, line width=0.5pt]
+\tikzstyle{key_block} = [rectangle, draw=highlight, fill=darkbg!60!highlight,
+    text width=4em, text centered, rounded corners, minimum height=2em, line width=0.5pt, text=lighttext]
+\tikzstyle{line} = [draw=lighttext, -{Stealth[length=2mm, width=1.5mm]}, line width=0.5pt]
+\tikzstyle{actor} = [circle, draw=lighttext, fill=darkbg!70!lighttext, minimum size=2em, text=darkbg]
+\tikzstyle{data_flow} = [->, >=Stealth, thick, color=lighttext]
+\tikzstyle{comm_channel} = [dashed, color=gray]
+
+
+% --- Evidenziazione del codice (richiede -shell-escape) ---
+\usepackage{minted}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines=true,
+    style=monokai, % Stile di highlighting che si adatta bene a sfondi scuri
+    bgcolor=codebg, % Sfondo per minted
+    % Per minted, il colore del testo è gestito dallo stile 'monokai'
+}
+
+% --- Titolo ---
+\title{\textbf{Appunti di Introduzione alla Crittografia}}
+\author{Basato sulle slide della Lezione}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Concetti di Base}
+
+\subsection{Definizioni Fondamentali}
+\begin{itemize}
+    \item \textbf{Crittografia}: Deriva dal Greco \textit{Kryptós} (nascosto) + \textit{Graphía} (scrittura). È l'arte e la scienza di utilizzare la matematica per oscurare il significato dei dati, applicando trasformazioni che sono impraticabili o impossibili da invertire senza la conoscenza di una \textbf{chiave segreta}. L'obiettivo è nascondere il \textit{significato} di un messaggio.
+
+    \item \textbf{Critptoanalisi}: L'arte e la scienza di \textbf{rompere sistemi di crittografia} o codici segreti, recuperando il testo originale (plaintext) dal testo cifrato (ciphertext) \textit{senza conoscere la chiave}.
+
+    \item \textbf{Crittologia}: Il campo di studio che comprende sia la crittografia che la crittoanalisi.
+
+    \item \textbf{Steganografia}: Deriva dal Greco \textit{Steganos} (coperto) + \textit{Graphía} (scrittura). Tecniche per \textbf{nascondere l'esistenza stessa di un messaggio}.
+    \begin{itemize}
+        \item \textit{Esempio}: Inserire un messaggio segreto nei bit meno significativi di un file immagine.
+        \item \textit{Differenza chiave}: La crittografia rende il messaggio incomprensibile, la steganografia lo rende (idealmente) invisibile.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Terminologia dell'Encryption (Schema di Cifratura)}
+Consideriamo Alice che vuole inviare un messaggio a Bob, e Eve che cerca di intercettarlo.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=2cm and 1.5cm, auto,
+    every node/.style={text=lighttext}] % Assicura che il testo in TikZ sia chiaro
+    % Nodi
+    \node[actor] (alice) {Alice};
+    \node[block, right=of alice] (encrypt) {Encryption ($E$)};
+    \node[block, text width=7em, right=of encrypt] (ciphertext) {Ciphertext $c$};
+    \node[block, right=of ciphertext] (decrypt) {Decryption ($D$)};
+    \node[actor, right=of decrypt] (bob) {Bob};
+    \node[actor, below=of ciphertext, yshift=0.5cm] (eve) {Eve};
+    \node[key_block, above=of encrypt, yshift=-1cm] (key_enc) {Key $k$};
+    \node[key_block, above=of decrypt, yshift=-1cm] (key_dec) {Key $k$};
+
+    % Frecce e testo
+    \draw[data_flow] (alice) -- node[midway, above] {Plaintext $m$} (encrypt);
+    \draw[data_flow] (encrypt) -- (ciphertext);
+    \draw[data_flow] (ciphertext) -- (decrypt);
+    \draw[data_flow] (decrypt) -- node[midway, above] {Plaintext $m$} (bob);
+    \draw[data_flow] (key_enc) -- (encrypt);
+    \draw[data_flow] (key_dec) -- (decrypt);
+
+    % Eve
+    \draw[dashed, color=red, thick, ->] (eve) to[bend left=20] (ciphertext);
+    \node[text width=10em, below=0.3cm of eve, text centered, color=red!80!lighttext] (eve_text)
+        {Eve non conosce $k$, non dovrebbe poter capire $m$};
+\end{tikzpicture}
+\caption{Schema di Cifratura Base}
+\label{fig:encryption_terminology}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Plaintext (\textit{Testo in Chiaro}, $m$)}: Il messaggio originale.
+    \item \textbf{Encryption (\textit{Cifratura}, $E$)}: Processo di trasformazione del plaintext. Si usa un algoritmo $E$ e una chiave $k$: $c = E(k, m)$.
+    \item \textbf{Ciphertext (\textit{Testo Cifrato}, $c$)}: Il messaggio trasformato e illeggibile.
+    \item \textbf{Decryption (\textit{Decifratura}, $D$)}: Processo di riconversione del ciphertext. Si usa un algoritmo $D$ e la chiave $k$: $m = D(k, c)$.
+    \item \textbf{Key (\textit{Chiave}, $k$)}: Informazione segreta. La sicurezza dipende dalla sua segretezza.
+    \item \textbf{Cipher / Cryptosystem}: L'insieme degli algoritmi $E, D$ e la gestione delle chiavi.
+\end{itemize}
+
+\section{Applicazioni, Obiettivi e Protocolli}
+
+\subsection{Applicazioni della Crittografia}
+La crittografia è pervasiva:
+\begin{itemize}
+    \item \textbf{Comunicazione Sicura}:
+    \begin{itemize}
+        \item Traffico Web: \texttt{HTTPS} (es. home banking, e-commerce).
+        \item Traffico Wireless/Cellulare: \texttt{WPA2/3}, \texttt{3G/4G/5G}.
+    \end{itemize}
+    \item \textbf{Cifratura di File su Disco}: Es. BitLocker, FileVault.
+    \item \textbf{Protezione dei Contenuti}: DRM per DVD, Blu-ray.
+    \item \textbf{Autenticazione Utente}: Password, token, certificati digitali.
+\end{itemize}
+Slide 4 (Wells Fargo) illustra come \texttt{HTTPS} protegga da \textit{eavesdropping} (intercettazione) e \textit{tampering} (manomissione).
+
+\subsection{Obiettivi di Sicurezza Fondamentali}
+\begin{itemize}
+    \item \textbf{Privacy (Riservatezza, Confidenzialità, Segretezza)}: Solo il destinatario previsto può vedere il contenuto. Ottenuta tramite cifratura.
+    \item \textbf{Autenticità}: La comunicazione è generata dal mittente dichiarato.
+    \item \textbf{Integrità}: Nessuna modifica non autorizzata ai messaggi durante la trasmissione.
+    \item \textbf{Non Ripudio}: Il mittente non può negare di aver inviato un messaggio.
+\end{itemize}
+
+\subsection{Protocolli Crittografici}
+Sequenze di passaggi e operazioni crittografiche per raggiungere obiettivi di sicurezza.
+\textbf{Da capire per un protocollo}:
+\begin{itemize}
+    \item Chi sono le parti e il contesto?
+    \item Quali sono gli obiettivi di sicurezza?
+    \item Qual è la Trusted Computing Base (TCB) (componenti fidati)?
+    \item Quali sono le capacità degli avversari? (\textbf{Threat Model - Modello di Minaccia}).
+\end{itemize}
+
+\section{Principi e Modelli di Minaccia}
+
+\subsection{Principio di Kerckhoffs (1883)}
+\blockquote{\textit{La sicurezza di un sistema crittografico deve dipendere \textbf{unicamente} dalla segretezza della chiave. L'algoritmo deve poter essere reso pubblico senza compromettere la sicurezza.}}
+\begin{itemize}
+    \item Implicazione: \textbf{"Security by obscurity" NON funziona}.
+    \item Esempi di fallimenti: WEP, cifrario CSS dei DVD.
+    \item L'attaccante è assunto conoscere l'algoritmo (DES, AES, RSA, ecc.).
+\end{itemize}
+
+\subsection{Modello di Minaccia dell'Attaccante (Threat Model)}
+\subsubsection{Conoscenza del Cifrario}
+L'attaccante conosce l'algoritmo (Kerckhoffs), non la chiave.
+
+\subsubsection{Interazione con Messaggi e Protocollo}
+\begin{itemize}
+    \item \textbf{Attaccante Passivo}: Osserva, tenta di decifrare. Minaccia la \textit{confidenzialità}.
+    \item \textbf{Attaccante Attivo}: Osserva, modifica, inietta, cancella messaggi. Minaccia \textit{confidenzialità, integrità, autenticità}.
+\end{itemize}
+
+\subsubsection{Interazione con l'Algoritmo di Cifratura (Tipi di Attacco)}
+\begin{itemize}
+    \item \textbf{Ciphertext-Only Attack (COA)}: L'attaccante ha solo ciphertext.
+    \item \textbf{Known-Plaintext Attack (KPA)}: L'attaccante ha coppie (plaintext, ciphertext).
+    \item \textbf{Chosen-Plaintext Attack (CPA)}: L'attaccante sceglie plaintext, ottiene ciphertext.
+    \item \textbf{Chosen-Ciphertext Attack (CCA)}: L'attaccante sceglie ciphertext, ottiene plaintext (eccetto il target).
+    \item \textbf{Attacchi Adattivi}: Le scelte cambiano in base ai risultati precedenti.
+\end{itemize}
+
+\subsubsection{Risorse Disponibili}
+\begin{itemize}
+    \item \textbf{Risorse Illimitate}: Modello teorico (sicurezza "perfetta").
+    \item \textbf{Risorse Finite (Sicurezza Computazionale)}: Modello realistico. Un cifrario è sicuro se romperlo richiede tempo/risorse irrealistici.
+\end{itemize}
+
+\section{Tipi di Crittografia}
+
+\subsection{Crittografia Simmetrica (a Chiave Segreta)}
+Alice e Bob usano la \textbf{stessa chiave segreta $k$} per cifrare e decifrare.
+\begin{itemize}
+    \item Cifratura: $c = E(k, m)$
+    \item Decifratura: $m = D(k, c)$
+\end{itemize}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.8cm and 1.5cm, auto,
+    every node/.style={text=lighttext}]
+    % Nodi
+    \node (m_alice) {$m$};
+    \node[block, right=0.2cm of m_alice] (enc) {$E$};
+    \node[key_block, below=0.5cm of enc] (k_alice) {$k$};
+    \node[right=0.7cm of enc] (c1) {$c = E(k,m)$};
+
+    \node[right=1.5cm of c1] (c2) {$c$};
+    \node[block, right=0.2cm of c2] (dec) {$D$};
+    \node[key_block, below=0.5cm of dec] (k_bob) {$k$};
+    \node[right=0.7cm of dec] (m_bob) {$m = D(k,c)$};
+
+    \node[above=0.2cm of enc, xshift=-0.5cm] {Alice};
+    \node[above=0.2cm of dec, xshift=0.5cm] {Bob};
+
+    % Frecce
+    \draw[data_flow] (m_alice) -- (enc);
+    \draw[data_flow] (k_alice) -- (enc);
+    \draw[data_flow] (enc) -- (c1);
+    \draw[data_flow] (c1) -- (c2) node[midway, above, text width=5em, text centered] {Canale Insecure};
+    \draw[data_flow] (c2) -- (dec);
+    \draw[data_flow] (k_bob) -- (dec);
+    \draw[data_flow] (dec) -- (m_bob);
+\end{tikzpicture}
+\caption{Crittografia Simmetrica}
+\label{fig:symmetric_crypto}
+\end{figure}
+\textbf{Caratteristiche}:
+\begin{itemize}
+    \item Chiave $k$ deve essere scambiata in modo sicuro.
+    \item Algoritmi veloci.
+    \item Usata per \textit{confidenzialità}. Può fornire \textit{autenticità/integrità} con \textbf{Message Authentication Codes (MAC)}.
+    \item Algoritmi (E, D) sono \textbf{pubblicamente noti}.
+    \item Esempi: DES, 3DES, AES, ChaCha20.
+\end{itemize}
+\textbf{Casi d'Uso delle Chiavi Simmetriche}:
+\begin{itemize}
+    \item \textbf{Single-use key (one-time key)}: Usata per un solo messaggio (es. nuova chiave per ogni email).
+    \item \textbf{Multi-use key (many-time key)}: Stessa chiave per più messaggi (es. cifratura file). Richiede più meccanismi (es. IVs).
+\end{itemize}
+
+\subsection{Crittografia Asimmetrica (a Chiave Pubblica)}
+Ogni utente ha una coppia di chiavi: \textbf{Chiave Pubblica ($K_{pub}$)} e \textbf{Chiave Privata ($K_{priv}$)}.
+$K_{pub}$ può essere distribuita, $K_{priv}$ è segreta. È infattibile derivare $K_{priv}$ da $K_{pub}$.
+
+\textbf{Scenario di Confidenzialità}:
+\begin{enumerate}
+    \item Bob genera ($K_{pub\_Bob}, K_{priv\_Bob}$). Rende $K_{pub\_Bob}$ pubblica.
+    \item Alice cifra $m$ con $K_{pub\_Bob}$: $c = E(K_{pub\_Bob}, m)$.
+    \item Bob decifra $c$ con $K_{priv\_Bob}$: $m = D(K_{priv\_Bob}, c)$.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.5cm and 1cm, auto,
+    every node/.style={text=lighttext},
+    key_pair_node/.style={rectangle, draw=lighttext, rounded corners, fill=darkbg!70!lighttext, inner sep=5pt, text centered, minimum width=3cm}]
+
+    % Alice
+    \node (plaintext_a) {Plaintext};
+    \node[block, below=0.5cm of plaintext_a] (enc_a) {$E$};
+    \node[left=0.3cm of enc_a, yshift=0.7cm] (alice_label) {Alice};
+
+    % Bob
+    \node[right=8cm of plaintext_a] (plaintext_b) {Plaintext};
+    \node[block, below=0.5cm of plaintext_b] (dec_b) {$D$};
+    \node[right=0.3cm of dec_b, yshift=0.7cm] (bob_label) {Bob};
+
+    % Keys for Bob
+    \node[key_pair_node, above right=0.2cm and 2cm of enc_a] (bob_keys) {Bob's Keys};
+    \node[key_block, text width=5em, below=0.2cm of bob_keys, xshift=-1cm] (pub_k_bob) {Public Key $K_{pub\_Bob}$};
+    \node[key_block, text width=5em, fill=red!50!darkbg, draw=red, below=0.2cm of bob_keys, xshift=1cm] (priv_k_bob) {Private Key $K_{priv\_Bob}$};
+    \node[draw,dashed,fit=(pub_k_bob)(priv_k_bob)(bob_keys), inner sep=0.2cm, rounded corners, line width=0.3pt, draw=gray] {};
+
+    % Public Repository (conceptual)
+    \node[rectangle, draw=highlight, dashed, below right=0.1cm and 0.1cm of pub_k_bob, minimum width=3.5cm, minimum height=1.5cm, line width=0.3pt, label={[text=highlight, yshift=0.2cm]above:Public Repository}] (repo) {};
+    \draw[->, shorten >=1pt, color=highlight, dashed] (pub_k_bob.south) to[bend right=10] (repo.north west);
+
+
+    % Data flow
+    \draw[data_flow] (plaintext_a) -- (enc_a);
+    \draw[data_flow] (pub_k_bob) -| (enc_a);
+    \node[right=0.5cm of enc_a] (cipher_text) {Ciphertext};
+    \draw[data_flow] (enc_a) -- (cipher_text);
+    \draw[data_flow] (cipher_text) -- node[midway, above, text width=3cm, text centered] {Network} (dec_b);
+    \draw[data_flow] (priv_k_bob) -| (dec_b);
+    \draw[data_flow] (dec_b) -- (plaintext_b);
+
+\end{tikzpicture}
+\caption{Crittografia Asimmetrica (Confidenzialità)}
+\label{fig:asymmetric_crypto}
+\end{figure}
+
+\textbf{Altri Scenari}:
+\begin{itemize}
+    \item \textbf{Firme Digitali}: Alice firma $m$ con $K_{priv\_Alice}$. Bob verifica con $K_{pub\_Alice}$. Fornisce autenticità, integrità, non ripudio.
+\end{itemize}
+\textbf{Caratteristiche}:
+\begin{itemize}
+    \item Risolve il problema della distribuzione sicura delle chiavi.
+    \item Algoritmi più lenti della simmetrica.
+    \item Spesso usata per scambiare una chiave simmetrica (approccio ibrido).
+    \item Esempi: RSA, ECC, Diffie-Hellman (scambio chiavi).
+\end{itemize}
+
+\subsection{Cose da Ricordare}
+\begin{itemize}
+    \item \textbf{La Crittografia È}: Uno strumento potente, base per molti meccanismi di sicurezza.
+    \item \textbf{La Crittografia NON È}:
+    \begin{itemize}
+        \item La soluzione a \textit{tutti} i problemi di sicurezza.
+        \item Affidabile se non implementata e usata \textit{correttamente}.
+        \item Qualcosa da inventare da soli (\textbf{"don't roll your own crypto"}).
+    \end{itemize}
+\end{itemize}
+
+\subsection{La Crittografia come Scienza Rigorosa}
+\begin{enumerate}
+    \item \textbf{Specificare Precisamente il Modello di Minaccia}.
+    \item \textbf{Proporre una Costruzione} (algoritmo, protocollo).
+    \item \textbf{Dimostrare} che rompere la costruzione implicherebbe risolvere un problema matematico noto per essere \textbf{difficile} (riduzione di sicurezza).
+\end{enumerate}
+
+\section{Breve Storia della Crittografia e Cifrari Classici}
+Riferimento: "The Code Breakers" di David Kahn (1996).
+\textbf{Evoluzione (Slide 23, semplificata)}:
+\begin{itemize}
+    \item Scitala Spartana ($\sim$400 a.C.) - Trasposizione
+    \item Cifrario di Cesare ($\sim$50 a.C.) - Sostituzione monoalfabetica
+    \item Enigma (1918-WWII) - Macchina a rotori, polialfabetica
+    \item DES (1975) - Standard simmetrico (blocco)
+    \item RSA (1977) - Algoritmo asimmetrico
+    \item AES (2001) - Standard simmetrico attuale
+    \item Crittografia Ellittica (ECC) - Asimmetrica, chiavi più piccole
+\end{itemize}
+
+\subsection{Cifrario di Cesare (Shift Cipher)}
+Sostituzione monoalfabetica. Chiave $k$: intero per lo "spostamento". Alfabeto $A=0, \dots, Z=25$.
+\begin{itemize}
+    \item \textbf{Cifratura}: $e_k(p) = (p + k) \pmod{26}$
+    \item \textbf{Decifratura}: $d_k(c) = (c - k) \pmod{26}$
+\end{itemize}
+\textit{Esempio ($k=3$)}: \texttt{ATTACCO} $\rightarrow$ \texttt{DWWDFFR}
+
+\textbf{Sicurezza}: Molto bassa. Vulnerabile a \textbf{Brute Force Attack} (solo 25 chiavi significative).
+Slide 33: \texttt{PHHW PH DIWHU WKH WRJD SDUWB} decifrato con $k=3$ (o shift -3) diventa \texttt{MEET ME AFTER THE TOGA PARTY}.
+
+\subsection{Cifrario a Sostituzione Monoalfabetica Generale}
+Chiave $\pi$: una permutazione dell'alfabeto.
+\begin{itemize}
+    \item \textbf{Cifratura}: $X \rightarrow \pi(X)$
+    \item \textbf{Decifratura}: $Y \rightarrow \pi^{-1}(Y)$
+\end{itemize}
+\textit{Esempio (da slide 34)}:
+\begin{tabular}{l l l l l l l l l}
+    Plaintext: & A & B & C & D & E & F & G & H \dots \\
+    Ciphertext ($\pi$): & B & A & D & C & Z & H & W & Y \dots
+\end{tabular}
+\texttt{BECAUSE} $\xrightarrow{\pi}$ \texttt{AZDBJSZ}
+
+\textbf{Dimensione Spazio Chiavi}: $26! \approx 4 \times 10^{26} \approx 2^{88}$. Brute force impossibile.
+\textbf{Sicurezza}: Debole. Vulnerabile a \textbf{Critptoanalisi delle Frequenze}.
+\begin{itemize}
+    \item Lingue hanno distribuzioni di frequenza caratteristiche (in inglese/italiano 'E', 'A' comuni).
+    \item I cifrari monoalfabetici preservano queste frequenze.
+    \item \textbf{Processo di Critptoanalisi}:
+    \begin{enumerate}
+        \item Conteggio frequenze singole lettere.
+        \item Conteggio frequenze digrammi (es. TH, HE; CH, GL).
+        \item Conteggio frequenze trigrammi (es. THE; CHE).
+        \item Ricerca pattern e parole corte.
+        \item Processo iterativo di ipotesi e verifica.
+    \end{enumerate}
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{freq_analysis_chart.png} % Placeholder
+    \caption{Tipica distribuzione di frequenza delle lettere in Inglese (Placeholder).}
+    \label{fig:freq_analysis}
+\end{figure}
+
+\subsection{Cifrario Affine}
+Caso speciale di sostituzione monoalfabetica. Chiave $(a, b)$, con $a, b \in \mathbb{Z}_{26}$.
+\begin{itemize}
+    \item \textbf{Cifratura}: $e(x) = (ax + b) \pmod{26}$
+    \item \textbf{Condizione per Decifrabilità}: $\gcd(a, 26) = 1$ ($a$ e 26 coprimi).
+        \begin{itemize}
+            \item Valori possibili per $a$: 1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25 (12 valori).
+            \item $b$ può avere 26 valori (0-25).
+            \item Totale chiavi: $12 \times 26 = 312$.
+        \end{itemize}
+    \item \textbf{Decifratura}: $d(y) = (a^{-1} \cdot (y - b)) \pmod{26}$ ($a^{-1}$ è l'inverso moltiplicativo di $a \pmod{26}$).
+    \item Se $a=1$, è un Cifrario di Cesare.
+\end{itemize}
+\textbf{Sicurezza}: Debole. 312 chiavi (brute force), monoalfabetico (analisi frequenze).
+\textit{Esempio non valido (slide 44)}: $a=4, b=7$. $\gcd(4, 26)=2 \neq 1$.
+'a' (0) $\rightarrow (4 \cdot 0 + 7) \pmod{26} = 7$ ('H').
+'n' (13) $\rightarrow (4 \cdot 13 + 7) \pmod{26} = (52+7) \pmod{26} = 59 \pmod{26} = 7$ ('H').
+Non decifrabile univocamente.
+
+\subsection{Cifrario di Vigenère (Polialfabetico)}
+Sostituzione polialfabetica. Chiave $K$: una parola chiave, es. \texttt{CRYPTO}.
+Lunghezza chiave $m$. $K = (k_1, k_2, \dots, k_m)$.
+\begin{itemize}
+    \item \textbf{Cifratura}: $c_i = (p_i + k_j) \pmod{26}$, dove $k_j$ è la lettera $j$-esima della chiave che si allinea con $p_i$ (la chiave si ripete).
+\end{itemize}
+\textit{Esempio (Chiave \texttt{CRYPTO})}
+\begin{verbatim}
+Chiave:    C R Y P T O C R Y P T O C R Y P T
+Plaintext: W H A T A N I C E D A Y T O D A Y
+---------------------------------------------
+Ciphertext:Y Y Y I T B K T C S T M V F B P R
+\end{verbatim}
+Ogni lettera del plaintext è cifrata con uno shift diverso, basato sulla corrispondente lettera della chiave.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{vigenere_square.png} % Placeholder
+    \caption{Tabula Recta o Quadrato di Vigenère (Placeholder).}
+    \label{fig:vigenere_square}
+\end{figure}
+
+\textbf{Sicurezza}: Più forte dei monoalfabetici. "Appiattisce" le frequenze.
+\textbf{Critptoanalisi del Vigenère}:
+\begin{enumerate}
+    \item \textbf{Determinare la Lunghezza della Chiave ($m$)}:
+    \begin{itemize}
+        \item \textbf{Test di Kasiski}: Cercare sequenze di lettere ripetute nel ciphertext. La distanza tra ripetizioni è spesso un multiplo di $m$.
+        \item \textbf{Indice di Coincidenza (Friedman)}.
+    \end{itemize}
+    \item \textbf{Rompere i Cifrari di Cesare Individuali}:
+    \begin{itemize}
+        \item Dividere il ciphertext in $m$ sotto-testi.
+        \item Il $j$-esimo sotto-testo contiene le lettere $j, j+m, j+2m, \dots$ del ciphertext.
+        \item Ognuno di questi è un Cifrario di Cesare, attaccabile con analisi delle frequenze.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{The Hill Cipher (1929)}
+Cifrario a sostituzione polligrafica (opera su blocchi di $n$ lettere).
+\begin{itemize}
+    \item Chiave $K$: una matrice $n \times n$ invertibile $\pmod{26}$.
+    \item Blocco Plaintext $P$ (vettore $1 \times n$). Blocco Ciphertext $C$.
+    \item \textbf{Cifratura}: $C = P \cdot K \pmod{26}$
+    \item \textbf{Decifratura}: $P = C \cdot K^{-1} \pmod{26}$
+\end{itemize}
+\textbf{Sicurezza}: Resiste all'analisi delle frequenze semplice. Vulnerabile a Known-Plaintext Attack (risolvendo un sistema di equazioni lineari per $K$).
+
+\subsection{Macchine a Rotori (1870-1943?)}
+Automatizzano cifratura polialfabetica complessa.
+\begin{itemize}
+    \item \textbf{Idea}: Multipli round di sostituzione. Rotori implementano sostituzioni.
+    \item I rotori \textbf{ruotano} dopo la cifratura di ogni lettera, cambiando la sostituzione. Periodo molto lungo.
+    \item \textbf{Esempi}: Macchina di Hebern, \textbf{Enigma} (WWII).
+    \item Enigma: 3-5 rotori, riflettore, plugboard. Chiave giornaliera complessa. Decifrata dagli Alleati.
+\end{itemize}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.8, transform shape, every node/.style={text=lighttext}]
+    % Simplified rotor concept for dark theme
+    \node (input_letter) at (0,0) {A};
+
+    % Rotor 1
+    \draw[fill=gray!60!black, draw=lighttext] (1,-1.5) rectangle (2,1.5) node[midway, rotate=90] {Rotor 1};
+    \draw[line] (input_letter.east) -- (1, 0.5) node[midway, above, sloped] {}; % Path to rotor 1
+    \draw[line] (2, -0.5) -- (3, -0.5) node[midway, above] (r1_out) {K};      % Path from rotor 1
+
+    % Rotor 2
+    \draw[fill=gray!50!black, draw=lighttext] (3.5,-1.5) rectangle (4.5,1.5) node[midway, rotate=90] {Rotor 2};
+    \draw[line] (r1_out.east) -- (3.5, -0.5); % Path to rotor 2
+    \draw[line] (4.5, 1) -- (5.5, 1) node[midway, above] (r2_out) {S};      % Path from rotor 2
+
+    % Rotor 3 (Conceptual)
+    \draw[fill=gray!40!black, draw=lighttext] (6,-1.5) rectangle (7,1.5) node[midway, rotate=90] {Rotor 3};
+    \draw[line] (r2_out.east) -- (6,1);    % Path to rotor 3
+    \draw[line] (7, 0) -- (8,0) node[midway, above] (r3_out) {T}; % Path from rotor 3 (final output)
+
+    \node at (8.5,0) {Output};
+
+    % Key press indication
+    \node[below=2cm of input_letter, text width=5cm, text centered] {Input: A};
+    \node[below=2cm of r3_out, text width=5cm, text centered] {Output: T (dipende dalle posizioni dei rotori)};
+
+    \node[above=2cm of r1_out, text width=10cm, text centered] {Simplificazione del percorso del segnale attraverso i rotori. Ogni rotore applica una sostituzione, e i rotori girano.};
+\end{tikzpicture}
+\caption{Concetto Semplificato di Macchina a Rotori}
+\label{fig:rotor_machine}
+\end{figure}
+
+
+\end{document}

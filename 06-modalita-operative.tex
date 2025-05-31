@@ -1,0 +1,377 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts} % Per \mathbb
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+
+% --- Immagini ---
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{graphicx}
+\graphicspath{{images/}} % Dice a LaTeX dove cercare le immagini
+\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, fit}
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Modalità Operative dei Cifrari a Blocchi},
+    pdfauthor={Basato sulle slide del Prof.},
+    colorlinks=true,
+    linkcolor=cyan,
+    filecolor=magenta,      
+    urlcolor=blue,
+    citecolor=green,
+    bookmarks=true
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\definecolor{darkbackground}{RGB}{30,30,30} % Un nero non assoluto
+\definecolor{lighttext}{RGB}{230,230,230}  % Un bianco non abbagliante
+\definecolor{codebackground}{RGB}{40,40,40}
+\definecolor{codeframecolor}{RGB}{80,80,80}
+\definecolor{tikznodefill}{RGB}{50,50,50}
+\definecolor{tikztext}{RGB}{220,220,220}
+\definecolor{tikzarrow}{RGB}{150,150,220}
+
+\pagecolor{darkbackground}
+\color{lighttext}
+
+% --- Evidenziazione del codice (richiede -shell-escape) ---
+\usepackage{minted}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines=true,
+    style=monokai, % Stile di highlighting (monokai è buono per sfondi scuri)
+    bgcolor=codebackground,
+    rulecolor=codeframecolor
+}
+\setmintedinline{bgcolor=codebackground}
+
+% Stile per TikZ
+\tikzstyle{block} = [rectangle, draw=tikztext, fill=tikznodefill,
+    text width=6em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{line} = [draw=tikzarrow, -{Stealth}]
+\tikzstyle{key} = [rectangle, draw=tikztext, fill=tikznodefill!70!black,
+    text width=3em, text centered, minimum height=2em, font=\footnotesize]
+\tikzstyle{data} = [rectangle, draw=tikztext, fill=tikznodefill!50!black,
+    text width=5em, text centered, minimum height=3em, font=\small]
+\tikzstyle{operator} = [circle, draw=tikztext, fill=blue!50!tikznodefill, text=tikztext, minimum size=1.5em, font=\Large]
+\tikzstyle{challenger} = [rectangle, draw=green!70!lighttext, fill=green!30!darkbackground, rounded corners,
+    minimum width=3cm, minimum height=2cm, text centered, text=lighttext]
+\tikzstyle{adversary} = [rectangle, draw=red!70!lighttext, fill=red!30!darkbackground, rounded corners,
+    minimum width=3cm, minimum height=2cm, text centered, text=lighttext]
+\tikzstyle{message_flow} = [draw=lighttext, -{Stealth[length=3mm, width=2mm]}]
+
+
+% --- Titolo ---
+\title{Appunti sulle Modalità Operative dei Cifrari a Blocchi}
+\author{Basato sulle slide del Professore}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduzione ai Cifrari a Blocchi}
+I cifrari a blocchi (come AES, DES) operano su blocchi di dati di dimensione fissa. Per crittografare messaggi più lunghi di un singolo blocco, o per aggiungere determinate proprietà di sicurezza, si usano le \textbf{modalità operative}.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=2cm, auto, text=tikztext]
+        % Nodi
+        \node [data] (pt) {PT Block ($n$ bits)};
+        \node [block, right=of pt] (cipher) {E, D};
+        \node [data, right=of cipher] (ct) {CT Block ($n$ bits)};
+        \node [key, below=0.5cm of cipher] (key_node) {Key ($k$ bits)};
+
+        % Frecce
+        \path [line] (pt) -- (cipher);
+        \path [line] (cipher) -- (ct);
+        \path [line] (key_node) -- (cipher);
+    \end{tikzpicture}
+    \caption{Schema generico di un cifrario a blocchi.}
+    \label{fig:block_cipher_generic}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Input:} Blocco di testo in chiaro (PT Block) di $n$ bit, Chiave (Key) di $k$ bit.
+    \item \textbf{Output:} Blocco di testo cifrato (CT Block) di $n$ bit.
+    \item \textbf{Esempi Canonici:}
+    \begin{itemize}
+        \item \textbf{DES:} $n = 64$ bit, $k = 56$ bit
+        \item \textbf{3DES:} $n = 64$ bit, $k = 168$ bit
+        \item \textbf{AES:} $n = 128$ bit, $k \in \{128, 192, 256\}$ bit
+    \end{itemize}
+\end{itemize}
+
+\section{Panoramica delle Modalità Comuni}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{0.2\textwidth}|p{0.5\textwidth}|p{0.25\textwidth}|}
+        \hline
+        \textbf{Modalità} & \textbf{Descrizione} & \textbf{Applicazione Tipica} \\
+        \hline
+        \textbf{ECB} (Electronic CodeBook) & Ogni blocco di testo in chiaro è codificato indipendentemente usando la stessa chiave. & Trasmissione sicura di valori singoli (es. una chiave di crittografia). \textbf{DA EVITARE} per dati generici. \\
+        \hline
+        \textbf{CBC} (Cipher Block Chaining) & L'input dell'algoritmo di crittografia è lo XOR del blocco di testo in chiaro corrente e del blocco di testo cifrato precedente. Richiede un IV (Initialization Vector). & Trasmissione general-purpose orientata ai blocchi, Autenticazione. \\
+        \hline
+        \textbf{CFB} (Cipher FeedBack) & L'input è processato $s$ bit alla volta. Il testo cifrato precedente è usato come input per l'algoritmo di crittografia per produrre un output pseudocasuale, che è XORato con il testo in chiaro per produrre la successiva unità di testo cifrato. & Trasmissione general-purpose orientata allo stream, Autenticazione. \\
+        \hline
+        \textbf{OFB} (Output FeedBack) & Simile a CFB, eccetto che l'input all'algoritmo di crittografia è l'output di crittografia precedente. & Trasmissione orientata allo stream su canali rumorosi (es. comunicazioni satellitari). \\
+        \hline
+        \textbf{CTR} (CounTeR) & Ogni blocco di testo in chiaro è XORato con un contatore crittografato. Il contatore è incrementato per ogni blocco successivo. & Trasmissione general-purpose orientata ai blocchi, Utile per requisiti ad alta velocità (parallelizzabile). \\
+        \hline
+    \end{tabular}
+    \caption{Confronto tra le principali modalità operative.}
+    \label{tab:modes_overview}
+\end{table}
+
+\section{Electronic CodeBook (ECB)}
+\begin{itemize}
+    \item \textbf{Funzionamento:}
+    \begin{enumerate}
+        \item Il messaggio originale è diviso in blocchi indipendenti ($P_1, P_2, \ldots, P_N$).
+        \item La stessa chiave $K$ è usata per crittografare/decrittografare ogni blocco.
+        \item Ogni blocco è crittografato separatamente: $C_i = E(K, P_i)$.
+        \item Decrittazione: $P_i = D(K, C_i)$.
+    \end{enumerate}
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{slide_5} % Assumendo che slide_5.png sia il diagramma ECB
+    \caption{Diagramma della modalità ECB (Encryption e Decryption).}
+    \label{fig:ecb_mode}
+\end{figure}
+
+\subsection{Sicurezza di ECB}
+\begin{itemize}
+    \item \textbf{Problema Grave:} Se due blocchi di testo in chiaro sono identici ($P_i = P_j$), allora i corrispondenti blocchi di testo cifrato saranno identici ($C_i = C_j$).
+    \item \textbf{Determinismo:} Lo stesso blocco di dati, con la stessa chiave, produce sempre lo stesso blocco cifrato.
+    \item \textbf{Rivelazione di Pattern:} Questa proprietà rivela pattern nei dati.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{slide_7} % Assumendo che slide_7.png sia l'immagine del pinguino
+    \caption{Effetto della modalità ECB sulla crittografia di un'immagine. Da sinistra a destra: testo in chiaro, testo cifrato con ECB (pattern visibili), testo cifrato con altre modalità (rumore).}
+    \label{fig:ecb_penguin}
+\end{figure}
+
+\section{Nozione di Sicurezza: Sicurezza Semantica (IND-CPA)}
+La \textbf{Sicurezza Semantica} implica che un testo cifrato non dovrebbe rivelare alcuna informazione sul testo in chiaro, a parte (eventualmente) la sua lunghezza.
+
+\subsection{IND-EAV (Indistinguishability under Eavesdropping Attack)}
+L'attaccante ($\text{Adv}$) osserva solo i testi cifrati (Ciphertext-Only Attack).
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm and 2.5cm, text=tikztext]
+        \node[challenger] (charlie) {Charlie (Challenger)};
+        \node[adversary, right=of charlie] (adv) {Adv};
+
+        \path (adv.west) edge[message_flow, bend left=15] node[above, midway, font=\footnotesize] {$m_0, m_1 \in \mathcal{M}$} (charlie.east);
+        \node[above=0.2cm of $(charlie.east)!0.5!(adv.west)$] (round1_text) [font=\scriptsize, text width=5cm, text centered] {Round 1: Charlie sceglie $k, Enc_k$\\Round 2: Adv sceglie $m_0, m_1$};
+
+        \path (charlie.east) edge[message_flow, bend left=15] node[above, midway, font=\footnotesize] {$c = Enc_k(m_b)$} (adv.west);
+         \node[below=0.2cm of $(charlie.east)!0.5!(adv.west)$] (round3_text) [font=\scriptsize, text width=5cm, text centered] {Round 3: Charlie sceglie $b \xleftarrow{R} \{0,1\}$\\Round 4: Charlie crittografa $m_b$};
+
+        \node[right=0.5cm of adv, font=\footnotesize] (b_prime) {$b' \in \{0,1\}$};
+        \path (adv.east) edge[message_flow, dashed] (b_prime.west);
+        \node[below=0.2cm of adv, font=\scriptsize, text width=3cm, text centered] (round5_text) {Round 5: Adv indovina $b'$ \\ Adv vince se $b=b'$};
+    \end{tikzpicture}
+    \caption{Gioco della Indistinguishability under Eavesdropping Attack (IND-EAV).}
+    \label{fig:ind_eav_game}
+\end{figure}
+Il vantaggio dell'attaccante è definito come:
+$$ \text{Adv}_{\text{SS}}[\text{A}, \text{Q}] := | \Pr[\text{EXP}(0)=1] - \Pr[\text{EXP}(1)=1] | $$
+Un cifrario è IND-EAV sicuro se $\text{Adv}_{\text{SS}}$ è "trascurabile".
+
+\subsection{IND-CPA (Indistinguishability under Chosen Plaintext Attack)}
+L'attaccante ha accesso a un oracolo di crittografia.
+\begin{itemize}
+    \item \textbf{Round 1:} Charlie sceglie $k$ e l'algoritmo di crittografia.
+    \item \textbf{Round 2 (Query Phase 1):} L'Adv può inviare messaggi $m_q$ a Charlie e ricevere $Enc_k(m_q)$.
+    \item \textbf{Round 3 (Challenge):} L'Adv sceglie due messaggi $m_0, m_1$ (di uguale lunghezza, non chiesti prima come $m_q$ per il challenge).
+    \item \textbf{Round 4:} Charlie sceglie $b \xleftarrow{R} \{0,1\}$ e invia $c = Enc_k(m_b)$ all'Adv.
+    \item \textbf{Round 5 (Query Phase 2):} L'Adv può fare altre query (non su $m_0$ o $m_1$ per il challenge).
+    \item \textbf{Round 6 (Guess):} L'Adv indovina $b'$ per $b$.
+\end{itemize}
+Un cifrario è IND-CPA sicuro se nessun attaccante efficiente può vincere con vantaggio non trascurabile.
+
+\subsection{ECB NON è Semanticamente Sicuro (IND-CPA)}
+ECB fallisce il test IND-CPA a causa del suo determinismo.
+\begin{itemize}
+    \item \textbf{Esempio di Attacco:}
+    \begin{enumerate}
+        \item L'attaccante $A$ sceglie:
+        \begin{itemize}
+            \item $m_0 = \text{"BloccoA"} || \text{"BloccoB"}$ (due blocchi diversi)
+            \item $m_1 = \text{"BloccoX"} || \text{"BloccoX"}$ (due blocchi identici)
+        \end{itemize}
+        \item Il challenger crittografa $m_b$ con ECB: $c = (c_{\text{primo}}, c_{\text{secondo}})$.
+        \item Se $c_{\text{primo}} = c_{\text{secondo}}$, $A$ sa che è stato crittografato $m_1$.
+        \item Se $c_{\text{primo}} \neq c_{\text{secondo}}$, $A$ sa che è stato crittografato $m_0$.
+        \item $A$ vince con probabilità 1 (vantaggio = 1).
+    \end{enumerate}
+\end{itemize}
+\textbf{Conclusione:} Non usare ECB in pratica. La crittografia ha bisogno di essere randomizzata o stateful.
+
+\section{Soluzioni per la Sicurezza Semantica}
+\begin{enumerate}
+    \item \textbf{Randomized Encryption (Crittografia Randomizzata):}
+    \begin{itemize}
+        \item $E(k,m)$ è un algoritmo randomizzato. Ogni chiamata a $E(k,m)$ per lo stesso $m$ produce $c$ diversi con alta probabilità.
+        \item Il testo cifrato è più lungo del testo in chiaro.
+    \end{itemize}
+    \item \textbf{Nonce-based Encryption (Crittografia basata su Nonce):}
+    \begin{itemize}
+        \item Un \textbf{nonce} (\textit{Number used ONCE}) è un valore usato una sola volta per una data chiave.
+        \item \textbf{Proprietà del Nonce:} Unico per la coppia $(k, \text{nonce})$, non necessariamente segreto, non necessariamente casuale (può essere un contatore).
+        \item Usato come $c = E(k, m, n)$ e $m = D(k, c, n)$.
+    \end{itemize}
+\end{enumerate}
+
+\section{Cipher Block Chaining (CBC)}
+Rende ogni blocco di testo cifrato dipendente da tutti i blocchi di testo in chiaro precedenti.
+\begin{itemize}
+    \item \textbf{Initialization Vector (IV):} Un blocco di bit, della stessa dimensione del blocco del cifrario.
+    \begin{itemize}
+        \item Deve essere noto al mittente e al destinatario.
+        \item Per IND-CPA, l'IV deve essere \textbf{imprevedibile} o un nonce crittografato.
+        \item Non deve essere segreto, ma la sua integrità deve essere protetta.
+    \end{itemize}
+    \item \textbf{Crittografia CBC:}
+    \begin{align*}
+        C_1 &= E(K, P_1 \oplus IV) \\
+        C_j &= E(K, P_j \oplus C_{j-1}) \quad \text{per } j > 1
+    \end{align*}
+    \item \textbf{Decrittografia CBC:}
+    \begin{align*}
+        P_1 &= D(K, C_1) \oplus IV \\
+        P_j &= D(K, C_j) \oplus C_{j-1} \quad \text{per } j > 1
+    \end{align*}
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{slide_28} % Diagramma CBC Encryption
+    \caption{Diagramma della modalità CBC - Crittografia.}
+    \label{fig:cbc_encryption}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{slide_30} % Diagramma CBC Decryption
+    \caption{Diagramma della modalità CBC - Decrittografia.}
+    \label{fig:cbc_decryption}
+\end{figure}
+\subsection{Sicurezza CBC}
+\begin{itemize}
+    \item Se l'IV è scelto correttamente, CBC è IND-CPA sicuro.
+    \item \textbf{Attenzione:} Se un attaccante può \textbf{prevedere} l'IV, CBC perde la sicurezza IND-CPA. Esempio: bug in SSL/TLS 1.0 dove l'IV per il record $i$ era l'ultimo blocco cifrato del record $i-1$.
+    \item L'OpenSSL `AES_cbc_encrypt` richiede che l'utente fornisca l'IV. Se questo IV non è casuale, deve essere crittografato prima dell'uso per mantenere la sicurezza CPA.
+\end{itemize}
+\begin{minted}{c}
+void AES_cbc_encrypt(
+    const unsigned char *in,
+    unsigned char *out,
+    size_t length,
+    const AES_KEY *key,
+    unsigned char *ivec, // User supplies IV
+    const int enc // AES_ENCRYPT or AES_DECRYPT
+);
+// When IV is non-random, need to encrypt it before use
+// (Otherwise, no CPA security!!)
+\end{minted}
+
+\section{Convertire Cifrari a Blocchi in Cifrari a Flusso}
+CFB, OFB e CTR trasformano un cifrario a blocchi in un cifrario a flusso, eliminando la necessità di padding e permettendo operazioni in tempo reale.
+
+\subsection{Cipher FeedBack (CFB) Mode}
+\begin{itemize}
+    \item Usa un registro a scorrimento $I$ inizializzato con un IV (nonce).
+    \item \textbf{Crittografia ($s$ bit alla volta):}
+    \begin{align*}
+        O_j &= E(K, I_j) \\
+        C_j &= P_j \oplus \text{MSB}_s(O_j) \\
+        I_{j+1} &= \text{LSB}_{b-s}(I_j) || C_j
+    \end{align*}
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{slide_35a} % Parte (a) Encryption del diagramma CFB
+    \caption{Diagramma della modalità CFB - Crittografia.}
+    \label{fig:cfb_encryption}
+\end{figure}
+
+\subsection{Output FeedBack (OFB) Mode}
+\begin{itemize}
+    \item L'output del cifrario $O_j$ è reimmesso nel registro. IV deve essere un nonce.
+    \item \textbf{Crittografia:}
+    \begin{align*}
+        I_1 &= \text{Nonce (IV)} \\
+        O_j &= E(K, I_j) \\
+        C_j &= P_j \oplus O_j \\
+        I_{j+1} &= O_j
+    \end{align*}
+    \item Gli errori di trasmissione non si propagano.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{slide_36a} % Parte (a) Encryption del diagramma OFB
+    \caption{Diagramma della modalità OFB - Crittografia.}
+    \label{fig:ofb_encryption}
+\end{figure}
+
+\subsection{Counter (CTR) Mode}
+\begin{itemize}
+    \item Genera un keystream crittografando i valori di un contatore $T_j$.
+    \item $T_j$ deve essere unico per ogni blocco (tipicamente $T_j = \text{Nonce} + (j-1)$).
+    \item \textbf{Crittografia:} $C_j = P_j \oplus E(K, T_j)$
+    \item \textbf{Decrittografia:} $P_j = C_j \oplus E(K, T_j)$
+    \item Altamente parallelizzabile. Mai riutilizzare una coppia $(K, T_j)$.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{slide_37a} % Parte (a) Encryption del diagramma CTR
+    \caption{Diagramma della modalità CTR - Crittografia.}
+    \label{fig:ctr_encryption}
+\end{figure}
+
+\section{XTS-AES Mode}
+\begin{itemize}
+    \item Approvato da NIST nel 2010 (IEEE Std 1619-2007).
+    \item Specifico per la crittografia di dati su dispositivi di archiviazione a settori (es. hard disk).
+    \item Modalità "tweakable block cipher", usa un "tweak" (derivato dalla posizione del settore) per differenziare la crittografia dello stesso blocco di dati in settori diversi.
+\end{itemize}
+
+\section{Riassunto Punti Chiave}
+\begin{itemize}
+    \item \textbf{ECB è insicuro:} Riconoscere il determinismo e la rivelazione di pattern.
+    \item \textbf{Sicurezza Semantica (IND-CPA):} Concetto chiave. ECB fallisce.
+    \item \textbf{Ruolo dell'IV/Nonce:} Fondamentale. Unicità e (per CBC) imprevedibilità sono cruciali.
+    \item \textbf{CBC:} Chaining, propagazione limitata dell'errore.
+    \item \textbf{CFB vs OFB:} Differenza nel feedback. OFB non propaga errori di trasmissione nel ciphertext.
+    \item \textbf{CTR:} Parallelizzabile, accesso casuale. Non riutilizzare (chiave, contatore).
+    \item Tutte le modalità (tranne ECB), se usate correttamente (specialmente la gestione dell'IV/Nonce), mirano a fornire sicurezza IND-CPA.
+\end{itemize}
+
+\end{document}

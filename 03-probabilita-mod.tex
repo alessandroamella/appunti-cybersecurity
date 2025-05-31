@@ -1,0 +1,470 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts} % Per \mathbb
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+
+% --- Immagini ---
+\usepackage{float}
+\usepackage{tikz} % per disegni
+\usepackage{pgfplots} % per grafici
+\pgfplotsset{compat=1.18}
+\usepackage{graphicx} % per immagini
+\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc}
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Appunti di Probabilità Discreta e Teoria dei Numeri per Cybersecurity},
+    pdfauthor={Basato sulle slide del Prof.},
+    colorlinks=true,
+    linkcolor=cyan,
+    urlcolor=magenta,
+    citecolor=green
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\definecolor{bgcolor}{RGB}{30,30,30} % Sfondo grigio scuro
+\definecolor{maintext}{RGB}{230,230,230} % Testo bianco sporco
+\definecolor{headercolor}{RGB}{100,180,255} % Blu chiaro per titoli
+\definecolor{codebg}{RGB}{40,40,40} % Sfondo per blocchi di codice
+
+\pagecolor{bgcolor}
+\color{maintext}
+
+% --- Evidenziazione del codice (richiede -shell-escape) ---
+% Compilare con: pdflatex -shell-escape nomefile.tex
+\usepackage{minted}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines=true,
+    style=monokai, % Stile di highlighting (dark)
+    bgcolor=codebg % Sfondo personalizzato per minted
+}
+\newminted{text}{bgcolor=codebg} % Per testo semplice con sfondo
+
+% --- Stile TikZ per diagrammi su sfondo scuro ---
+\tikzstyle{block} = [rectangle, draw=cyan, fill=bgcolor!80!maintext,
+    text width=8em, text centered, rounded corners, minimum height=3em, line width=0.5pt]
+\tikzstyle{diamond_block} = [diamond, draw=cyan, fill=bgcolor!80!maintext,
+    text width=6em, text centered, minimum height=2.5em, aspect=2, line width=0.5pt, inner sep=0pt]
+\tikzstyle{line} = [draw=maintext, -Latex, line width=0.5pt]
+\tikzstyle{startend} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=cyan, fill=bgcolor!60!maintext, line width=0.5pt]
+
+
+% --- Titolo ---
+\title{\color{headercolor}Appunti di Probabilità Discreta e Teoria dei Numeri per Cybersecurity}
+\author{Basato sulle slide del Professore}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\part{Probabilità Discreta (Richiamo)}
+
+\section{Distribuzione di Probabilità}
+
+\begin{itemize}
+    \item \textbf{Universo (U) o Spazio Campionario (Sample Space)}: È l'insieme di tutti i possibili risultati di un esperimento. Deve essere un insieme \textbf{finito}.
+    \begin{itemize}
+        \item Esempio (Lancio Moneta): $U = \{ \text{testa, croce} \}$ oppure $U = \{0, 1\}$.
+        \item Esempio (Lancio Dado): $U = \{1, 2, 3, 4, 5, 6\}$.
+    \end{itemize}
+    \item \textbf{Distribuzione di Probabilità (P)}: È una funzione che assegna a ciascun elemento $x$ dell'universo U una probabilità $P(x)$.
+    \begin{itemize}
+        \item Dominio: $U$
+        \item Codominio: $[0, 1]$ (la probabilità è un valore tra 0 e 1 inclusi)
+        \item Proprietà Fondamentale: La somma delle probabilità di tutti gli elementi nell'universo deve essere 1.
+        \[ \sum_{x \in U} P(x) = 1 \]
+        \item Esempio (Moneta Equa): $P(\text{testa}) = 1/2$, $P(\text{croce}) = 1/2$. $(1/2 + 1/2 = 1)$
+        \item Esempio (Dado Equo): $P(1) = P(2) = \dots = P(6) = 1/6$. $(6 \times 1/6 = 1)$
+    \end{itemize}
+    \item \textbf{Notazione per Stringhe Binarie}: Spesso l'universo è l'insieme di tutte le possibili stringhe binarie di una certa lunghezza $n$.
+    \begin{itemize}
+        \item $U = \{0,1\}^n$ (l'insieme di tutte le stringhe binarie di lunghezza $n$)
+        \item Esempio ($n=2$): $U = \{0,1\}^2 = \{00, 01, 10, 11\}$
+            \begin{itemize}
+                \item Una possibile distribuzione (non uniforme): $P(00) = 1/2$, $P(01) = 1/8$, $P(10) = 1/4$, $P(11) = 1/8$.
+                \item Verifica: $1/2 + 1/8 + 1/4 + 1/8 = 4/8 + 1/8 + 2/8 + 1/8 = 8/8 = 1$.
+            \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\section{Esempi Particolari di Distribuzioni}
+\begin{itemize}
+    \item \textbf{Distribuzione Uniforme}: Ogni elemento $x$ nell'universo U ha la stessa probabilità.
+    \[ P(x) = \frac{1}{|U|} \]
+    (dove $|U|$ è il numero di elementi in U, ovvero la sua cardinalità).
+    \item \textbf{Distribuzione Puntuale (Point distribution) in $x_0$}: Tutta la probabilità è concentrata su un singolo elemento $x_0$.
+    \begin{itemize}
+        \item $P(x_0) = 1$
+        \item $P(x) = 0$ per ogni $x \neq x_0$.
+    \end{itemize}
+\end{itemize}
+
+\section{Eventi}
+\begin{itemize}
+    \item \textbf{Evento (A)}: Un evento è un \textbf{sottoinsieme} dell'universo U ($A \subseteq U$). Rappresenta un insieme di risultati di interesse.
+    \item \textbf{Probabilità di un Evento (Pr[A])}: È la somma delle probabilità di tutti gli elementi $x$ che appartengono all'evento A.
+    \[ \text{Pr}[A] = \sum_{x \in A} P(x) \]
+    \item Nota: $\text{Pr}[U] = 1$.
+    \item Esempio (Dado Equo):
+    \begin{itemize}
+        \item $U = \{1, 2, 3, 4, 5, 6\}$, $P(x) = 1/6$ per ogni $x$.
+        \item Evento $A = \text{"esce un numero dispari"} = \{1, 3, 5\}$.
+        \item $\text{Pr}[A] = P(1) + P(3) + P(5) = 1/6 + 1/6 + 1/6 = 3/6 = 1/2$.
+    \end{itemize}
+    \item Esempio (Stringhe Binarie):
+    \begin{itemize}
+        \item Universo $U = \{0,1\}^8$. $|U| = 2^8$.
+        \item Distribuzione $P$ uniforme: $P(x) = 1/2^8$ per ogni $x \in U$.
+        \item Evento $A = \{ \text{tutte le } x \in U \text{ tali che lsb}_2(x)=11 \}$. (lsb$_2(x)$ sono gli ultimi due bit di $x$)
+        \item Un elemento $x$ in $A$ ha la forma: $b_5 b_4 b_3 b_2 b_1 b_0 1 1$. I primi 6 bit possono essere qualsiasi cosa.
+        \item Quindi, $|A| = 2^6$.
+        \item $\text{Pr}[A] = |A| \times P(x) = 2^6 \times (1/2^8) = 2^6 / 2^8 = 1/2^2 = 1/4$.
+    \end{itemize}
+\end{itemize}
+
+\section{Unione di Eventi}
+Siano $A_1$ e $A_2$ due eventi.
+\begin{itemize}
+    \item L'unione $A_1 \cup A_2$ ("$A_1$ oppure $A_2$") è anch'essa un evento.
+    \item \textbf{Formula Generale}:
+    \[ \text{Pr}[A_1 \cup A_2] = \text{Pr}[A_1] + \text{Pr}[A_2] – \text{Pr}[A_1 \cap A_2] \]
+    \item \textbf{Union Bound (Limite dell'Unione)}:
+    \[ \text{Pr}[A_1 \cup A_2] \le \text{Pr}[A_1] + \text{Pr}[A_2] \]
+    \item \textbf{Eventi Disgiunti (Mutuamente Esclusivi)}: Se $A_1 \cap A_2 = \emptyset$, allora $\text{Pr}[A_1 \cap A_2] = 0$.
+    \[ \text{Pr}[A_1 \cup A_2] = \text{Pr}[A_1] + \text{Pr}[A_2] \]
+\end{itemize}
+
+\section{Variabili Aleatorie (Random Variables)}
+\begin{itemize}
+    \item \textbf{Definizione}: Una variabile aleatoria $X$ è una funzione $X : U \to V$.
+    \item Esempio (Lancio Dado):
+    \begin{itemize}
+        \item $U = \{1, 2, 3, 4, 5, 6\}$ con $P(i) = 1/6$.
+        \item $X: U \to V=\{\text{"pari", "dispari"}\}$ definita come $X(i) = \text{"pari"}$ se $i$ è pari, e $\text{"dispari"}$ se $i$ è dispari.
+        \item $\text{Pr}[X=\text{"pari"}] = P(\{2, 4, 6\}) = P(2)+P(4)+P(6) = 3/6 = 1/2$.
+        \item $\text{Pr}[X=\text{"dispari"}] = P(\{1, 3, 5\}) = P(1)+P(3)+P(5) = 3/6 = 1/2$.
+    \end{itemize}
+    \item Una variabile aleatoria $X$ induce una distribuzione di probabilità sull'insieme $V$.
+    \item \textbf{Variabile Aleatoria Uniforme su un Insieme S}:
+    \begin{itemize}
+        \item Si scrive $X \stackrel{\$}{\leftarrow} S$.
+        \item Significa che per ogni elemento $a \in S$:
+        \[ \text{Pr}[X=a] = \frac{1}{|S|} \]
+    \end{itemize}
+\end{itemize}
+
+\section{Algoritmi Randomizzati vs. Deterministici}
+\begin{itemize}
+    \item \textbf{Algoritmo Deterministico}: $y \leftarrow A(m)$. L'output è sempre lo stesso per un dato input.
+    \item \textbf{Algoritmo Randomizzato}: $y \leftarrow A(m)$. L'output è una variabile aleatoria.
+\end{itemize}
+
+\section{Indipendenza}
+\begin{itemize}
+    \item \textbf{Eventi Indipendenti}: A e B sono indipendenti se:
+    \[ \text{Pr}[A \cap B] = \text{Pr}[A] \cdot \text{Pr}[B] \]
+    \item \textbf{Variabili Aleatorie Indipendenti}: X e Y (che assumono valori in V) sono indipendenti se per ogni $a,b \in V$:
+    \[ \text{Pr}[X=a \text{ and } Y=b] = \text{Pr}[X=a] \cdot \text{Pr}[Y=b] \]
+\end{itemize}
+
+\section{Operazione XOR e sue Proprietà}
+\begin{itemize}
+    \item \textbf{XOR ($\oplus$)}: Addizione bit a bit modulo 2.
+    \begin{center}
+    \begin{tabular}{cc|c}
+        $X$ & $Y$ & $X \oplus Y$ \\ \hline
+        0 & 0 & 0 \\
+        0 & 1 & 1 \\
+        1 & 0 & 1 \\
+        1 & 1 & 0
+    \end{tabular}
+    \end{center}
+    \item Esempio (stringhe):
+    \[
+    \begin{array}{@{}c@{\,}c@{}c@{}c@{}c@{}c@{}c@{}c}
+      & 0 & 1 & 1 & 0 & 1 & 1 & 1 \\
+    \oplus & 1 & 0 & 1 & 1 & 0 & 1 & 0 \\ \hline
+      & 1 & 1 & 0 & 1 & 1 & 0 & 1
+    \end{array}
+    \]
+    \item \textbf{Teorema (Proprietà Importante dell'XOR)}:
+    \begin{enumerate}
+        \item Sia $X$ una variabile aleatoria su $\{0,1\}^n$ con distribuzione \textbf{uniforme}.
+        \item Sia $Y$ una variabile aleatoria su $\{0,1\}^n$ con una distribuzione \textbf{arbitraria}.
+        \item $X$ e $Y$ siano \textbf{indipendenti}.
+    \end{enumerate}
+    Allora, $Z := X \oplus Y$ è una variabile aleatoria \textbf{uniforme} su $\{0,1\}^n$.
+    \item \textit{Dimostrazione (per n=1)}:
+        $P(X=0)=1/2, P(X=1)=1/2$. $P(Y=0)=p_0, P(Y=1)=p_1$ (con $p_0+p_1=1$).
+        \begin{align*} \text{Pr}[Z=0] &= \text{Pr}[(X=0 \land Y=0) \lor (X=1 \land Y=1)] \\ &= \text{Pr}[X=0 \land Y=0] + \text{Pr}[X=1 \land Y=1] \\ &= \text{Pr}[X=0]P[Y=0] + \text{Pr}[X=1]P[Y=1] \quad \text{(indipendenza)} \\ &= (1/2)p_0 + (1/2)p_1 = 1/2(p_0+p_1) = 1/2(1) = 1/2 \end{align*}
+        Poiché $\text{Pr}[Z=0]=1/2$, allora $\text{Pr}[Z=1]=1/2$. Quindi $Z$ è uniforme.
+\end{itemize}
+
+\section{Il Paradosso del Compleanno}
+\begin{itemize}
+    \item \textbf{Concetto}: In un gruppo, la probabilità che almeno due persone condividano lo stesso compleanno è sorprendentemente alta.
+    \item \textbf{Teorema Generale}: Siano $r_1, \dots, r_n$ variabili aleatorie i.i.d. su $U$.
+    Se $n \approx 1.2 \times \sqrt{|U|}$, allora $\text{Pr}[\exists i \neq j : r_i = r_j] \ge 1/2$.
+    \item \textbf{Esempi}:
+    \begin{enumerate}
+        \item \textbf{Compleanni}: $U = \{1, \dots, 365\}$. $|U|=365$. $\sqrt{365} \approx 19.1$. $n \approx 1.2 \times 19.1 \approx 23$. Con 23 persone, $P(\text{collisione}) \ge 1/2$.
+        \item \textbf{Hashing}: $U = \{0,1\}^{128}$. $|U|=2^{128}$. $\sqrt{|U|} = 2^{64}$. $n \approx 1.2 \times 2^{64}$. Campionando $\sim 2^{64}$ messaggi, è probabile una collisione.
+    \end{enumerate}
+    \item \textbf{Grafico Concettuale della Probabilità di Collisione}:
+    Per un universo di dimensione $|U|$, la probabilità di collisione $P(n)$ in funzione del numero di campioni $n$:
+    \begin{itemize}
+        \item $P(n)$ parte da 0 per $n=1$.
+        \item Cresce lentamente all'inizio, poi più rapidamente.
+        \item Raggiunge $0.5$ (50\%) quando $n \approx \sqrt{|U|}$ (più precisamente, $1.2 \sqrt{|U|}$).
+        \item Tende a 1 (certezza) per $n$ che si avvicina a $|U|$.
+    \end{itemize}
+    Esempio con $|U|=10^6$: $\sqrt{|U|} = 1000$. $P(n) \approx 0.5$ per $n \approx 1200$.
+    \begin{center}
+    \begin{tikzpicture}[scale=0.8, every node/.style={color=maintext}]
+    \begin{axis}[
+        axis lines=middle, xlabel={$n$ (\# campioni)}, ylabel={$P(\text{collisione})$},
+        xmin=0, xmax=4500, ymin=0, ymax=1.05,
+        xtick={0, 1000, 2000, 3000, 4000},
+        ytick={0, 0.25, 0.5, 0.75, 1.0},
+        grid=major,
+        grid style={dotted,gray!50},
+        legend pos=south east,
+        legend style={fill=bgcolor, draw=maintext, text=maintext},
+        tick label style={color=maintext},
+        label style={color=maintext},
+        title style={color=headercolor},
+        title={Probabilità di Collisione (es. $|U|=10^6$)},
+        axis line style={maintext},
+    ]
+    % Formula approssimata per il paradosso del compleanno P(n) ~ 1 - exp(-n^2 / (2*|U|))
+    \addplot[smooth, thick, color=cyan, domain=0:4500, samples=100] {1 - exp(-x^2 / (2*1000000))};
+    \addlegendentry{$P(n) \approx 1 - e^{-n^2/(2|U|)}$}
+    
+    % Punto n ~ 1.2 * sqrt(|U|)
+    \pgfmathsetmacro{\Nval}{1000000}
+    \pgfmathsetmacro{\nstar}{1.2*sqrt(\Nval)} % Circa 1183, useremo 1200 per l'esempio
+    \pgfmathsetmacro{\pstar}{1 - exp(-\nstar^2 / (2*\Nval))}
+    
+    \draw[dashed, color=red!70!maintext] (axis cs:1200,0) -- (axis cs:1200,\pstar);
+    \draw[dashed, color=red!70!maintext] (axis cs:0,\pstar) -- (axis cs:1200,\pstar);
+    \node[red!70!maintext, above right, font=\tiny] at (axis cs:1200,\pstar) {$(1200, \approx 0.5)$};
+    \end{axis}
+    \end{tikzpicture}
+    \end{center}
+\end{itemize}
+
+\part{Teoria dei Numeri}
+
+\section{Background e Applicazioni}
+La teoria dei numeri è usata per costruire:
+\begin{itemize}
+    \item Protocolli di scambio di chiavi (es. Diffie-Hellman)
+    \item Firme digitali (es. RSA, DSA)
+    \item Cifratura a chiave pubblica (es. RSA)
+\end{itemize}
+
+\section{Il Modulo e la Congruenza}
+\begin{itemize}
+    \item \textbf{Operazione Modulo ($a \pmod n$)}: Se $a$ è un intero e $n$ è un intero positivo (chiamato \textbf{modulo}), $a \pmod n$ è il resto della divisione di $a$ per $n$.
+    \[ a = qn + r, \quad \text{dove } 0 \le r < n. \quad r = a \pmod n. \]
+    \item \textbf{Congruenza}: Due interi $a$ e $b$ sono \textbf{congruenti modulo n} (scritto $a \equiv b \pmod n$) se $a \pmod n = b \pmod n$.
+    Equivalentemente, $a \equiv b \pmod n$ se $n | (a-b)$ ($n$ divide $a-b$).
+    \item \textbf{Proprietà della Congruenza}:
+    \begin{enumerate}
+        \item $a \equiv b \pmod n \iff n | (a-b)$.
+        \item Se $a \equiv b \pmod n \implies b \equiv a \pmod n$ (simmetrica).
+        \item Se $a \equiv b \pmod n$ e $b \equiv c \pmod n \implies a \equiv c \pmod n$ (transitiva).
+    \end{enumerate}
+\end{itemize}
+
+\section{Operazioni Aritmetiche Modulari}
+Proprietà valide $\pmod n$:
+\begin{enumerate}
+    \item $[(a \pmod n) + (b \pmod n)] \pmod n = (a + b) \pmod n$
+    \item $[(a \pmod n) - (b \pmod n)] \pmod n = (a - b) \pmod n$
+    \item $[(a \pmod n) \times (b \pmod n)] \pmod n = (a \times b) \pmod n$
+\end{enumerate}
+Esempio ($\pmod 8$): $11 \pmod 8 = 3$, $15 \pmod 8 = 7$.
+\begin{itemize}
+    \item $(3+7) \pmod 8 = 10 \pmod 8 = 2$.
+    \item $(3-7) \pmod 8 = -4 \pmod 8 = 4$.
+    \item $(3 \times 7) \pmod 8 = 21 \pmod 8 = 5$.
+\end{itemize}
+
+\section{Notazione $\mathbb{Z}_N$ e Aritmetica in $\mathbb{Z}_N$}
+\begin{itemize}
+    \item $\mathbb{Z}_N$: È l'insieme degli interi $\{0, 1, 2, \dots, N-1\}$.
+    \item Esempi (in $\mathbb{Z}_{12}$):
+    \begin{itemize}
+        \item $9 + 8 = 17 \equiv 5 \pmod{12}$
+        \item $5 \times 7 = 35 \equiv 11 \pmod{12}$
+        \item $5 - 7 = -2 \equiv 10 \pmod{12}$
+    \end{itemize}
+\end{itemize}
+
+\section{Esponenziazione Modulare}
+Calcolare $a^b \pmod n$. Si esegue tramite moltiplicazioni ripetute, riducendo modulo $n$ ad ogni passo.
+Esempio: Calcolare $11^7 \pmod{13}$.
+\begin{itemize}
+    \item $11^1 \equiv 11 \pmod{13}$
+    \item $11^2 = 121 \equiv 4 \pmod{13}$ (poiché $121 = 9 \times 13 + 4$)
+    \item $11^4 = (11^2)^2 \equiv 4^2 = 16 \equiv 3 \pmod{13}$
+    \item $11^7 = 11^{4+2+1} = 11^4 \times 11^2 \times 11^1 \equiv 3 \times 4 \times 11 \pmod{13}$
+    \item $\equiv 12 \times 11 \pmod{13} \equiv (-1) \times (-2) \pmod{13} \equiv 2 \pmod{13}$.
+\end{itemize}
+
+\section{Massimo Comun Divisore (GCD) e Algoritmo Euclideo}
+\begin{itemize}
+    \item \textbf{GCD(a, b)}: Il più grande intero positivo che divide sia $a$ che $b$.
+    \item \textbf{Relativamente Primi}: $a, b$ sono relativamente primi se $\text{gcd}(a,b) = 1$.
+    \item \textbf{Algoritmo Euclideo}: Basato su $\text{gcd}(a, b) = \text{gcd}(b, a \pmod b)$ (per $a \ge b$). Caso base: $\text{gcd}(a, 0) = a$.
+    \begin{minted}{text}
+Euclid(a,b)
+  if (b=0) then return a;
+  else return Euclid(b, a mod b);
+    \end{minted}
+    \item Esempio: $\text{gcd}(18, 12)$
+    $\text{gcd}(18,12) = \text{gcd}(12, 18 \pmod{12}) = \text{gcd}(12,6) = \text{gcd}(6, 12 \pmod 6) = \text{gcd}(6,0) = 6$.
+\end{itemize}
+\begin{center}
+\begin{tikzpicture}[node distance=2cm, auto]
+    \node [startend] (start) {START};
+    \node [diamond_block, below of=start, node distance=1.5cm] (a_gt_b) {$a > b$?};
+    \node [block, left of=a_gt_b, node distance=3cm] (swap) {Swap $a,b$};
+    \node [block, right of=a_gt_b, node distance=3cm] (divide) {Divide $a$ by $b$, remainder $r$};
+    \node [diamond_block, below of=divide, node distance=2cm] (r_gt_0) {$r > 0$?};
+    \node [block, right of=r_gt_0, node distance=3cm] (replace_a_b) {Replace $a \leftarrow b, b \leftarrow r$};
+    \node [startend, below of=r_gt_0, node distance=1.5cm] (end) {END ($b$ (or $a$) is GCD)};
+    
+    \path [line] (start) -- (a_gt_b);
+    \path [line] (a_gt_b) -- node[near start, above] {No} (swap);
+    \path [line] (swap.east) -- ++(0.5,0) |- (a_gt_b); % back to a_gt_b
+    \path [line] (a_gt_b) -- node[near start, above] {Yes} (divide);
+    \path [line] (divide) -- (r_gt_0);
+    \path [line] (r_gt_0) -- node[near start, above] {Yes} (replace_a_b);
+    \draw [line] (replace_a_b.east) -- ++(0.5,0) |- (divide); % loop back to divide
+    \path [line] (r_gt_0) -- node[near start, left] {No} (end);
+    \node[maintext, below of=end, node distance=0.8cm, text width=10cm, align=center]{\footnotesize Nota: Lo schema della slide originale ha `d=gcd(a,b)` e `GCD is the final value of b`. Se $r=0$, il GCD è $b$ (il divisore). Se si segue `a <- b, b <- r`, quando `r` diventa 0, il precedente $b$ (ora $a$) è il GCD. Qui `end` significa che $b$ è il GCD se l'ultimo $r$ calcolato era 0.};
+\end{tikzpicture}
+\end{center}
+
+
+\section{Algoritmo Euclideo Esteso (EEA)}
+\begin{itemize}
+    \item \textbf{Identità di Bézout}: Esistono interi $x, y$ tali che $ax + by = \text{gcd}(a,b)$.
+    \item L'EEA calcola $d = \text{gcd}(a,b)$ e i coefficienti $x, y$.
+    \item \textbf{Procedura Tabellare}:
+    Inizializzazione: $r_{-1}=a, x_{-1}=1, y_{-1}=0$; $r_{0}=b, x_{0}=0, y_{0}=1$.
+    Per $i \ge 1$:
+    \begin{itemize}
+        \item $q_i = \lfloor r_{i-2} / r_{i-1} \rfloor$
+        \item $r_i = r_{i-2} - q_i r_{i-1}$ (cioè $r_{i-2} \pmod{r_{i-1}}$)
+        \item $x_i = x_{i-2} - q_i x_{i-1}$
+        \item $y_i = y_{i-2} - q_i y_{i-1}$
+    \end{itemize}
+    Ci si ferma quando $r_k=0$. Allora $\text{gcd}(a,b) = r_{k-1}$, $x = x_{k-1}$, $y = y_{k-1}$.
+    \item Esempio: $93x + 57y = \text{gcd}(93,57)$
+    \begin{center}
+    \begin{tabular}{|c|c|c|c|c|}
+    \hline
+    $i$ & $r_i$ & $q_i$ & $x_i$ & $y_i$ \\ \hline
+    -1  & 93    &       & 1     & 0     \\
+    0   & 57    &       & 0     & 1     \\
+    1   & 36    & $q_1=\lfloor 93/57 \rfloor = 1$ & $x_1=1-1 \cdot 0 = 1$ & $y_1=0-1 \cdot 1 = -1$ \\
+    2   & 21    & $q_2=\lfloor 57/36 \rfloor = 1$ & $x_2=0-1 \cdot 1 = -1$ & $y_2=1-1 \cdot (-1) = 2$ \\
+    3   & 15    & $q_3=\lfloor 36/21 \rfloor = 1$ & $x_3=1-1 \cdot (-1) = 2$ & $y_3=-1-1 \cdot 2 = -3$ \\
+    4   & 6     & $q_4=\lfloor 21/15 \rfloor = 1$ & $x_4=-1-1 \cdot 2 = -3$ & $y_4=2-1 \cdot (-3) = 5$ \\
+    5   & \textbf{3} & $q_5=\lfloor 15/6 \rfloor = 2$ & $x_5=2-2 \cdot (-3) = \textbf{8}$ & $y_5=-3-2 \cdot 5 = \textbf{-13}$ \\
+    6   & 0     & $q_6=\lfloor 6/3 \rfloor = 2$ &       &       \\ \hline
+    \end{tabular}
+    \end{center}
+    Quindi, $\text{gcd}(93, 57) = 3$. E $93 \cdot (8) + 57 \cdot (-13) = 744 - 741 = 3$.
+\end{itemize}
+
+\section{Inversione Modulare}
+\begin{itemize}
+    \item L'inverso moltiplicativo di $x \pmod N$ è $y$ (scritto $x^{-1}$) tale che $x \cdot y \equiv 1 \pmod N$.
+    \item \textbf{Esistenza}: $x \in \mathbb{Z}_N$ ha un inverso $\iff \text{gcd}(x, N) = 1$.
+    L'inverso $a$ è $x_i$ dell'EEA per $ax+bN=1$.
+    \item \textbf{$\mathbb{Z}_N^*$}: L'insieme degli elementi invertibili in $\mathbb{Z}_N$.
+    \[ \mathbb{Z}_N^* = \{x \in \mathbb{Z}_N \mid \text{gcd}(x,N) = 1 \} \]
+    \begin{itemize}
+        \item Se $p$ è primo, $\mathbb{Z}_p^* = \{1, 2, \dots, p-1\}$.
+        \item $\mathbb{Z}_{12}^* = \{1, 5, 7, 11\}$.
+    \end{itemize}
+\end{itemize}
+
+\section{Teorema di Fermat (Piccolo Teorema)}
+Se $p$ è primo e $x$ è un intero non divisibile per $p$ ($x \in \mathbb{Z}_p^*$), allora:
+\[ x^{p-1} \equiv 1 \pmod p \]
+\begin{itemize}
+    \item Esempio: $p=5, x=3$. $3^{5-1} = 3^4 = 81 \equiv 1 \pmod 5$.
+    \item Per calcolare l'inverso: $x^{-1} \equiv x^{p-2} \pmod p$.
+\end{itemize}
+
+\section{Applicazione: Generazione di Numeri Primi Casuali}
+\begin{enumerate}
+    \item Scegli un intero casuale $p$ grande.
+    \item Verifica se $a^{p-1} \equiv 1 \pmod p$ (es. $a=2$).
+    \item Se vero, $p$ è \textit{probabilmente} primo. Altrimenti $p$ è composto.
+\end{enumerate}
+(Test di primalità probabilistico; in pratica si usa Miller-Rabin).
+
+\section{Funzione Totiente di Eulero ($\phi(N)$)}
+\begin{itemize}
+    \item \textbf{Definizione}: $\phi(N)$ è il numero di interi positivi $<N$ e coprimi con $N$.
+    \[ \phi(N) = |\mathbb{Z}_N^*| \]
+    \item \textbf{Proprietà}:
+    \begin{itemize}
+        \item $\phi(1)=1$.
+        \item Se $p$ è primo, $\phi(p) = p-1$. (es. $\phi(37)=36$)
+        \item Se $p, q$ sono primi distinti, $\phi(pq) = (p-1)(q-1)$.
+        \item $\phi(12) = |\{1,5,7,11\}| = 4$.
+    \end{itemize}
+\end{itemize}
+
+\section{Teorema di Eulero}
+Se $\text{gcd}(x, N) = 1$ (cioè $x \in \mathbb{Z}_N^*$), allora:
+\[ x^{\phi(N)} \equiv 1 \pmod N \]
+\begin{itemize}
+    \item È una generalizzazione del Piccolo Teorema di Fermat.
+    \item Esempio: $N=12, x=5$. $\phi(12)=4$. $5^4 = 625 \equiv 1 \pmod{12}$.
+    \item \textbf{Base del criptosistema RSA}.
+\end{itemize}
+
+\section{Il Problema della Fattorizzazione}
+\begin{itemize}
+    \item \textbf{Problema}: Dato un intero composto $N$, trovare i suoi fattori primi.
+    \item \textbf{Difficoltà}: Fattorizzare interi molto grandi è computazionalmente difficile.
+    \item \textbf{Miglior Algoritmo Conosciuto}: Number Field Sieve (NFS).
+    \item \textbf{Record Attuale}: RSA-768 (232 cifre) fattorizzato.
+    \item \textbf{Implicazioni per RSA}: La sicurezza di RSA si basa sulla difficoltà di fattorizzare $N=pq$.
+\end{itemize}
+
+\end{document}

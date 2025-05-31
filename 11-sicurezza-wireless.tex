@@ -1,0 +1,599 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+
+% --- Immagini ---
+\usepackage{float}
+\usepackage{tikz} % per disegni
+\usepackage{graphicx} % per immagini
+\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, backgrounds}
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Appunti sulla Sicurezza delle Reti Wireless},
+    colorlinks=true,
+    linkcolor=cyan,
+    filecolor=magenta,      
+    urlcolor=green,
+    citecolor=red,
+    bookmarksopen=true,
+    bookmarksnumbered=true
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\definecolor{darkbg}{RGB}{30,30,30} % Un nero non assoluto
+\definecolor{lighttext}{RGB}{230,230,230} % Un bianco non accecante
+\definecolor{highlight}{RGB}{100,150,255} % Un blu per evidenziare
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+% Stili per TikZ (Dark Theme)
+\tikzstyle{block_dark} = [rectangle, draw=lighttext, fill=gray!60!darkbg, text=lighttext, 
+    minimum height=2em, minimum width=6em, text centered, rounded corners]
+\tikzstyle{arrow_dark} = [-{Stealth[length=3mm, width=2mm]}, draw=lighttext, thick]
+\tikzstyle{line_dark} = [draw=lighttext, thick]
+\tikzstyle{node_dark} = [circle, draw=lighttext, fill=gray!40!darkbg, text=lighttext, minimum size=7mm]
+\tikzstyle{label_dark} = [text=lighttext, font=\footnotesize]
+
+% --- Evidenziazione del codice (richiede -shell-escape) ---
+% Compilare con: pdflatex -shell-escape nomefile.tex
+\usepackage{minted}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines=true,
+    style=monokai, % Stile di highlighting dark-friendly
+    bgcolor=black!80 % Sfondo leggermente diverso per i blocchi minted
+}
+\usemintedstyle{monokai}
+
+
+% --- Titolo ---
+\title{Appunti sulla Sicurezza delle Reti Wireless}
+\author{Basato sulle slide del Prof. Jocelyne Elias}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% Contenuto qui
+
+\section{L'Ambiente Wireless/Radio}
+L'ambiente wireless è intrinsecamente più vulnerabile di quello cablato. I punti di attacco principali sono tre:
+
+\begin{itemize}
+    \item \textbf{Client Wireless:} Qualsiasi dispositivo che si connette in modalità wireless (es. smartphone, laptop, tablet con Wi-Fi, sensori wireless, dispositivi Bluetooth).
+    \begin{itemize}
+        \item \textit{Esempio pratico:} Il tuo smartphone che si connette alla rete Wi-Fi di casa.
+    \end{itemize}
+    \item \textbf{Punto di Accesso Wireless (AP):} Fornisce la connessione alla rete o a un servizio (es. ripetitori cellulari (Base Station), hotspot Wi-Fi, AP per reti LAN o WAN).
+    \begin{itemize}
+        \item \textit{Esempio pratico:} Il router Wi-Fi a casa tua.
+    \end{itemize}
+    \item \textbf{Mezzo di Trasmissione:} Le onde radio usate per trasmettere i dati. Essendo un mezzo condiviso e aperto, è una fonte significativa di vulnerabilità.
+    \begin{itemize}
+        \item \textit{Esempio pratico:} L'aria attraverso cui viaggiano i segnali Wi-Fi, Bluetooth, ecc.
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=3cm, auto, every node/.style={text=lighttext}]
+        \node[block_dark] (endpoint) {Endpoint (Client)};
+        \node[block_dark, right=of endpoint] (medium) {Wireless Medium};
+        \node[block_dark, right=of medium] (ap) {Access Point};
+
+        \draw[arrow_dark, <->] (endpoint) -- node[above, midway] {Segnali Radio} (medium);
+        \draw[arrow_dark, <->] (medium) -- node[above, midway] {Segnali Radio} (ap);
+        
+        \begin{pgfonlayer}{background}
+            \node[rectangle, fill=darkbg!80, inner sep=1cm, fit=(endpoint)(medium)(ap), rounded corners] {};
+        \end{pgfonlayer}
+    \end{tikzpicture}
+    \caption{Componenti di una Rete Wireless.}
+    \label{fig:wireless_components}
+\end{figure}
+
+
+\subsection{Fattori Chiave di Rischio nelle Reti Wireless}
+(rispetto alle Reti Cablate):
+\begin{itemize}
+    \item \textbf{Canale Wireless:}
+    \begin{itemize}
+        \item Comunicazioni \textbf{broadcast}: Chiunque nel raggio d'azione può "ascoltare".
+        \item Più soggetto a \textbf{intercettazioni} e \textbf{interferenze}.
+        \item Vulnerabile ad \textbf{attacchi attivi} che sfruttano le debolezze dei protocolli di comunicazione.
+    \end{itemize}
+    \item \textbf{Mobilità:}
+    \begin{itemize}
+        \item I dispositivi wireless sono portatili e mobili.
+        \item Comporta rischi come smarrimento, furto, connessione a reti insicure.
+        \item \textit{Esempio pratico:} Perdere lo smartphone aziendale che contiene dati sensibili.
+    \end{itemize}
+    \item \textbf{Risorse Limitate:}
+    \begin{itemize}
+        \item Dispositivi come smartphone e tablet hanno risorse di memoria ed elaborazione limitate.
+        \item Questo li rende meno capaci di contrastare minacce complesse (es. DoS, malware).
+    \end{itemize}
+    \item \textbf{Accessibilità Fisica:}
+    \begin{itemize}
+        \item Dispositivi come sensori IoT o robot possono essere lasciati incustoditi in luoghi remoti o ostili.
+        \item Aumenta la vulnerabilità ad \textbf{attacchi fisici} (manomissione, estrazione di dati).
+        \item \textit{Esempio pratico:} Un sensore ambientale in un campo agricolo potrebbe essere facilmente manomesso da un malintenzionato.
+    \end{itemize}
+\end{itemize}
+
+\section{Possibili Minacce alla Rete Wireless}
+\begin{itemize}
+    \item \textbf{Associazione Dannosa (Malicious Association / Rogue AP):}
+    \begin{itemize}
+        \item Un dispositivo wireless malevolo si configura per apparire come un AP legittimo (es. \texttt{"Free\_Airport\_WiFi"}).
+        \item Induce gli utenti a connettersi, permettendo all'attaccante di rubare password o intercettare dati.
+        \item Può essere usato per penetrare una rete cablata attraverso l'AP wireless legittimo compromesso.
+    \end{itemize}
+    \item \textbf{Reti Ad Hoc:}
+    \begin{itemize}
+        \item Reti peer-to-peer tra dispositivi wireless senza un AP centrale.
+        \item La mancanza di un punto di controllo centrale le rende una minaccia alla sicurezza.
+    \end{itemize}
+    \item \textbf{Reti Non Tradizionali:}
+    \begin{itemize}
+        \item Dispositivi come Bluetooth, scanner di codici a barre, PDA.
+        \item Presentano rischi di intercettazione e spoofing.
+    \end{itemize}
+    \item \textbf{Furto di Identità (MAC Spoofing):}
+    \begin{itemize}
+        \item Un attaccante intercetta il traffico di rete, identifica l'indirizzo MAC di un computer con privilegi.
+        \item L'attaccante poi configura il proprio dispositivo con quel MAC address per impersonare l'utente legittimo.
+    \end{itemize}
+    \item \textbf{Attacchi Man-in-the-Middle (MitM):}
+    \begin{itemize}
+        \item L'attaccante si interpone tra un utente e un AP (o tra due utenti).
+        \item Entrambe le parti credono di comunicare direttamente, ma in realtà la comunicazione passa attraverso l'attaccante.
+        \item Le reti wireless sono particolarmente vulnerabili.
+    \end{itemize}
+    \item \textbf{Denial of Service (DoS):}
+    \begin{itemize}
+        \item L'attaccante bombarda un AP o un client con traffico eccessivo o malformato.
+        \item L'obiettivo è consumare le risorse del target, rendendolo inutilizzabile.
+        \item Facile da realizzare in ambiente wireless.
+    \end{itemize}
+    \item \textbf{Iniezione di Rete (Network Injection):}
+    \begin{itemize}
+        \item Mira a AP esposti a traffico di rete non filtrato.
+        \item L'attaccante invia comandi di riconfigurazione fasulli per degradare le prestazioni della rete.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Tipi di Attacchi (Generale)}
+\begin{itemize}
+    \item \textbf{Passivo:} L'attaccante osserva/registra il traffico senza modificarlo (es. eavesdropping, analisi del traffico).
+    \item \textbf{Attivo:} L'attaccante modifica il traffico, si impersona o crea nuovo traffico (es. masquerade, modifica dati, replay, DoS).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm and 2.5cm, every node/.style={text=lighttext}]
+        % Normal Flow
+        \node[block_dark] (c1) {Client};
+        \node[block_dark, right=of c1] (s1) {Server};
+        \draw[arrow_dark] (c1) -- (s1);
+        \node[label_dark, below=0.1cm of c1, xshift=1.25cm] {(a) Normal flow};
+
+        % Passive Attack
+        \node[block_dark, below=of c1, yshift=-0.5cm] (c2) {Client};
+        \node[block_dark, right=of c2] (s2) {Server};
+        \node[block_dark, below=of c2, xshift=1.25cm, yshift=0.3cm] (atk2) {Attacker};
+        \draw[arrow_dark] (c2) -- (s2);
+        \draw[arrow_dark, dashed] (c2) -- (atk2);
+        \draw[arrow_dark, dashed] (s2) -- (atk2);
+        \node[label_dark, below=0.1cm of atk2] {(b) Passive attack};
+        
+        % Active Attack (Masquerade, Data Mod)
+        \node[block_dark, right=of s1, xshift=1.5cm] (c3) {Client};
+        \node[block_dark, right=of c3] (s3) {Server};
+        \node[block_dark, below=of c3, xshift=1.25cm, yshift=0.3cm] (atk3) {Attacker};
+        \draw[arrow_dark] (c3) -- (atk3);
+        \draw[arrow_dark] (atk3) -- (s3);
+        \node[label_dark, below=0.1cm of atk3] {(c) Active (masquerade, mod)};
+
+        % Active Attack (Masquerade, Data Mod, DoS)
+        \node[block_dark, below=of c2, yshift=-2cm] (c4) {Client};
+        \node[block_dark, right=of c4] (s4) {Server};
+        \node[block_dark, below=of c4, xshift=1.25cm, yshift=0.3cm] (atk4) {Attacker};
+        \draw[arrow_dark] (atk4) -- (s4); % Attacker sends to server
+        % No direct line from client in this common representation
+        \node[label_dark, below=0.1cm of atk4] {(d) Active (masquerade, DoS)};
+
+        % Active Attack (Replay)
+        \node[block_dark, right=of s3, xshift=1.5cm] (c5) {Client};
+        \node[block_dark, right=of c5] (s5) {Server};
+        \node[block_dark, below=of c5, xshift=1.25cm, yshift=0.3cm] (atk5) {Attacker};
+        \draw[arrow_dark, dashed] (c5) -- (atk5); % Capture
+        \draw[arrow_dark] (atk5) -- (s5);    % Replay
+        \node[label_dark, below=0.1cm of atk5] {(e) Active (replay)};
+        
+        \begin{pgfonlayer}{background}
+            \node[rectangle, fill=darkbg!80, inner sep=0.5cm, fit=(c1)(s1), rounded corners] {};
+            \node[rectangle, fill=darkbg!80, inner sep=0.5cm, fit=(c2)(s2)(atk2), rounded corners] {};
+            \node[rectangle, fill=darkbg!80, inner sep=0.5cm, fit=(c3)(s3)(atk3), rounded corners] {};
+            \node[rectangle, fill=darkbg!80, inner sep=0.5cm, fit=(c4)(s4)(atk4), rounded corners] {};
+            \node[rectangle, fill=darkbg!80, inner sep=0.5cm, fit=(c5)(s5)(atk5), rounded corners] {};
+        \end{pgfonlayer}
+    \end{tikzpicture}
+    \caption{Tipi di Attacchi alla Sicurezza.}
+    \label{fig:security_attacks}
+\end{figure}
+
+
+\section{Sicurezza a Livello Radio}
+\subsection{Denial of Service (Jamming)}
+\begin{itemize}
+    \item Consiste nell'\textbf{emettere un forte segnale radio} (rumore) sulla stessa frequenza utilizzata dalla rete target.
+    \item Questo "disturba" o "copre" i segnali legittimi, impedendo la comunicazione.
+    \item \textbf{Contromisura:}
+    \begin{itemize}
+        \item Usare \textbf{più frequenze portanti (banda larga)}.
+        \item \textbf{Frequency Hopping Spread Spectrum (FHSS):}
+        \begin{itemize}
+            \item Si selezionano più portanti e si "salta" da una all'altra secondo una sequenza pseudocasuale.
+            \item Se una singola portante è disturbata, si perde solo una piccola parte dell'informazione.
+            \item \textit{Esempio pratico:} Il Bluetooth utilizza FHSS.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+(La slide 9 mostra un diagramma FHSS: (a) Channel assignment con barre di energia per diverse frequenze $f_1..f_8$ e una sequenza di uso, (b) Channel use che mostra i salti di frequenza nel tempo. Questo illustra come l'energia sia distribuita su più canali e come il sistema cambi canale rapidamente).
+
+\subsection{Eavesdropping (Intercettazione) e Sniffing}
+\begin{itemize}
+    \item Relativamente semplice intercettare le trasmissioni radio.
+    \item Se si usa FHSS, conoscere il "seed" del PRNG permette di seguire le trasmissioni.
+    \item \textbf{Cosa serve all'attaccante:}
+    \begin{enumerate}
+        \item Un \textbf{ricevitore} (con antenna adeguata) alla corretta distanza.
+        \item Conoscenza della \textbf{modulazione} utilizzata.
+        \item Conoscenza del \textbf{protocollo} utilizzato.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Replay Attack (Attacco di Ripetizione)}
+\begin{itemize}
+    \item Un attaccante cattura una trasmissione legittima e la \textbf{ritrasmette successivamente}.
+    \item Può essere effettuato anche \textbf{senza comprendere il contenuto} del messaggio.
+    \item \textit{Esempio pratico:} Catturare il segnale del telecomando di un cancello (OOK su 433MHz) e ritrasmetterlo.
+    \item \textbf{Importante:} Meccanismi di sola confidenzialità e integrità NON proteggono da replay.
+\end{itemize}
+\textbf{Contromisure al Replay Attack:}
+\begin{enumerate}
+    \item \textbf{Rolling Code (Codice Progressivo):}
+    \begin{itemize}
+        \item Il trasmettitore e il ricevitore condividono un PRNG sincronizzato.
+        \item Ad ogni trasmissione, viene inviato un codice diverso.
+        \item Il ricevitore accetta un codice solo se "atteso" o entro una "finestra".
+        \item \textit{Problema:} Disallineamento se trasmissioni perse; mitigato dalla finestra.
+        \item \textit{Efficacia:} Rende il replay meno efficiente.
+    \end{itemize}
+    \item \textbf{Challenge and Response (Sfida-Risposta):}
+    \begin{itemize}
+        \item Richiede un canale di ritorno (transceiver).
+        \item \textbf{Funzionamento:}
+        \begin{enumerate}
+            \item L'\textbf{autenticando} richiede accesso.
+            \item L'\textbf{autenticatore} genera un numero casuale (nonce) e lo invia.
+            \item L'autenticando cifra il nonce e lo reinvia.
+            \item L'autenticatore decifra e valida.
+        \end{enumerate}
+        \item Previene il replay perché il nonce cambia.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Cifratura}
+\begin{itemize}
+    \item Usata per \textbf{confidenzialità} e \textbf{integrità} dei dati.
+    \item Nel mondo radio:
+    \begin{itemize}
+        \item \textbf{Cifrari a blocco:} Es. AES.
+        \item \textbf{Cifrari a flusso:} Es. Kasumi (A5/3 "rotto" nel 2010).
+    \end{itemize}
+\end{itemize}
+
+\section{Radio Frequency Identification (RFID)}
+\begin{itemize}
+    \item Sistema di identificazione automatica tramite campi elettromagnetici.
+    \item \textbf{Componenti:} Tag RFID, Lettore RFID.
+    \item \textbf{Funzionamento:} Il lettore interroga, il tag risponde con i dati.
+    \item \textit{Esempio pratico:} Badge Unibo (EM410X con ID univoco).
+\end{itemize}
+
+\subsection{Vulnerabilità RFID}
+\begin{enumerate}
+    \item \textbf{Cloning:}
+    \begin{itemize}
+        \item \textbf{Come aggirare:} Acquistare tag riscrivibili e copiare l'ID.
+    \end{itemize}
+    \item \textbf{Spoofing:}
+    \begin{itemize}
+        \item In assenza di crittografia robusta:
+        \begin{enumerate}
+            \item Intercettare segnali legittimi.
+            \item Usare un dispositivo specializzato (es. \texttt{Proxmark}) per imitare i segnali.
+        \end{enumerate}
+    \end{itemize}
+\end{enumerate}
+
+\section{IEEE 802.11 (Wi-Fi)}
+Standard per WLAN, interoperabile con Ethernet (IEEE 802.3).
+
+\subsection{Livello Fisico e Accesso al Canale}
+\begin{itemize}
+    \item Vari \textbf{sotto-standard} (es. 802.11g - 2.4GHz, 802.11ac - 5GHz).
+    \item \textbf{Protezioni fisiche:} Si possono usare pitture schermanti.
+    \item \textbf{Accesso al Canale:} CSMA/CA (Carrier Sense Multiple Access with Collision Avoidance).
+    \item \textbf{Problema del Terminale Nascosto:} Due client (A e C) potrebbero non "sentirsi", ma entrambi "sentono" l'AP (B). Collisione su B se A e C trasmettono contemporaneamente.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[every node/.style={text=lighttext}]
+        \node[node_dark] (A) {A};
+        \node[node_dark, right=3cm of A] (B) {B (AP)};
+        \node[node_dark, right=3cm of B] (C) {C};
+
+        % Ranges
+        \begin{scope}[on background layer]
+            \fill[blue!50!darkbg, opacity=0.5] (A) circle (2cm);
+            \fill[yellow!50!darkbg, opacity=0.5] (C) circle (2cm);
+        \end{scope}
+        
+        \draw[line_dark, <->] (A) -- (B);
+        \draw[line_dark, <->] (B) -- (C);
+        % A and C cannot hear each other directly but can hear B
+        
+        \node[label_dark, below=0.2cm of A] {Client A};
+        \node[label_dark, below=0.2cm of C] {Client C};
+        \node[label_dark, above=0.2cm of B] {Access Point};
+        \node[label_dark, text width=3cm, align=center, above left=0.1cm and -1cm of B] {A è un terminale nascosto per C (e viceversa)};
+    \end{tikzpicture}
+    \caption{Problema del Terminale Nascosto.}
+    \label{fig:hidden_terminal}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Inter-Frame Space (IFS):} "Spazi di silenzio" per evitare collisioni.
+    Se collisione $\rightarrow$ attesa random (DIFS + backoff).
+    \item \textbf{Attacchi legati all'IFS:}
+    \begin{itemize}
+        \item \textbf{Appropriazione della rete:} Attaccante non rispetta IFS $\rightarrow$ monopolizza canale.
+        \item \textbf{Denial of Service:} Due attaccanti non rispettano IFS $\rightarrow$ continue collisioni.
+    \end{itemize}
+\end{itemize}
+(La slide 33 mostra una timeline dell'IFS dove un Attacker trasmette senza rispettare i tempi di attesa (DIFS) dei client legittimi, causando potenzialmente collisioni o guadagnando accesso prioritario).
+
+\subsection{"Misure di Sicurezza" Deboli (Security by Obscurity)}
+\begin{enumerate}
+    \item \textbf{SSID Hiding:} Non trasmettere l'SSID nei beacon.
+    \begin{itemize}
+        \item \textbf{Fallacia:} L'SSID è trasmesso in chiaro dai client. "Security by obscurity".
+    \end{itemize}
+    \item \textbf{MAC Whitelisting:} Permettere solo MAC specifici.
+    \begin{itemize}
+        \item \textbf{Fallacia:} I MAC sono trasmessi in chiaro e possono essere spoofati.
+        L'esempio mostra il comando \texttt{macchanger}:
+\begin{minted}{bash}
+[root@snark ~]# macchanger -m 11:22:33:44:55:66 virbr0
+Current MAC:   52:54:00:b7:9a:84 (unknown)
+Permanent MAC: 00:00:00:00:00:00 (XEROX CORPORATION)
+\end{minted}
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Messaggi di Gestione in Chiaro e Attacchi di Deautenticazione/Dissociazione}
+\begin{itemize}
+    \item Alcuni messaggi di gestione IEEE 802.11 sono inviati \textbf{in chiaro} e \textbf{senza autenticazione}.
+    \item Es. messaggio di \textbf{"deautenticazione"} o \textbf{"dissociazione"}.
+    \item \textbf{Attacco:} Un attaccante può forgiare un messaggio di deautenticazione, costringendo un client a disconnettersi. Causa disservizio.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=0.7cm, every node/.style={text=lighttext}]
+        % Swimlanes
+        \node (client_label) [label_dark, above] {Client};
+        \draw[line_dark] (client_label.south west) ++(0,-0.2) -- ++(0,-5) node(client_line_end){};
+        \node (ap_label) [label_dark, right=3cm of client_label, above] {Access Point};
+        \draw[line_dark] (ap_label.south west) ++(0,-0.2) -- ++(0,-5) node(ap_line_end){};
+
+        % Authentication Phase
+        \node[label_dark, left=0.2cm of client_label, yshift=-0.8cm, text width=2cm, align=right] {Authentication phase};
+        \draw[arrow_dark] ($(client_label.south)+(0,-1cm)$) -- node[above,sloped] {Request} ($(ap_label.south)+(0,-1cm)$);
+        \draw[arrow_dark] ($(ap_label.south)+(0,-1.5cm)$) -- node[above,sloped] {Response} ($(client_label.south)+(0,-1.5cm)$);
+        
+        % Association Phase
+        \node[label_dark, left=0.2cm of client_label, yshift=-2.3cm, text width=2cm, align=right] {Association phase};
+        \draw[arrow_dark] ($(client_label.south)+(0,-2.5cm)$) -- node[above,sloped] {Request} ($(ap_label.south)+(0,-2.5cm)$);
+        \draw[arrow_dark] ($(ap_label.south)+(0,-3cm)$) -- node[above,sloped] {Response} ($(client_label.south)+(0,-3cm)$);
+
+        % Normal Communication
+        \node[label_dark, left=0.2cm of client_label, yshift=-3.8cm, text width=2cm, align=right] {Normal communication};
+        \draw[arrow_dark, <->, dashed] ($(client_label.south)+(0,-4cm)$) -- ($(ap_label.south)+(0,-4cm)$);
+
+        % Deauth attack (example injection)
+        \node[block_dark, fill=red!70!darkbg, left=0.5cm of client_line_end, yshift=2cm, text width=1.5cm] (attacker) {Attacker};
+        \draw[arrow_dark, red, thick] (attacker.east) ++(0,0.2) -- node[above,sloped,black] {Fake Deauth to Client} ($(client_label.south)+(0,-1.8cm)$);
+        \draw[arrow_dark, red, thick] (attacker.east) ++(0,-0.2) -- node[below,sloped,black] {Fake Deauth to AP} ($(ap_label.south)+(0,-1.8cm)$);
+    \end{tikzpicture}
+    \caption{Attacco di Deautenticazione/Dissociazione (schema semplificato di interazione).}
+    \label{fig:deauth_attack}
+\end{figure}
+
+\subsection{Wired Equivalent Privacy (WEP)}
+\begin{itemize}
+    \item Primo standard di sicurezza per 802.11. \textbf{ESTREMAMENTE INSICURO!}
+    \item Due modalità:
+    \begin{enumerate}
+        \item \textbf{Shared Key:} Autenticazione challenge-response con chiave condivisa.
+        \begin{itemize}
+            \item \textbf{Vulnerabilità:} Attacchi KPA per ricavare la chiave.
+        \end{itemize}
+        \item \textbf{Open System:} Nessuna vera autenticazione della chiave.
+    \end{enumerate}
+    \item \textbf{Cifratura WEP:}
+    \begin{itemize}
+        \item Utilizza \textbf{RC4}.
+        \item Chiave base $k$ + Vettore di Inizializzazione (IV) $v$ (24 bit, in chiaro) $\rightarrow$ keystream RC4($v,k$).
+        \item \textbf{Vulnerabilità dell'IV:}
+        \begin{itemize}
+            \item \textbf{Collisioni IV:} IV di soli 24 bit $\rightarrow$ riutilizzo frequente (birthday paradox).
+            $P(\text{collisione}) \approx 1 - e^{-N^2 / (2 \cdot 2^{24})}$. Con $N \approx 30000$, $P \approx 1$.
+            \item Riutilizzo IV con stessa chiave in RC4 è catastrofico: $C_1 = P_1 \oplus K_s$, $C_2 = P_2 \oplus K_s \Rightarrow C_1 \oplus C_2 = P_1 \oplus P_2$.
+            \item Permette attacchi statistici e di replay.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.7cm, every node/.style={text=lighttext}]
+    \node (client_label) [label_dark, above] {Client Station};
+    \draw[line_dark] (client_label.south west) ++(0,-0.2) -- ++(0,-3.5);
+    \node (ap_label) [label_dark, right=3cm of client_label, above] {Access Point};
+    \draw[line_dark] (ap_label.south west) ++(0,-0.2) -- ++(0,-3.5);
+
+    \draw[arrow_dark] ($(client_label.south)+(0,-0.5cm)$) -- node[above,sloped] {Auth request} ($(ap_label.south)+(0,-0.5cm)$);
+    \draw[arrow_dark] ($(ap_label.south)+(0,-1.2cm)$) -- node[above,sloped] {$n$ = challenge} ($(client_label.south)+(0,-1.2cm)$);
+    \draw[arrow_dark] ($(client_label.south)+(0,-1.9cm)$) -- node[above,sloped] {RC4$_{wep\_key}(n)$} ($(ap_label.south)+(0,-1.9cm)$);
+    \draw[arrow_dark, dashed] ($(ap_label.south)+(0,-2.6cm)$) -- node[above,sloped] {Accept/Reject} ($(client_label.south)+(0,-2.6cm)$);
+\end{tikzpicture}
+\caption{Autenticazione WEP Shared Key.}
+\label{fig:wep_shared_key}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[every node/.style={text=lighttext}]
+        \draw[line_dark] (0,0) rectangle (5,0.5) node[midway] {IV (24 bit)};
+        \node[label_dark, right=0.1cm of {(5,0.25)}] {Key ID (opz.)};
+        \draw[line_dark] (0,-0.2) rectangle (5,-0.7) node[midway] {Data};
+        \draw[line_dark] (0,-1.4) rectangle (5,-1.9) node[midway] {ICV (CRC32)};
+        
+        % Braces for encrypted part
+        \draw [decorate,decoration={brace,amplitude=5pt,mirror}, line_dark]
+              (5.2,0.5) -- (5.2,-0.7) node [label_dark,midway,xshift=0.8cm] {Encrypted};
+        
+        \node[label_dark, below=0.5cm of {(2.5,-1.9)}] {Pacchetto WEP (semplificato)};
+    \end{tikzpicture}
+    \caption{Struttura Frame WEP (semplificata).}
+    \label{fig:wep_frame}
+\end{figure}
+
+
+\subsection{Wi-Fi Protected Access (WPA, WPA2, WPA3) e IEEE 802.11i}
+Sviluppati per ovviare ai problemi di WEP. IEEE 802.11i è lo standard.
+\begin{itemize}
+    \item \textbf{Modalità di utilizzo:}
+    \begin{itemize}
+        \item \textbf{PSK (Pre-Shared Key) / WPA-Personal:} Chiave segreta (passphrase) condivisa.
+        \item \textbf{Enterprise / WPA-Enterprise (802.1X):} Autenticazione individuale tramite server RADIUS.
+        \item \textbf{WPS (Wi-Fi Protected Setup):} Autenticazione facilitata (vulnerabile).
+    \end{itemize}
+    \item \textbf{Protocolli di Sicurezza IEEE 802.11i:}
+    \begin{enumerate}
+        \item \textbf{TKIP (Temporal Key Integrity Protocol):}
+        \begin{itemize}
+            \item "Pezza" per WEP. \textbf{DEPRECATO E INSICURO.}
+            \item Integrità: MIC "Michael" (64 bit).
+            \item Confidenzialità: RC4 (con key mixing).
+            \item Sequence Counter (TSC) per anti-replay e chiave dinamica.
+        \end{itemize}
+        \item \textbf{CCMP (Counter Mode with CBC MAC Protocol):}
+        \begin{itemize}
+            \item Basato su \textbf{AES}. \textbf{RACCOMANDATO E SICURO} (WPA2/WPA3).
+            \item Integrità: AES-CBC-MAC.
+            \item Confidenzialità: AES-CTR.
+            \item Contatore di pacchetto (48 bit) per nonce anti-replay.
+        \end{itemize}
+    \end{enumerate}
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[every node/.style={text=lighttext, font=\footnotesize}]
+        \coordinate (start) at (0,0);
+        \node[draw, minimum height=1cm, minimum width=1.5cm, anchor=west] at (start) (mac_ctrl) {MAC Control};
+        \node[draw, minimum height=1cm, minimum width=2.5cm, anchor=west, right=0 of mac_ctrl.east] (dest_addr) {Destination MAC Address};
+        \node[draw, minimum height=1cm, minimum width=2.5cm, anchor=west, right=0 of dest_addr.east] (src_addr) {Source MAC Address};
+        \node[draw, minimum height=1cm, minimum width=4cm, anchor=west, right=0 of src_addr.east] (msdu) {MAC Service Data Unit (MSDU)};
+        \node[draw, minimum height=1cm, minimum width=1.5cm, anchor=west, right=0 of msdu.east] (crc) {CRC};
+        
+        % MAC Header Brace
+        \draw [decorate,decoration={brace,amplitude=5pt}, line_dark]
+              ($(mac_ctrl.south west)+(-0.1,-0.1)$) -- ($(src_addr.south east)+(0.1,-0.1)$) 
+              node [label_dark,midway,yshift=-0.5cm] {MAC header};
+
+        % MAC Trailer Brace
+        \draw [decorate,decoration={brace,amplitude=5pt}, line_dark]
+              ($(crc.south west)+(-0.1,-0.1)$) -- ($(crc.south east)+(0.1,-0.1)$) 
+              node [label_dark,midway,yshift=-0.5cm] {MAC trailer};
+    \end{tikzpicture}
+    \caption{Formato Generale IEEE 802 MPDU.}
+    \label{fig:mpdu_format}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Attacchi a WPA-PSK:}
+    \begin{itemize}
+        \item Vulnerabile ad attacchi \textbf{brute-force} o a \textbf{dizionario} sulla passphrase se debole (catturando l'handshake a 4 vie).
+    \end{itemize}
+\end{itemize}
+
+\subsection{WPS (Wi-Fi Protected Setup)}
+\begin{itemize}
+    \item Metodo per semplificare la connessione (tasto fisico, PIN).
+    \item \textbf{Vulnerabilità di WPS (PIN):}
+    \begin{itemize}
+        \item PIN di 8 cifre (7 significative + checksum).
+        \item \textbf{Errore di progettazione:} Verificato in due metà (4 cifre, poi 3).
+        \item Spazio di brute force ridotto a $10^4 + 10^3 = 11.000$ tentativi.
+        \item Attacco brute-force recupera PIN in poche ore $\rightarrow$ ottiene chiave WPA/WPA2.
+        \item \textbf{Pixiedust Attack:} PRNG predicibile in alcuni dispositivi $\rightarrow$ attacco in minuti.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Rogue AP (Access Point Falso/Non Autorizzato)}
+\begin{itemize}
+    \item AP installato senza autorizzazione.
+    \item Può \textbf{spoofare SSID} di reti legittime per intercettare traffico o credenziali.
+\end{itemize}
+
+\subsection{KRACK (Key Reinstallation Attacks)}
+\begin{itemize}
+    \item Vulnerabilità in WPA2 (nell'handshake, non in AES).
+    \item Permette a un attaccante di forzare la \textbf{reinstallazione di una chiave di sessione già utilizzata}.
+    \item Può portare a decifratura parziale del traffico, iniezione, ecc.
+    \item Ha contribuito allo sviluppo di \textbf{WPA3} (che include protezioni).
+\end{itemize}
+
+\end{document}

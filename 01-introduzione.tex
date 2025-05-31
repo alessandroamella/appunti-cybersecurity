@@ -1,0 +1,511 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+
+% --- Immagini ---
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{graphicx}
+\graphicspath{{images/}} % Specifica la cartella per le immagini
+\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, decorations.pathreplacing}
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Appunti di Fondamenti di Cybersecurity},
+    colorlinks=true,
+    linkcolor=cyan, % Colore per link interni (es. \ref, \tableofcontents)
+    urlcolor=green!60!black, % Colore per URL (\url, \href)
+    citecolor=magenta % Colore per citazioni bibliografiche (se usate)
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\definecolor{darkergray}{rgb}{0.1,0.1,0.1} % Un grigio molto scuro per alcuni fill
+\definecolor{lightgray}{rgb}{0.8,0.8,0.8} % Grigio chiaro per testo su sfondi scuri in tikz
+\definecolor{nodegray}{rgb}{0.3,0.3,0.3} % Grigio per i nodi tikz
+\pagecolor{black}
+\color{white}
+
+% --- Evidenziazione del codice (richiede -shell-escape) ---
+% Compilare con: pdflatex -shell-escape nomefile.tex
+\usepackage{minted}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines=true,
+    style=monokai, % Adatto per sfondi scuri
+    bgcolor=darkergray % Sfondo leggermente diverso per i blocchi minted
+}
+
+% --- Tabelle ---
+\usepackage{array} % Per opzioni colonne tabelle
+\usepackage{longtable} % Per tabelle che possono spezzarsi su più pagine
+\usepackage{booktabs} % Per linee tabelle più professionali (ma su sfondo nero potrebbero non vedersi bene)
+
+% Stili TikZ per tema scuro
+\tikzstyle{block_white} = [rectangle, draw=white, fill=nodegray, text=white,
+    text width=6em, text centered, rounded corners, minimum height=3em, line width=1pt]
+\tikzstyle{block_wide_white} = [rectangle, draw=white, fill=nodegray, text=white,
+    text width=10em, text centered, rounded corners, minimum height=3em, line width=1pt]
+\tikzstyle{cloud_white} = [ellipse, draw=white, fill=blue!70!black, text=white, % Un blu scuro ma visibile
+    minimum height=2em, minimum width=3em, line width=1pt]
+\tikzstyle{sensor_white} = [circle, draw=white, fill=green!60!black, text=white, % Un verde scuro ma visibile
+    minimum size=1.5em, line width=1pt]
+\tikzstyle{line_white} = [draw=white, -{Stealth[length=2mm, width=1.5mm]}, line width=1pt]
+\tikzstyle{line_double_white} = [draw=white, {Stealth[length=2mm, width=1.5mm]}-{Stealth[length=2mm, width=1.5mm]}, line width=1pt]
+\tikzstyle{label_white} = [text=white, font=\footnotesize]
+
+% --- Titolo ---
+\title{Appunti di Fondamenti di Cybersecurity (FdC)}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Informazioni Generali sul Corso}
+
+\subsection{Docente e Contatti}
+\begin{itemize}
+    \item \textbf{Docente:} Jocelyne Elias
+    \item \textbf{Email:} \href{mailto:jocelyne.elias@unibo.it}{\texttt{jocelyne.elias@unibo.it}}
+    \item \textbf{Website Docente:} \url{https://www.unibo.it/sitoweb/jocelyne.elias/}
+\end{itemize}
+
+\subsection{Orario Lezioni e Ricevimento}
+\begin{itemize}
+    \item \textbf{Orario Lezioni:}
+    \begin{itemize}
+        \item \textbf{Giovedì:} 09:00 – 12:00, AULA CREMONA
+        \item \textbf{Venerdì:} 11:00 – 14:00, AULA L.TONELLI
+        \item Per orari aggiornati (anno 2024, codice insegnamento 455457):\\ \url{https://www.unibo.it/it/studiare/dottorati-master-specializzazioni-e-altra-formazione/insegnamenti/insegnamento/2024/455457/orariolezioni}
+    \end{itemize}
+    \item \textbf{Ricevimento:} Da concordare via mail con la docente.
+\end{itemize}
+
+\subsection{Piattaforma Didattica}
+\begin{itemize}
+    \item Si utilizzerà la piattaforma \textbf{Virtuale}.
+    \item Sarà costantemente aggiornata con:
+    \begin{itemize}
+        \item Informazioni generali
+        \item \textbf{Materiale didattico (slides)} - Risorsa principale.
+        \item Annunci
+    \end{itemize}
+\end{itemize}
+
+\section{Materiale Didattico}
+\begin{itemize}
+    \item \textbf{Slide:} Caricate su Virtuale (fondamentali per lo studio).
+    \item \textbf{Testi Consigliati (per approfondimento):}
+    \begin{enumerate}
+        \item William Stallings, Lawrie Brown, \textit{Computer Security Principles and Practice (Fifth Edition)}
+        \item William Stallings, \textit{Cryptography and Network Security: Principles and Practice (Eighth Edition)}
+        \item Douglas R. Stinson, Maura B. Paterson, \textit{Cryptography Theory and Practice}
+        \item Dan Boneh, Victor Shoup, \textit{A Graduate Course in Applied Cryptography} (approccio matematico)
+        \item Bruce Schneier, \textit{Applied Cryptography: Protocols, Algorithms, and Source Code in C.}
+    \end{enumerate}
+\end{itemize}
+
+\section{Modalità d'Esame}
+\begin{itemize}
+    \item \textbf{Prova scritta} (NON ci sono orali).
+    \item La prova scritta include una \textbf{domanda o un esercizio} (massimo 6 punti) sulla \textbf{parte dei laboratori}.
+    \item \textbf{Date Esami:} Consultare il sito del Dipartimento.
+    \begin{itemize}
+        \item \textbf{Sessione Estiva (giugno-luglio):} Tre appelli.
+        \item \textbf{Sessione Autunnale (settembre):} Un appello.
+        \item \textbf{Sessione Invernale (gennaio/febbraio 2026):} Due appelli.
+    \end{itemize}
+\end{itemize}
+
+\section{Roadmap del Corso (Argomenti Trattati)}
+\begin{enumerate}
+    \item Introduzione alla Cybersecurity
+    \item Crittografia
+    \begin{itemize}
+        \item Chiave Simmetrica
+        \item Chiave Asimmetrica
+    \end{itemize}
+    \item Sicurezza dei Sistemi e Permessi
+    \item Password e Autenticazione
+    \item Sicurezza Internet, Comunicazione Anonima, Privacy dei Dati
+    \item Sicurezza delle Reti Wireless
+    \item Sicurezza del Software: Buffer Overflows
+    \item Sicurezza Web (indicato con "?")
+    \item \dots (altri argomenti)
+\end{enumerate}
+
+\section{Concetti Fondamentali di Cybersecurity}
+
+\subsection{Cos'è la Cybersecurity?}
+La Cybersecurity si riferisce a qualsiasi \textbf{tecnologia, misura o pratica} volta a \textbf{prevenire gli attacchi informatici (cyberattacks)} o a mitigarne l'impatto.
+L'obiettivo è proteggere sistemi, applicazioni, dispositivi, dati sensibili e asset finanziari.
+
+Secondo Gartner, la Cybersecurity è la pratica di impiegare \textbf{persone, policy, processi e tecnologie} per proteggere le organizzazioni da attacchi digitali.
+\begin{itemize}
+    \item \textit{Esempio Pratico:} Un'azienda che implementa la cybersecurity non si limita a installare un firewall (tecnologia). Forma i propri dipendenti (persone) su come riconoscere email di phishing (policy e processi), stabilisce regole per l'accesso ai dati (policy) e ha procedure definite (processi) per rispondere a un incidente di sicurezza.
+\end{itemize}
+
+\subsection{Cos'è un Cyberattack (Attacco Informatico)?}
+Un cyberattack è qualsiasi \textbf{sforzo intenzionale} per rubare, esporre, alterare, disabilitare o distruggere dati, applicazioni o altri asset, attraverso un \textbf{accesso non autorizzato}.
+\begin{itemize}
+    \item \textit{Esempio Pratico:} Un hacker che ottiene l'accesso al database di un sito e-commerce e ruba i numeri delle carte di credito dei clienti.
+\end{itemize}
+
+\subsection{Tipi Comuni di Attacchi Informatici}
+\begin{enumerate}
+    \item \textbf{Phishing e Ingegneria Sociale:} Ingannare utenti per ottenere credenziali o compiere azioni dannose.
+        \begin{itemize}
+            \item \textit{Esempio:} Email fasulla della banca che chiede di aggiornare i dati su un sito clone.
+        \end{itemize}
+    \item \textbf{Rischi dei Servizi Esposti su Internet (inclusi Cloud Services):} Mancata messa in sicurezza di servizi cloud o esposti (es. errori di configurazione).
+        \begin{itemize}
+            \item \textit{Esempio:} Database su cloud accessibile pubblicamente senza password.
+        \end{itemize}
+    \item \textbf{Compromissione di Account legata alle Password:} Uso di password comuni, riutilizzate o deboli.
+        \begin{itemize}
+            \item \textit{Esempio:} Attaccante prova "password123"; credential stuffing.
+        \end{itemize}
+    \item \textbf{Uso Improprio di Informazioni (Misuse of Information):} Utenti autorizzati che diffondono o usano impropriamente dati.
+        \begin{itemize}
+            \item \textit{Esempio:} Dipendente scontento copia l'elenco clienti; invio errato di email con dati sensibili.
+        \end{itemize}
+    \item \textbf{Attacchi di Rete e Man-in-the-Middle (MitM):} Intercettazione, reindirizzamento o interruzione del traffico di rete non sicuro.
+        \begin{itemize}
+            \item \textit{Esempio:} Su Wi-Fi pubblico non sicuro, un attaccante intercetta traffico non cifrato.
+        \end{itemize}
+    \item \textbf{Attacchi alla Supply Chain:} Compromissione di partner, fornitori o codice di terze parti.
+        \begin{itemize}
+            \item \textit{Esempio (Dependency Confusion):} Attaccante pubblica libreria malevola con lo stesso nome di una interna, inducendo il sistema di build a scaricarla.
+        \end{itemize}
+    \item \textbf{Attacchi Denial-of-Service (DoS) e Distributed DoS (DDoS):} Sovraccarico di sistemi con traffico massiccio.
+        \begin{itemize}
+            \item \textit{Esempio:} Sito web bombardato da richieste da una botnet, rendendolo irraggiungibile.
+        \end{itemize}
+    \item \textbf{Ransomware (\$):} Software malevolo che cifra dati o blocca sistemi chiedendo un riscatto.
+        \begin{itemize}
+            \item \textit{Esempio:} Utente apre allegato infetto, ransomware cifra i file aziendali, compare richiesta di riscatto.
+        \end{itemize}
+\end{enumerate}
+
+\section{Breve Contesto Storico}
+
+\subsection{ARPANET}
+\begin{itemize}
+    \item \textbf{1969:} ARPANET (precursore di Internet) va online.
+    \item \textbf{1973:} Robert Metcalfe avverte che ARPANET è insicura.
+    \item \textbf{1983:} Fred Cohen conia il termine "computer virus".
+    \item \textbf{1983:} ARPANET adotta il protocollo TCP/IP.
+\end{itemize}
+
+\subsection{Il Primo Worm: Morris Worm (1988)}
+\begin{itemize}
+    \item \textbf{Robert Morris} rilascia inavvertitamente il primo worm.
+    \item \textbf{Funzionamento:} Scopriva host, sfruttava vulnerabilità in \texttt{sendmail}, si copiava.
+    \item \textbf{Intento:} Esperimento di ricerca.
+    \item \textbf{Problema:} Bug causò replicazione fuori controllo.
+    \item \textbf{Impatto:} Crash del 10\% dei computer su ARPANET.
+    \item \textbf{Conseguenze Legali:} Condanna secondo CFAA, libertà vigilata, multa \$10k.
+    \item \textbf{Significato Tecnico:} Primo uso documentato di exploit di \textbf{buffer overflow}.
+    \begin{itemize}
+        \item \textit{Buffer Overflow:} Inserire più dati di quanti un buffer possa contenere, sovrascrivendo memoria adiacente, potenzialmente per eseguire codice malevolo.
+    \end{itemize}
+\end{itemize}
+
+\section{Definizioni Chiave Aggiuntive}
+
+\subsection{Cyber Systems (Sistemi Cyber)}
+La cybersecurity riguarda i \textbf{Cyber Systems}, che integrano:
+\begin{enumerate}
+    \item Computer
+    \item Comunicazioni (reti)
+    \item Persone (utenti e operatori)
+\end{enumerate}
+\begin{itemize}
+    \item \textit{Esempio Pratico:} Un sistema SCADA per una centrale elettrica (computer, reti, operatori).
+\end{itemize}
+
+\subsection{Vulnerability, Attack, Threat}
+\begin{itemize}
+    \item \textbf{Vulnerability (Vulnerabilità):} Debolezza che può essere sfruttata.
+        \begin{itemize}
+            \item \textit{Esempio:} Software non aggiornato; password "123456".
+        \end{itemize}
+    \item \textbf{Attack (Attacco):} Metodo per sfruttare una vulnerabilità.
+        \begin{itemize}
+            \item \textit{Esempio:} Usare un exploit; provare password deboli.
+        \end{itemize}
+    \item \textbf{Threat (Minaccia):} Avversario motivato e capace che attacca.
+        \begin{itemize}
+            \item \textit{Esempio:} Gruppo criminale che lancia phishing per rubare dati.
+        \end{itemize}
+\end{itemize}
+
+\subsection{Strategie di Difesa}
+\begin{enumerate}
+    \item \textbf{Identificare e correggere ogni vulnerabilità} (es. patch, password complesse).
+    \item \textbf{Identificare gli attacchi ed eliminare le vulnerabilità} che sfruttano (es. monitoraggio log, analisi).
+\end{enumerate}
+
+\section{Zero-Day}
+
+\subsection{Definizioni}
+\begin{itemize}
+    \item \textbf{Zero-Day Vulnerability:} Vulnerabilità \textbf{non nota} a chi dovrebbe mitigarla.
+        \begin{itemize}
+            \item \textit{Esempio:} Hacker scopre nuovo bug in Windows, Microsoft non lo sa ancora.
+        \end{itemize}
+    \item \textbf{Window of Opportunity (Finestra di Opportunità):} Il \textbf{tempo} tra l'attivazione di un exploit e l'applicazione della patch. Periodo in cui il sistema è vulnerabile.
+    \item \textbf{Zero-Day Attack:} Attacco che avviene \textbf{durante la finestra di opportunità}, sfruttando una vulnerabilità zero-day.
+        \begin{itemize}
+            \item \textit{Esempio:} Exploit venduto nel dark web e usato prima della patch.
+        \end{itemize}
+\end{itemize}
+
+\subsection{Andamento e Fonti delle Vulnerabilità Zero-Day}
+\begin{itemize}
+    \item \textbf{Andamento Finestra di Opportunità:}
+    \begin{itemize}
+        \item \textbf{2005:} Media 54 giorni.
+        \item \textbf{2014:} Cresciuta a quasi 12 mesi.
+    \end{itemize}
+    \item \textbf{Fonti:} Spesso le grandi aziende tecnologiche (Big Tech) a causa della complessità e diffusione dei loro OS (Windows, Android, iOS, MacOS).
+    \item \textbf{Grafico - Zero Days of 2022 by Vendor (Placeholder):}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{zero_days_by_vendor_2022.png}
+        \caption{Zero Days of 2022 by Vendor (Fonte: Slide 20, da generare con Python).}
+        \label{fig:zero_days_vendor}
+    \end{figure}
+    \item \textbf{Grafico - Zero-Day Vulnerabilities by Year (Placeholder):}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{zero_day_vulnerabilities_by_year.png}
+        \caption{Zero-Day Vulnerabilities by Year (Fonte: Slide 21, Google Project Zero, da generare con Python).}
+        \label{fig:zero_days_year}
+    \end{figure}
+    \textit{Nota: I grafici qui sopra sono placeholder. Lo script Python per generarli è fornito separatamente.}
+\end{itemize}
+
+\subsection{Esempi Noti di Exploit Zero-Day}
+\begin{itemize}
+    \item \textbf{Code Red Worm (2001):} Buffer overflow in Microsoft IIS.
+    \item \textbf{Heartbleed (2014):} Bug in OpenSSL, esponeva memoria server.
+        \begin{itemize}
+            \item \textit{Esempio Heartbleed:} Attaccante otteneva dati (credenziali, chiavi SSL) dalla memoria di server vulnerabili.
+        \end{itemize}
+    \item \textbf{Shellshock (2014):} Vulnerabilità in Bash Unix per RCE.
+    \item \textbf{Petya/NotPetya (2017):} Ransomware, sfruttava EternalBlue.
+    \item \textbf{WannaCry (2017):} Ransomware, sfruttava EternalBlue.
+\end{itemize}
+
+\section{Cybersecurity in Ambiti Specifici}
+Applicazioni in:
+\begin{itemize}
+    \item Applicazioni IoT (Internet of Things)
+    \item Applicazioni Healthcare (Sanità)
+\end{itemize}
+
+\subsection{Applicazioni IoT (Internet of Things)}
+
+\subsubsection{Architettura a Livelli per la Sicurezza IoT}
+Un modello comune (Lu \& Xu, IEEE IoT Journal 2019) per analizzare la sicurezza IoT è un'architettura a 4 livelli.
+
+\begin{table}[H]
+\centering
+\caption{Architettura a 4 Livelli per la Sicurezza IoT (Adattato da Lu \& Xu, 2019)}
+\label{tab:iot_architecture}
+\begin{tabular}{|p{0.15\textwidth}|p{0.4\textwidth}|p{0.35\textwidth}|}
+\hline
+\rowcolor{gray!15} % Riga header leggermente colorata per contrasto (sarà un grigio scuro su sfondo nero)
+\textcolor{black}{\textbf{Livello}} & \textcolor{black}{\textbf{Descrizione e Focus Attacco}} & \textcolor{black}{\textbf{Tipi di Attacco}} \\
+\hline
+\textbf{Sensing} & Oggetti fisici e sensori. \newline \textbf{Focus:} confidenzialità. &
+    \begin{itemize}[nosep, leftmargin=*, itemsep=-2pt, before=\vspace{-0.5\baselineskip}, after=\vspace{-\baselineskip}]
+        \item Replay Attacks
+        \item Timing Attacks
+        \item Node Capture
+        \item Malicious Data Attacks
+        \item SCA (Side Channel Attack)
+    \end{itemize} \\
+\hline
+\textbf{Networking} & Trasmissione dati. \newline \textbf{Focus:} confidenzialità, privacy, compatibilità. &
+    \begin{itemize}[nosep, leftmargin=*, itemsep=-2pt, before=\vspace{-0.5\baselineskip}, after=\vspace{-\baselineskip}]
+        \item Spoofed/altered/ replayed routing
+        \item Sybil attacks
+        \item Wormholes
+    \end{itemize} \\
+\hline
+\textbf{Middleware} & Consegna dati. \newline \textbf{Focus:} autenticità, integrità, confidenzialità. &
+    \begin{itemize}[nosep, leftmargin=*, itemsep=-2pt, before=\vspace{-0.5\baselineskip}, after=\vspace{-\baselineskip}]
+        \item Malicious Insider
+        \item Attacchi infrastruttura
+        \item Minacce terze parti
+        \item Minacce virtualizzazione
+    \end{itemize} \\
+\hline
+\textbf{Application} & Fornitura servizi. \newline \textbf{Focus:} privacy dati/identità, autenticazione. &
+    \begin{itemize}[nosep, leftmargin=*, itemsep=-2pt, before=\vspace{-0.5\baselineskip}, after=\vspace{-\baselineskip}]
+        \item Phishing Attack
+        \item Virus, Worms, Trojan
+        \item Spyware, Malicious Scripts
+        \item Unauthorized Access
+    \end{itemize} \\
+\hline
+\end{tabular}
+\end{table}
+\textit{Nota per la tabella: `\rowcolor{gray!15}` crea un grigio chiaro per la riga dell'header se il testo è nero. Con testo bianco su sfondo nero, è meglio rimuovere `\rowcolor` o usare un colore che si distingua ma mantenga la leggibilità del testo bianco. Ho modificato per usare testo nero su sfondo grigio chiaro per l'header, altrimenti non si vede.}
+
+\subsubsection{Componenti dell'Edge Layer in Architetture IoT}
+Diagramma che illustra i flussi tipici nell'edge layer.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=2.5cm and 1.5cm, auto]
+    % Nodi
+    \node[cloud_white, text width=4em] (cloud) {Cloud Services};
+    \node[sensor_white, below left=0.8cm and 0.3cm of cloud, label={[label_white]below:IoT Nodes}] (iot_node1) {N1};
+    \node[sensor_white, below right=0.8cm and 0.3cm of cloud, label={[label_white]below:IoT Nodes}] (iot_node2) {N2};
+    \node[block_white, text width=4em, below=1.5cm of cloud] (gateway) {IoT Gateway};
+    \node[block_white, text width=5em, below left=0.8cm and 0.3cm of gateway] (mobile) {Mobile Devices};
+    \node[sensor_white, right=1.5cm of gateway, label={[label_white]right:Sensors}] (sensor1) {S1};
+    \node[sensor_white, above right=0.2cm and 0.1cm of sensor1, label={[label_white]right:Sensors}] (sensor2) {S2};
+    \node[sensor_white, below right=0.2cm and 0.1cm of sensor1, label={[label_white]right:Sensors}] (sensor3) {S3};
+
+    % Connessioni
+    \path[line_white] (iot_node1.east) -- (gateway.west);
+    \path[line_white] (iot_node2.east) -- (gateway.west);
+    \path[line_white] (gateway.north) -- (cloud.south);
+    \path[line_white] (mobile.north) -- (gateway.south west);
+    \path[line_white] (gateway.east) -- (sensor1.west);
+    \path[line_white] (gateway.east) -- (sensor2.west);
+    \path[line_white] (gateway.east) -- (sensor3.west);
+\end{tikzpicture}
+\caption{Componenti dell'Edge Layer in Architetture IoT (Adattato da Slide 25).}
+\label{fig:iot_edge_layer}
+\end{figure}
+
+\subsubsection{Tassonomia Applicazioni e Sfide di Sicurezza (Descrizione)}
+Le slide 26 e 27 presentano tassonomie complesse per le applicazioni IoT e per i requisiti/sfide di sicurezza, suddivise per layer architetturale (Edge, Network, Application).
+\begin{itemize}
+    \item \textbf{Requisiti di Sicurezza per Layer:}
+    \begin{itemize}
+        \item \textit{Edge:} Crittografia, Threat Hunting, Accesso Limitato, Autenticazione.
+        \item \textit{Network:} Traffic Shaping, Rilevamento Anomalie, Monitoraggio Traffico.
+        \item \textit{Application:} Analisi Forense, API Sicure, Verifica Applicazioni.
+    \end{itemize}
+    \item \textbf{Sfide (Esempi di Attacchi per Layer):}
+    \begin{itemize}
+        \item \textit{Edge:} Deprivation Attack, Interfacce Insicure, Sybil/Spoofing, Jamming.
+        \item \textit{Network:} Violazione Privacy Cloud, Session Hijacking, Sinkhole/Wormhole.
+        \item \textit{Application:} Replay Attack, Middleware Insicuro, Software/OS Insicuri.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Sicurezza e Privacy in Healthcare 4.0}
+
+\subsubsection{Architettura Generale e Minacce (Descrizione)}
+La slide 28 mostra un ecosistema Healthcare 4.0 complesso con sensori indossabili, dispositivi medici, cloud, fog computing, ospedali. Evidenzia attacchi a vari livelli e menziona la Blockchain per la sicurezza dei dati.
+
+\subsubsection{Scambio Dati Mobile tra Operatori Sanitari}
+Illustrazione del flusso di dati paziente-caregiver.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.5cm and 1cm]
+    % Nodi
+    \node[block_white, text width=5em] (patient) {Paziente (Sensori IoT)};
+    \node[block_white, text width=7em, right=of patient] (patient_mobile) {Stazione Mobile Paziente};
+    \node[cloud_white, text width=3em, right=of patient_mobile] (network) {3G/4G/5G};
+    \node[block_white, text width=7em, right=of network] (doctor_mobile) {Stazione Mobile Dottore};
+    \node[block_white, text width=4em, below right=0.5cm and -1cm of doctor_mobile] (hospital) {Ospedale};
+    \node[block_white, text width=4em, below left=0.5cm and -1cm of doctor_mobile] (pharmacy) {Farmacia};
+
+    % Connessioni
+    \path[line_white] (patient) -- node[above, label_white] {Dati} (patient_mobile);
+    \path[line_white] (patient_mobile) -- (network);
+    \path[line_white] (network) -- (doctor_mobile);
+    \path[line_white] (doctor_mobile.south) |- ($(doctor_mobile.south)!0.5!(hospital.north west)$) -- (hospital.north west);
+    \path[line_white] (doctor_mobile.south) |- ($(doctor_mobile.south)!0.5!(pharmacy.north east)$) -- (pharmacy.north east);
+
+    % Etichette Location send
+    \node[label_white, rotate=30] at ($(patient_mobile)!0.5!(network)$) [above=0.1cm] {\textit{Location send}};
+    \node[label_white, rotate=-30] at ($(network)!0.5!(doctor_mobile)$) [above=0.1cm] {\textit{Location send}};
+
+\end{tikzpicture}
+\caption{Scambio Dati Mobile in Healthcare 4.0 (Adattato da Slide 29).}
+\label{fig:healthcare_mobile_data}
+\end{figure}
+
+\subsubsection{Possibili Attacchi su Diversi Livelli in Healthcare}
+La slide 30 mostra i livelli (Fisico, Comunicazione, Applicazione) e i relativi attacchi.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1cm and 0.5cm]
+    % Layers
+    \node[block_wide_white, minimum height=10em] (physical_layer_box) {};
+    \node[label_white, anchor=south] at (physical_layer_box.north) {Livello Fisico (Sensori)};
+     \node[below=0.2cm of physical_layer_box.north, text width=10em, align=center] (physical_content) {
+        \textit{Attacchi:}\newline Eavesdropping, Hardware Tempering, Physical Attack, Malware, DoS
+    };
+
+
+    \node[block_wide_white, minimum height=12em, above=0.5cm of physical_layer_box] (comm_layer_box) {};
+    \node[label_white, anchor=south] at (comm_layer_box.north) {Livello Comunicazione};
+    \node[below=0.2cm of comm_layer_box.north, text width=10em, align=center] (comm_content) {
+        \textit{Attacchi:}\newline Sybil, Eavesdropping, Replay, MiM, Privacy Threat, Data Corruption, Malware, DDoS, Identity Theft, Routing, Spoofing, Passive Monitoring
+    };
+
+    \node[block_wide_white, minimum height=8em, above=0.5cm of comm_layer_box] (app_layer_box) {};
+    \node[label_white, anchor=south] at (app_layer_box.north) {Livello Applicazione};
+     \node[below=0.2cm of app_layer_box.north, text width=10em, align=center] (app_content) {
+        \textit{Attacchi:}\newline SQL Injection, Phishing, Privacy Threat, Data Corruption, Malware, DDoS
+    };
+
+
+    % Decorazioni (frecce attacchi)
+    \foreach \layeranchor/\textanchor/\attacktext [count=\i] in {
+        app_layer_box.west/left/{SQLi, Phishing},
+        comm_layer_box.west/left/{Sybil, Eavesdrop, Replay, MiM},
+        physical_layer_box.west/left/{Eavesdrop, HW Temper}
+    }{
+        \node[label_white, anchor=east, xshift=-0.5cm] at (\layeranchor) {\attacktext};
+        \draw[line_white, thick] ($( \layeranchor)+(-0.4cm,0)$) -- (\layeranchor);
+    }
+    \foreach \layeranchor/\textanchor/\attacktext [count=\i] in {
+        app_layer_box.east/right/{Priv. Threat, Data Corr., Malware, DDoS},
+        comm_layer_box.east/right/{ID Theft, Routing, Spoof, DDoS, Pass. Mon.},
+        physical_layer_box.east/right/{Phys. Atk, Malware, DoS}
+    }{
+        \node[label_white, anchor=west, xshift=0.5cm, text width=5em, align=left] at (\layeranchor) {\attacktext};
+        \draw[line_white, thick] (\layeranchor) -- ($( \layeranchor)+(0.4cm,0)$);
+    }
+
+\end{tikzpicture}
+\caption{Possibili Attacchi per Livello in Healthcare 4.0 (Adattato da Slide 30).}
+\label{fig:healthcare_attacks_layer}
+\end{figure}
+
+\end{document}

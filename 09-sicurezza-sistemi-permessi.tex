@@ -1,0 +1,519 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+
+% --- Immagini ---
+\usepackage{float}
+\usepackage{tikz} % per disegni
+\usepackage{graphicx} % per immagini
+\usetikzlibrary{shapes.geometric, positioning, arrows.meta, calc, fit, backgrounds}
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Appunti su Sicurezza dei Sistemi e Permessi (Access Control), Linux},
+    colorlinks=true,
+    linkcolor=cyan,
+    filecolor=magenta,
+    urlcolor=green,
+    citecolor=yellow,
+    bookmarksopen=true,
+    bookmarksnumbered=true
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\pagecolor{black}
+\color{white}
+
+% Stile per i nodi TikZ
+\tikzstyle{genericNodeStyle}=[rectangle, rounded corners, draw=white, fill=gray!20!black, text=white, minimum height=2em, minimum width=3em, text centered]
+\tikzstyle{userNodeStyle}=[ellipse, draw=white, fill=blue!50!black, text=white, minimum height=2.5em, text centered]
+\tikzstyle{roleNodeStyle}=[rectangle, draw=white, fill=green!50!black, text=white, minimum height=2em, minimum width=5em, text centered]
+\tikzstyle{resourceNodeStyle}=[cylinder, shape border rotate=90, aspect=0.3, draw=white, fill=red!50!black, text=white, minimum height=2.5em, text centered, alias=cyl]
+\tikzstyle{arrowStyle}=[->, >=latex, draw=white, thick]
+\tikzstyle{labelStyle}=[text=white, font=\footnotesize]
+
+% --- Evidenziazione del codice (richiede -shell-escape) ---
+% Compilare con: pdflatex -shell-escape nomefile.tex
+\usepackage{minted}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines=true,
+    style=monokai, % Stile di highlighting adatto per sfondo scuro
+    bgcolor=black!80 % Sfondo per i blocchi minted
+}
+\newminted{bash}{bgcolor=black!80, textcolor=white}
+\newminted{text}{bgcolor=black!80, textcolor=white}
+\newminted{c}{bgcolor=black!80, textcolor=white}
+
+
+% --- Titolo ---
+\title{Appunti su Sicurezza dei Sistemi e Permessi (Access Control), Linux}
+\author{Basato sulle slide della Prof.ssa Jocelyne Elias (Cybersecurity 2024/2025)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Autenticazione vs. Autorizzazione}
+\begin{itemize}
+    \item \textbf{Autenticazione:} Processo di verifica dell'identità di un utente (Chi sei?). Tipicamente tramite username e password. (Per dettagli, si rimanda al LAB 2).
+    \item \textbf{Autorizzazione (Access Control):} Una volta che un utente è autenticato, l'autorizzazione determina cosa quell'utente può fare (Cosa ti è permesso fare?). È un elemento centrale della sicurezza informatica.
+    \begin{itemize}
+        \item \textbf{Obiettivi dell'Access Control:}
+        \begin{enumerate}
+            \item Impedire a utenti \textbf{non autorizzati} di accedere alle risorse.
+            \begin{itemize}
+                \item \textit{Esempio:} Un utente "guest" non deve poter leggere i file privati dell'amministratore.
+            \end{itemize}
+            \item Impedire agli utenti \textbf{legittimi} di accedere alle risorse in modo \textbf{non autorizzato}.
+            \begin{itemize}
+                \item \textit{Esempio:} Un utente "standard" autenticato non deve poter modificare file di configurazione del sistema, anche se può leggerne alcuni.
+            \end{itemize}
+            \item Consentire agli utenti \textbf{legittimi} di accedere alle risorse in modo \textbf{autorizzato}.
+            \begin{itemize}
+                \item \textit{Esempio:} L'utente "Alice" deve poter modificare i file nella sua cartella \texttt{/home/alice}.
+            \end{itemize}
+        \end{enumerate}
+    \end{itemize}
+\end{itemize}
+
+\section{Elementi Base del Controllo degli Accessi}
+Il controllo degli accessi si basa su politiche e meccanismi.
+\begin{itemize}
+    \item \textbf{Politica di Controllo degli Accessi:} Stabilisce quali tipi di accesso sono consentiti, in quali circostanze e da chi.
+    \item \textbf{Elementi Fondamentali:}
+    \begin{enumerate}
+        \item \textbf{Soggetto (Subject):} L'entità che cerca di accedere a una risorsa (es. un utente, un processo).
+        \item \textbf{Oggetto (Object):} La risorsa a cui si vuole accedere e che necessita di protezione (es. un file, una directory, una porta di rete).
+        \item \textbf{Diritto di Accesso (Access Right/Permission):} L'azione che il soggetto può compiere sull'oggetto (es. lettura, scrittura, esecuzione).
+    \end{enumerate}
+\end{itemize}
+
+\section{Tipi di Politiche di Controllo degli Accessi}
+\begin{enumerate}
+    \item \textbf{Controllo Discrezionale dell'Accesso (DAC - Discretionary Access Control):}
+    \begin{itemize}
+        \item L'accesso è basato sull'identità del soggetto e su regole (permessi) associate agli oggetti.
+        \item È "discrezionale" perché il proprietario (soggetto) di un oggetto decide chi può accedervi e con quali permessi.
+        \item \textit{Esempio pratico:} In Linux, il proprietario di un file può usare il comando \texttt{chmod} per concedere ad altri utenti il permesso di leggere o scrivere quel file. Se Alice crea \texttt{documento.txt}, può decidere se Bob può leggerlo.
+        \item \textbf{Matrice di Accesso:} Un modo per rappresentare DAC. Le righe sono i soggetti, le colonne gli oggetti, e le celle i permessi.
+        \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[node distance=0mm, text=white]
+            % Header
+            \node[genericNodeStyle, minimum width=2.5cm, fill=black!70] (subjects_h) at (0,0) {\textbf{SUBJECTS}};
+            \node[genericNodeStyle, minimum width=2.5cm, fill=black!70, right=of subjects_h] (objects_h) {\textbf{OBJECTS}};
+            \node[genericNodeStyle, minimum width=2.5cm, fill=black!70, right=0 of objects_h] (file1_h) {File 1};
+            \node[genericNodeStyle, minimum width=2.5cm, fill=black!70, right=0 of file1_h] (file2_h) {File 2};
+            \node[genericNodeStyle, minimum width=2.5cm, fill=black!70, right=0 of file2_h] (file3_h) {File 3};
+            \node[genericNodeStyle, minimum width=2.5cm, fill=black!70, right=0 of file3_h] (file4_h) {File 4};
+
+            % User A
+            \node[genericNodeStyle, minimum height=3cm, fill=black!70, below=0 of subjects_h] (userA_l) {User A};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of file1_h] (userA_f1) {Own\\Read\\Write};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of file2_h] (userA_f2) {};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of file3_h] (userA_f3) {Own\\Read\\Write};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of file4_h] (userA_f4) {};
+
+            % User B
+            \node[genericNodeStyle, minimum height=3cm, fill=black!70, below=0 of userA_l] (userB_l) {User B};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of userA_f1] (userB_f1) {Read};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of userA_f2] (userB_f2) {Own\\Read\\Write};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of userA_f3] (userB_f3) {Write};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of userA_f4] (userB_f4) {Read};
+
+            % User C
+            \node[genericNodeStyle, minimum height=3cm, fill=black!70, below=0 of userB_l] (userC_l) {User C};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of userB_f1] (userC_f1) {Read\\Write};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of userB_f2] (userC_f2) {Read};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of userB_f3] (userC_f3) {};
+            \node[genericNodeStyle, minimum height=3cm, fill=yellow!30!black, below=0 of userB_f4] (userC_f4) {Own\\Read\\Write};
+
+            % Lines to separate sections (visual aid, not strictly like the slide)
+            \draw[white, thick] (subjects_h.north east) -- (subjects_h.south east);
+            \draw[white, thick] (objects_h.north east) -- (objects_h.south east);
+            \draw[white, thick] (file1_h.north east) -- (file1_h.south east);
+            \draw[white, thick] (file2_h.north east) -- (file2_h.south east);
+            \draw[white, thick] (file3_h.north east) -- (file3_h.south east);
+        \end{tikzpicture}
+        \caption{Esempio di Matrice di Accesso (DAC)}
+        \end{figure}
+    \end{itemize}
+
+    \item \textbf{Controllo di Accesso Obbligatorio (MAC - Mandatory Access Control):}
+    \begin{itemize}
+        \item L'accesso è basato sul confronto di etichette di sicurezza (\textit{security labels}) degli oggetti (che indicano la sensibilità) con le autorizzazioni di sicurezza (\textit{security clearances}) dei soggetti.
+        \item È "obbligatorio" perché le etichette e le autorizzazioni sono definite centralmente dal sistema (o da un amministratore) e \textbf{non possono essere modificate discrezionalmente dagli utenti/proprietari degli oggetti}.
+        \item \textit{Esempio pratico:} In un sistema militare, un documento etichettato "Top Secret" può essere letto solo da un utente con autorizzazione "Top Secret", indipendentemente da chi ha creato il documento. Il creatore non può decidere di mostrarlo a un utente con autorizzazione "Confidential".
+        \item Un esempio di modello MAC è Bell-LaPadula.
+    \end{itemize}
+
+    \item \textbf{Controllo degli Accessi Basato sui Ruoli (RBAC - Role-Based Access Control):}
+    \begin{itemize}
+        \item L'accesso è basato sui ruoli che i soggetti hanno all'interno del sistema. Agli utenti vengono assegnati ruoli, e ai ruoli vengono assegnati i permessi.
+        \item \textit{Esempio pratico:} In un'azienda, invece di dare a ogni singolo impiegato i permessi per accedere ai report finanziari, si crea un ruolo "Contabile". Gli utenti Alice e Bob vengono assegnati al ruolo "Contabile". Il ruolo "Contabile" ha il permesso di leggere e modificare i report finanziari.
+        \item \textbf{Matrice Utente-Ruolo:} Associa utenti a ruoli.
+        \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}[text=white, node distance=1.5cm and 2.5cm]
+            % Titles
+            \node (users_title) [labelStyle, above=0.1cm of U1] {Users};
+            \node (roles_title) [labelStyle, right=3.5cm of users_title] {Roles};
+            \node (resources_title) [labelStyle, right=3cm of roles_title] {Resources};
+
+            % Users
+            \node (U1) [userNodeStyle] {User 1};
+            \node (U2) [userNodeStyle, below=1cm of U1] {User 2};
+            \node (U3) [userNodeStyle, below=1cm of U2] {User 3};
+            \node (U4) [userNodeStyle, below=1cm of U3] {User 4};
+
+            % Roles
+            \node (Role1) [roleNodeStyle, right=of U1, yshift=-0.5cm] {Role 1};
+            \node (Role2) [roleNodeStyle, right=of U2, yshift=-0.5cm] {Role 2};
+            \node (Role3) [roleNodeStyle, right=of U3, yshift=-0.5cm] {Role 3};
+
+            % Resources
+            \node (Res1) [resourceNodeStyle, right=of Role1, yshift=-0.5cm] {Res A};
+            \node (Res2) [resourceNodeStyle, right=of Role2, yshift=0.5cm] {Res B};
+            \node (Res3) [resourceNodeStyle, right=of Role3, yshift=-0.5cm] {Res C};
+            
+            % Arrows
+            \draw[arrowStyle] (U1) -- (Role1);
+            \draw[arrowStyle] (U2) -- (Role1);
+            \draw[arrowStyle] (U2) -- (Role2);
+            \draw[arrowStyle] (U3) -- (Role2);
+            \draw[arrowStyle] (U4) -- (Role3);
+
+            \draw[arrowStyle] (Role1) -- (Res1);
+            \draw[arrowStyle] (Role1) -- (Res2);
+            \draw[arrowStyle] (Role2) -- (Res2);
+            \draw[arrowStyle] (Role3) -- (Res3);
+            \draw[arrowStyle] (Role3) -- (Res1); % Added example connection
+        \end{tikzpicture}
+        \caption{Diagramma RBAC (Role-Based Access Control)}
+        \end{figure}
+        \textbf{Matrice di rappresentazione RBAC (Utente-Ruolo):}
+        \begin{center}
+        \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \textbf{Utente/Ruolo} & \textbf{R$_1$} & \textbf{R$_2$} & \textbf{...} & \textbf{R$_n$} \\ \hline
+        U$_1$ & X &   &   &   \\ \hline
+        U$_2$ & X &   &   &   \\ \hline
+        U$_3$ &   & X &   & X \\ \hline
+        U$_4$ &   &   &   & X \\ \hline
+        U$_5$ &   & X &   &   \\ \hline
+        ...   &   &   &   &   \\ \hline
+        U$_m$ & X &   &   &   \\ \hline
+        \end{tabular}
+        \end{center}
+        Ogni X indica che l'utente è assegnato a quel ruolo.
+    \end{itemize}
+\end{enumerate}
+
+\section{Principi Fondamentali per le Politiche di Sicurezza}
+\begin{enumerate}
+    \item \textbf{"Open design":} La sicurezza non deve dipendere dalla segretezza del design.
+    \item \textbf{"Economy of mechanism":} Meccanismi di sicurezza semplici (\textit{as simple as possible}). Meno complessità = meno errori.
+    \item \textbf{"Fail-safe defaults":} L'accesso deve essere negato di default. I permessi sono concessi esplicitamente.
+    \item \textbf{"Complete mediation" (Reference Monitor):} Ogni accesso a ogni oggetto deve essere controllato.
+    \item \textbf{"Least privilege" (Minimo Privilegio):} Un soggetto deve operare con il minimo set di privilegi necessari.
+    \begin{itemize}
+        \item Limita i danni in caso di incidente.
+        \item \textit{Esempio pratico:} Un server web non necessita privilegi di \texttt{root}.
+        \item RBAC aiuta a implementare questo principio.
+    \end{itemize}
+\end{enumerate}
+
+\section{Problemi Comuni}
+\begin{itemize}
+    \item \textbf{Privilege Escalation:} Ottenere privilegi superiori a quelli concessi, sfruttando falle o errori di configurazione.
+    \item \textbf{Arbitrary Code Execution (ACE):} Eseguire codice arbitrario sulla macchina target. Spesso un passo per la privilege escalation.
+\end{itemize}
+
+\section{Filosofia UNIX: "Tutto è un file"}
+\begin{itemize}
+    \item Molti componenti (hardware, processi) sono rappresentati come file.
+    \item Controllare un "file" significa controllare ciò che rappresenta.
+    \item \textit{Esempio:} \texttt{/dev/sda} (hard disk), \texttt{/dev/snd/*} (audio).
+\end{itemize}
+
+\section{Access Control in Linux}
+\subsection{Access Control List (ACL) - Modello Tradizionale UGO}
+\begin{itemize}
+    \item Modello DAC semplice basato su 3 categorie di soggetti per file/directory:
+    \begin{enumerate}
+        \item \textbf{User (u):} Proprietario.
+        \item \textbf{Group (g):} Gruppo proprietario.
+        \item \textbf{Other (o):} Tutti gli altri.
+    \end{enumerate}
+    \item Identificatori: \textbf{User ID (UID)} da \texttt{/etc/passwd}, \textbf{Group ID (GID)} da \texttt{/etc/group}.
+    \item Esempio output \texttt{ls -la /etc/passwd}:
+    \begin{bashcode}
+-rw-r--r-- 1 root root 2083 Mar  9 17:23 /etc/passwd
+    \end{bashcode}
+    Interpretazione:
+    \begin{itemize}
+        \item \texttt{-}: tipo file (regolare)
+        \item \texttt{rw-}: permessi proprietario (root) $\rightarrow$ lettura, scrittura
+        \item \texttt{r--}: permessi gruppo (root) $\rightarrow$ lettura
+        \item \texttt{r--}: permessi altri $\rightarrow$ lettura
+    \end{itemize}
+\end{itemize}
+
+\subsection{Capabilities (per processi)}
+Unix/Linux usa un sistema misto: ACL per file non aperti, Capabilities per file aperti.
+\begin{itemize}
+    \item Quando un processo apre un file (syscall \texttt{open}), il kernel verifica ACL.
+    \item Se consentito, il kernel restituisce un \textbf{file descriptor} (FD).
+    \item L'FD è una \textit{capability}: rappresenta il diritto del processo di operare su quel file specifico.
+    \item \textbf{Integrità della Capability:} L'FD è gestito dal kernel.
+\end{itemize}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[text=white, node distance=0.5cm and 1cm]
+    \node[draw=white, fill=gray!10!black, minimum width=5cm, minimum height=2.5cm, label={[labelStyle, yshift=0.2cm]User Space}] (userspace) {};
+    \node[draw=white, fill=gray!20!black, minimum width=4cm, minimum height=0.8cm, text centered, anchor=center] (process) at (userspace.center) {Process};
+    \node[draw=white, fill=gray!20!black, minimum width=4cm, minimum height=0.8cm, text centered, below=0.1cm of process] (libraries) {Libraries};
+
+    \node[draw=white, fill=gray!10!black, minimum width=5cm, minimum height=1.5cm, below=2cm of userspace, label={[labelStyle, yshift=0.2cm]Kernel Space}] (kernelspace) {};
+    \node[draw=white, fill=gray!20!black, minimum width=4cm, minimum height=0.8cm, text centered, anchor=center] (kernel) at (kernelspace.center) {Kernel};
+    
+    \node[left=0.5cm of process, text width=3cm, align=right, labelStyle] (fopen_text) {\texttt{fopen("aaa", "r")}\\ \texttt{f = 0x7fffabcd1234}};
+    \node[below left=0.2cm and 0.2cm of libraries, text width=3cm, align=right, labelStyle] (open_text) {\texttt{open("aaa", O\_RDONLY)}};
+    \node[right=0.2cm of open_text, labelStyle, yshift=0.1cm] (fd_text) {\texttt{fd = 3}};
+
+    \draw[arrowStyle, <->, thick] (libraries.south) -- (kernel.north);
+\end{tikzpicture}
+\caption{Interazione User Space / Kernel Space con File Descriptor}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \textbf{Access Control Lists (ACLs)} \\
+        \textit{Encode columns of an access control matrix}
+        \begin{tikzpicture}[scale=0.7, transform shape, text=white]
+            \matrix[matrix of nodes, nodes={draw, white, minimum size=1.2cm, anchor=center, fill=yellow!30!black},
+                    column 1/.style={nodes={fill=black!70}},
+                    row 1/.style={nodes={fill=black!70}}] (matrix_acl)
+            {
+                 & O1 & O2 & O3 \\
+            S1   & RW & RX &    \\
+            S2   & R  & RWX& RW \\
+            S3   &    & RWX&    \\
+            };
+            \node[draw=blue, thick, inner sep=0pt, fit=(matrix_acl-1-3) (matrix_acl-4-3), label={[blue, yshift=0.3cm, labelStyle]ACL for O2}] {};
+        \end{tikzpicture}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \textbf{Capabilities} \\
+        \textit{Encode rows of an access control matrix}
+        \begin{tikzpicture}[scale=0.7, transform shape, text=white]
+            \matrix[matrix of nodes, nodes={draw, white, minimum size=1.2cm, anchor=center, fill=yellow!30!black},
+                    column 1/.style={nodes={fill=black!70}},
+                    row 1/.style={nodes={fill=black!70}}] (matrix_cap)
+            {
+                 & O1 & O2 & O3 \\
+            S1   & RW & RX &    \\
+            S2   & R  & RWX& RW \\
+            S3   &    & RWX&    \\
+            };
+            \node[draw=blue, thick, inner sep=0pt, fit=(matrix_cap-2-1) (matrix_cap-2-4), label={[blue, xshift=1cm, labelStyle]Capabilities for S1}] {};
+        \end{tikzpicture}
+    \end{minipage}
+    \caption{ACLs vs Capabilities in relazione alla Matrice di Accesso}
+\end{figure}
+
+
+\section{Modelli di Scambio Informazioni Avanzati (MAC in Linux)}
+Per evitare che l'utente proprietario "regali" l'accesso (DAC), si usano sistemi MAC.
+\begin{itemize}
+    \item \textbf{SELinux (Security-Enhanced Linux)}
+    \item \textbf{Tomoyo, SMACK}
+    \item \textit{Analogia Android:} Segregazione delle app (Telegram non legge dati WhatsApp).
+\end{itemize}
+
+\subsection{Modello Bell-LaPadula (BLP) - per la Confidenzialità}
+\begin{itemize}
+    \item Focalizzato sulla \textbf{confidenzialità}.
+    \item Ogni soggetto/oggetto ha una \textbf{classe di sicurezza} (livello). Es: Non Classificato $<$ Riservato $<$ Segreto $<$ Top Secret.
+    \item \textbf{Regole Fondamentali:}
+    \begin{enumerate}
+        \item \textbf{No Read Up (Simple Security Property):} Un soggetto legge un oggetto solo se livello(soggetto) $\geq$ livello(oggetto).
+        \item \textbf{No Write Down ($\ast$-Property):} Un soggetto scrive un oggetto solo se livello(soggetto) $\leq$ livello(oggetto). (Scrive al proprio livello o superiore).
+    \end{enumerate}
+    \item Acronimo: WURD (Write-Up-Read-Down).
+    \item \textit{Esempio:} Alice ("Segreto")
+    \begin{itemize}
+        \item Può leggere: "Segreto", "Pubblico".
+        \item Può scrivere: "Segreto", "Top-Secret".
+        \item NON può: scrivere "Pubblico" (no write down), leggere "Top-Secret" (no read up).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Modello Biba - per l'Integrità}
+\begin{itemize}
+    \item Duale a BLP, focalizzato sull'\textbf{integrità} dei dati.
+    \item Ogni soggetto/oggetto ha un \textbf{livello di integrità}. Es: Bassa $<$ Media $<$ Alta.
+    \item \textbf{Regole Fondamentali (come da slide):}
+    \begin{enumerate}
+        \item Soggetto può scrivere oggetti a livelli di integrità $\leq$ al suo (Write Down).
+        \item Soggetto può leggere oggetti a livelli di integrità $\geq$ al suo (Read Up).
+    \end{enumerate}
+    \item Acronimo: WDRU (Write-Down-Read-Up).
+    \item \textit{Esempio Militare (Integrità):} Livelli: Carabiniere $<$ Tenente $<$ Capitano.
+    Alice ("Tenente"):
+    \begin{itemize}
+        \item Può leggere: documenti da "Tenenti" e "Capitani".
+        \item Può scrivere: documenti per "Tenenti" e "Carabinieri".
+    \end{itemize}
+    \item In Windows: "Integrity Level (IL)".
+\end{itemize}
+
+\section{Filesystem Linux}
+\begin{itemize}
+    \item Struttura ad albero dalla radice (\texttt{/}).
+    \item \textbf{Cartelle Comuni:}
+    \begin{minted}{text}
+/       The root filesystem
+/proc   (pseudo) Process virtual infrastructure
+/sys    (pseudo) System virtual infrastructure
+/dev    (pseudo) Device drivers file interface
+/etc    Configuration directory
+/tmp    Temporary directory
+/home   Users' directories
+/bin    Essential user binaries
+/sbin   Essential system binaries
+/lib    Essential shared libraries
+/usr    Secondary hierarchy (user binaries, libraries, etc.)
+/var    Variable data (logs, caches)
+/root   Root's home
+    \end{minted}
+\end{itemize}
+
+\subsection{Permessi Linux: \texttt{root}}
+L'utente \texttt{root} è il superutente, privilegi illimitati, bypassa controlli DAC.
+
+\subsection{Comandi per la Gestione dei Permessi (DAC)}
+\begin{itemize}
+    \item \textbf{Ordine di controllo permessi (DAC tradizionale):}
+    \begin{enumerate}
+        \item UID processo == UID proprietario file? $\rightarrow$ Permessi proprietario.
+        \item Altrimenti, GID processo (o GID supplementari) == GID gruppo file? $\rightarrow$ Permessi gruppo.
+        \item Altrimenti $\rightarrow$ Permessi "others".
+    \end{enumerate}
+    \item \texttt{chown} (change owner): Cambia proprietario/gruppo. Solo \texttt{root} può "regalare" file.
+    \item \texttt{chgrp} (change group): Cambia gruppo.
+    \item \texttt{chmod} (change mode): Modifica permessi r, w, x.
+    \begin{itemize}
+        \item \textbf{Modalità Ottale:} r=4, w=2, x=1. Somma per categoria (u, g, o).
+        \begin{itemize}
+            \item \texttt{chmod 750 file.txt} $\rightarrow$ \texttt{rwxr-x---}
+            \item \texttt{chmod 777 file.txt} $\rightarrow$ \texttt{rwxrwxrwx} (\textbf{PERICOLOSO!})
+        \end{itemize}
+        \item \textbf{Permessi su Cartelle:}
+        \begin{itemize}
+            \item \texttt{r}: Elencare contenuto.
+            \item \texttt{w}: Creare/eliminare/rinominare file \textit{all'interno}.
+            \item \texttt{x}: Attraversare la cartella (es. \texttt{cd}).
+        \end{itemize}
+        \item \textit{Caso "security by obscurity":} \texttt{chmod 711 test\_dir/} (\texttt{rwx--x--x}). Altri possono entrare e accedere a file noti, ma non elencare (\texttt{ls} fallisce per mancanza di \texttt{r}).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Gruppi Linux}
+Utente può appartenere a più gruppi. Utili per accesso condiviso (es. \texttt{/dev}).
+
+\subsection{Permessi Speciali}
+\begin{enumerate}
+    \item \textbf{SetUID (SUID):}
+    \begin{itemize}
+        \item \textbf{Su file eseguibile:} Processo assume UID del proprietario del file.
+        \begin{itemize}
+            \item \texttt{ls -l}: \texttt{---s--x--x} (o \texttt{S} se non c'è \texttt{x} per owner).
+            \item \textbf{ESTREMAMENTE PERICOLOSO} se eseguibile è di \texttt{root}.
+            \item \textit{Esempio vulnerabilità:} Programma C SUID root che esegue \texttt{system("whoami");}. Manipolando \texttt{PATH}, \texttt{whoami} può puntare a script malevolo eseguito come \texttt{root}.
+            \begin{ccode}
+// Esempio vulnerabile (semplificato)
+#include <stdio.h>
+#include <stdlib.h>
+int main() {
+    system("whoami"); // Se PATH è manipolabile, questo è pericoloso
+    return 0;
+}
+            \end{ccode}
+        \end{itemize}
+        \item \textbf{Su directory:} Generalmente ignorato.
+    \end{itemize}
+
+    \item \textbf{SetGID (SGID):}
+    \begin{itemize}
+        \item \textbf{Su file eseguibile:} Processo assume GID del gruppo proprietario del file.
+        \item \textbf{Su directory:} Nuovi file/sottodirectory ereditano GID della directory. Utile per cartelle condivise.
+        \begin{itemize}
+            \item \texttt{ls -ld}: \texttt{drwxr-sr-x}
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Sticky Bit:}
+    \begin{itemize}
+        \item \textbf{Su file eseguibile:} Ignorato.
+        \item \textbf{Su directory:} Solo proprietario file, proprietario directory o \texttt{root} possono eliminare/rinominare file al suo interno.
+        \begin{itemize}
+            \item \texttt{ls -ld}: \texttt{drwxrwxrwt} (la \texttt{t} al posto della \texttt{x} per "others").
+            \item Usato su \texttt{/tmp}, \texttt{/var/tmp}.
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
+
+\section{Elevazione dei Privilegi}
+\subsection{\texttt{sudo} (superuser do)}
+\begin{itemize}
+    \item Permette a utenti autorizzati (\texttt{/etc/sudoers}) di eseguire comandi come altro utente (tipicamente \texttt{root}).
+    \item Verifica password utente (via PAM).
+    \item Più controllato di SUID root. Può avere vulnerabilità (es. CVE-2023-22809 per \texttt{sudoedit}).
+\end{itemize}
+
+\subsection{Linux Capabilities (per processi)}
+\begin{itemize}
+    \item Problema SUID \texttt{root}: concede \textit{tutti} i privilegi di \texttt{root}.
+    \item Capabilities dividono privilegi di \texttt{root} in capacità distinte e granulari.
+    \item Un processo riceve solo le capacità specifiche necessarie (Least Privilege).
+    \item \textit{Esempi:}
+    \begin{itemize}
+        \item \texttt{CAP\_NET\_ADMIN}: Operazioni di rete.
+        \item \texttt{CAP\_DAC\_OVERRIDE}: Bypassare controlli DAC.
+        \item \texttt{CAP\_SYS\_ADMIN}: Molti privilegi di sistema.
+        \item (Consultare \texttt{man capabilities})
+    \end{itemize}
+\end{itemize}
+
+\end{document}

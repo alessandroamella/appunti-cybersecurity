@@ -1,0 +1,438 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+
+% --- Immagini ---
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usetikzlibrary{shapes.geometric, positioning, calc, arrows.meta}
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Appunti su Scambio di Chiavi (Key Exchange)},
+    pdfauthor={Basato sulle slide del Prof.},
+    colorlinks=true,
+    linkcolor=cyan,
+    urlcolor=cyan,
+    citecolor=green
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\definecolor{darkbg}{RGB}{20,20,20} % Un nero non assoluto per minor affaticamento
+\definecolor{lighttext}{RGB}{230,230,230} % Un bianco non assoluto
+\definecolor{darknodefill}{RGB}{50,50,50}
+\definecolor{darkarrow}{RGB}{180,180,180}
+\definecolor{highlight}{RGB}{100,180,255} % Blu chiaro per highlight
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+% --- Titolo ---
+\title{Appunti su Scambio di Chiavi (Key Exchange)}
+\author{Basato sulle slide del Professore}
+\date{\today}
+
+% Stili TikZ per diagrammi dark theme
+\tikzstyle{user} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, text centered, draw=lighttext, fill=darknodefill, text=lighttext, font=\sffamily]
+\tikzstyle{entity} = [rectangle, minimum width=2.5cm, minimum height=1cm, text centered, draw=lighttext, fill=blue!60!darknodefill, text=lighttext, font=\sffamily]
+\tikzstyle{attacker} = [ellipse, minimum width=2cm, minimum height=1cm, text centered, draw=red!80!lighttext, fill=red!40!darknodefill, text=lighttext, font=\sffamily]
+\tikzstyle{authority} = [cylinder, shape border rotate=90, aspect=0.5, minimum height=1.5cm, text width=2cm, text centered, draw=lighttext, fill=green!40!darknodefill, text=lighttext, font=\sffamily]
+\tikzstyle{data} = [rectangle, draw=lighttext, fill=gray!50!darknodefill, text=lighttext, font=\sffamily\footnotesize, inner sep=2pt]
+\tikzstyle{arrow} = [draw=darkarrow, -{Latex[length=2mm, width=1.5mm]}, thick]
+\tikzstyle{comm_arrow} = [draw=highlight, -{Latex[length=2mm, width=1.5mm]}, thick]
+\tikzstyle{key_exchange_line} = [draw=highlight, <->, dashed, thick]
+
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduzione e Definizioni}
+
+Lo \textbf{scambio di chiavi} (key exchange) è una procedura che permette a due parti comunicanti (che chiameremo Alice e Bob) di cooperare per acquisire una chiave crittografica segreta condivisa.
+
+\begin{itemize}
+    \item \textbf{Importanza per la crittografia simmetrica:} Affinché la crittografia simmetrica funzioni, le due parti devono possedere la \textbf{stessa chiave}, e questa chiave deve essere protetta dall'accesso di terzi.
+        \begin{itemize}
+            \item \textit{Esempio pratico:} Se Alice vuole inviare un messaggio cifrato a Bob usando AES (un algoritmo simmetrico), entrambi devono prima accordarsi su una chiave AES. Se un intercettatore (Eve) conosce questa chiave, può decifrare tutti i messaggi.
+        \end{itemize}
+    \item \textbf{Cambi Frequenti di Chiave:} È solitamente desiderabile cambiare le chiavi frequentemente per limitare la quantità di dati compromessi se un attaccante dovesse apprendere la chiave.
+\end{itemize}
+
+\section{Distribuzione di Chiavi Pubbliche}
+Quando si usano sistemi di crittografia asimmetrica (o a chiave pubblica), ogni utente ha una coppia di chiavi: una pubblica ($PU$) da distribuire e una privata ($PR$) da tenere segreta. La sfida è come distribuire in modo sicuro le chiavi pubbliche.
+
+\subsection{Annuncio Pubblico (Public Announcement)}
+Un utente annuncia semplicemente la sua chiave pubblica.
+\begin{itemize}
+    \item \textbf{Problema:} Chiunque può falsificare un annuncio.
+        \begin{itemize}
+            \item \textit{Esempio:} Eve potrebbe annunciare una sua chiave pubblica spacciandola per quella di Alice ($PU_A$). Se Bob usa questa chiave per inviare un messaggio "ad Alice", Eve potrà decifrarlo con la sua chiave privata corrispondente ($PR_E$).
+        \end{itemize}
+\end{itemize}
+
+\subsection{Directory Pubblicamente Disponibile (Publicly Available Directory)}
+Una directory centrale, gestita da un'entità fidata (organizzazione o autorità centrale, CA), mantiene un elenco di utenti e delle loro chiavi pubbliche.
+\begin{itemize}
+    \item \textbf{Responsabilità:} Mantenimento e distribuzione sono a carico della CA.
+    \item \textbf{Registrazione:} La registrazione della chiave pubblica ($PU$) nella directory dovrebbe avvenire di persona o tramite comunicazione autenticata sicura.
+    \item \textbf{Problema:} Se un attaccante riesce a ottenere/calcolare la chiave privata della CA ($PR_{CA}$), può compromettere l'intera directory e falsificare le chiavi pubbliche.
+\end{itemize}
+
+\subsection{Autorità di Chiave Pubblica (Public-Key Authority)}
+Simile alla directory, ma l'autorità è attivamente coinvolta nello scambio.
+\begin{itemize}
+    \item \textbf{Scenario:}
+        \begin{enumerate}
+            \item Alice vuole la chiave pubblica di Bob ($PU_B$). Alice invia una richiesta (con timestamp $T_1$) all'Autorità di Chiave Pubblica (CA).
+            \item La CA risponde ad Alice con un messaggio contenente la chiave pubblica di Bob ($PU_B$), la richiesta originale e il timestamp $T_1$, il tutto \textbf{firmato} con la chiave privata della CA ($PR_{auth}$). Matematicamente: $E(PR_{auth}, [PU_B \parallel \text{Richiesta} \parallel T_1])$. Alice può verificare la firma usando la chiave pubblica della CA ($PU_{auth}$), che si presume conosca in modo sicuro.
+            \item Alice ora ha $PU_B$. Invia a Bob un messaggio cifrato con $PU_B$ contenente un suo identificativo ($ID_A$) e un nonce ($N_1$): $E(PU_B, [ID_A \parallel N_1])$. (Nonce = numero usato una sola volta, per prevenire replay attack).
+            \item Bob fa lo stesso per ottenere la chiave pubblica di Alice ($PU_A$) e le invia un nonce $N_2$.
+            \item $N_1$ e $N_2$ identificano univocamente la transazione.
+        \end{enumerate}
+    \item \textbf{Svantaggi:}
+        \begin{itemize}
+            \item \textbf{Collo di bottiglia (Bottleneck):} L'autorità deve essere contattata per ogni richiesta di chiave pubblica.
+            \item \textbf{Vulnerabilità:} La directory di nomi e chiavi pubbliche mantenuta dall'autorità è vulnerabile a manomissioni (se non adeguatamente protetta).
+        \end{itemize}
+\end{itemize}
+
+\subsection{Certificati di Chiave Pubblica (Public-Key Certificates)}
+Rappresentano la soluzione più comune e scalabile.
+\begin{itemize}
+    \item \textbf{Cos'è un certificato:}
+        \begin{itemize}
+            \item Una chiave pubblica.
+            \item Un identificatore del proprietario della chiave.
+            \item L'intero blocco è \textbf{firmato digitalmente} da una terza parte fidata (Certificate Authority - CA).
+            \item \textit{Esempio di CA:} Agenzie governative, istituzioni finanziarie, aziende specializzate (es. Let's Encrypt, DigiCert).
+        \end{itemize}
+    \item \textbf{Processo:}
+        \begin{enumerate}
+            \item Un partecipante (es. Alice) fa richiesta alla CA, fornendo la sua chiave pubblica. La richiesta deve avvenire in modo sicuro/autenticato.
+            \item La CA crea un certificato per Alice ($C_A$) che contiene un timestamp ($T$), l'ID di Alice ($ID_A$) e la chiave pubblica di Alice ($PU_A$), il tutto firmato con la chiave privata della CA ($PR_{auth}$): $C_A = E(PR_{auth}, [T \parallel ID_A \parallel PU_A])$.
+            \item Alice può ora distribuire $C_A$ a chiunque.
+            \item Chi riceve il certificato (es. Bob) può verificarlo usando la chiave pubblica della CA ($PU_{auth}$): $D(PU_{auth}, C_A)$ restituisce $(T \parallel ID_A \parallel PU_A)$. Se la decifratura/verifica ha successo, Bob sa che $PU_A$ appartiene veramente ad Alice (o meglio, all'entità $ID_A$) ed è stata certificata dalla CA.
+        \end{enumerate}
+    \item \textbf{Requisiti dei certificati:}
+        \begin{itemize}
+            \item \textbf{Leggibilità:} Chiunque può leggere un certificato per determinare nome e chiave pubblica del proprietario.
+            \item \textbf{Verificabilità:} Chiunque può verificare che il certificato provenga dalla CA e non sia contraffatto.
+            \item \textbf{Creazione/Aggiornamento Esclusivo:} Solo la CA può creare e aggiornare certificati.
+            \item \textbf{Validità Temporale:} Chiunque può verificare la validità temporale del certificato (date "Not before" e "Not after").
+        \end{itemize}
+    \item \textbf{Standard X.509:} È lo standard universalmente accettato per il formato dei certificati di chiave pubblica. Usato in molte applicazioni di sicurezza di rete (IPsec, TLS/SSL per HTTPS).
+        \begin{itemize}
+            \item \textit{Esempio Pratico (HTTPS):} Quando ti connetti a \texttt{https://www.google.com}, il tuo browser riceve il certificato X.509 di Google. Il browser verifica la firma della CA (es. Google Trust Services) usando la chiave pubblica di quella CA (che è pre-installata nel browser o nel sistema operativo). Se la firma è valida, il browser sa che la chiave pubblica nel certificato appartiene legittimamente a Google.
+        \end{itemize}
+    \item \textbf{Diagramma di utilizzo di un certificato X.509 (semplificato):}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{images/x509_process.png} % Immagine generata da script Python
+        \caption{Processo di creazione e verifica di un certificato X.509. A sinistra: la CA firma le informazioni dell'utente. A destra: un utente verifica il certificato per ottenere la chiave pubblica di Bob.}
+        \label{fig:x509}
+    \end{figure}
+\end{itemize}
+
+\section{Distribuzione di Chiavi Segrete / Scambio di Chiavi Simmetriche}
+Come si scambiano le chiavi quando si usa la crittografia simmetrica?
+
+\subsection{Opzioni di Distribuzione}
+\begin{enumerate}
+    \item \textbf{Consegna Fisica (A a B):} Alice seleziona/crea una chiave e la consegna fisicamente a Bob (es. su una chiavetta USB). Sicuro ma poco pratico su larga scala.
+    \item \textbf{Consegna Fisica (Terza Parte ad A e B):} Una terza parte fidata seleziona la chiave e la consegna fisicamente ad A e B.
+    \item \textbf{Cifratura con Vecchia Chiave:} Se A e B hanno già condiviso una chiave recentemente, uno dei due può trasmettere la nuova chiave cifrandola con la vecchia chiave.
+        \begin{itemize}
+            \item \textit{Problema:} Se la vecchia chiave è compromessa, anche la nuova lo sarà.
+        \end{itemize}
+    \item \textbf{Terza Parte Fidata (TTP) Online:} Se A e B hanno entrambi una connessione cifrata con una terza parte fidata C, C può generare una chiave e consegnarla ad A e B sui rispettivi canali sicuri.
+\end{enumerate}
+
+\subsection{Trusted Third Parties (TTP)}
+\begin{itemize}
+    \item \textbf{Problema di Gestione Chiavi (Senza TTP):} Con $n$ utenti, se ognuno deve avere una chiave segreta condivisa con ogni altro utente, ogni utente deve memorizzare $O(n)$ chiavi. Il numero totale di chiavi nel sistema è $O(n^2)$ (specificamente $n(n-1)/2$).
+        \begin{itemize}
+            \item \textit{Esempio:} Con 10 utenti, servono $(10 \times 9)/2 = 45$ chiavi totali. Con 100 utenti, 4950 chiavi.
+        \end{itemize}
+    \item \textbf{Soluzione con TTP Online:}
+        \begin{itemize}
+            \item Ogni utente ($U_1, U_2, \dots$) memorizza \textbf{una sola chiave} segreta a lungo termine ($k_1, k_2, \dots$), condivisa individualmente con la TTP.
+            \item Quando $U_1$ vuole comunicare con $U_3$:
+                \begin{enumerate}
+                    \item $U_1$ contatta la TTP.
+                    \item La TTP genera una \textbf{chiave di sessione} temporanea ($k_{13}$).
+                    \item La TTP invia $k_{13}$ a $U_1$ (cifrata con $k_1$) e $k_{13}$ a $U_3$ (cifrata con $k_3$).
+                    \item $U_1$ e $U_3$ ora condividono $k_{13}$ per la loro sessione.
+                \end{enumerate}
+        \end{itemize}
+        \begin{figure}[H]
+            \centering
+            \begin{tikzpicture}[node distance=2.5cm and 3cm]
+                \node[user] (u1) {$U_1$};
+                \node[user, right=of u1] (u2) {$U_2$};
+                \node[user, below=of u1] (u3) {$U_3$};
+                \node[user, right=of u3] (u4) {$U_4$};
+                \node[entity, above right=0.5cm and 0.2cm of u3, minimum width=2cm, minimum height=2cm] (ttp) {TTP};
+
+                \draw[arrow] (u1) -- node[above, sloped, midway, font=\sffamily\scriptsize] {$k_1$} (ttp);
+                \draw[arrow] (u2) -- node[above, sloped, midway, font=\sffamily\scriptsize] {$k_2$} (ttp);
+                \draw[arrow] (u3) -- node[below, sloped, midway, font=\sffamily\scriptsize] {$k_3$} (ttp);
+                \draw[arrow] (u4) -- node[below, sloped, midway, font=\sffamily\scriptsize] {$k_4$} (ttp);
+                
+                \path (u1) edge[key_exchange_line] node[left, midway, font=\sffamily\scriptsize] {session key $k_{13}$} (u3);
+                 \node[below left=0.1cm and 0.1cm of u1, font=\sffamily\tiny, text width=3cm, text centered] {Ogni utente ricorda UNA chiave master condivisa con la TTP.};
+            \end{tikzpicture}
+            \caption{Schema di una Trusted Third Party (TTP).}
+            \label{fig:ttp_schema}
+        \end{figure}
+    \item \textbf{Protocollo Giocattolo (Esempio Semplificato con TTP):}
+        \begin{itemize}
+            \item Obiettivo: Alice e Bob ottengono una chiave condivisa $K_{AB}$, sicura solo contro l'\textbf{intercettazione passiva} (eavesdropping).
+            \item Alice e Bob hanno chiavi $k_A$ e $k_B$ condivise con la TTP.
+        \end{itemize}
+        \begin{enumerate}
+            \item Alice $\rightarrow$ TTP: "Alice vuole una chiave con Bob".
+            \item TTP: Sceglie una $K_{AB}$ casuale.
+                \begin{itemize}
+                    \item Invia ad Alice: $E(k_A, \text{"Alice, Bob"} \parallel K_{AB})$
+                    \item Invia a Bob (o ad Alice che lo inoltra a Bob) un "ticket": $E(k_B, \text{"Alice, Bob"} \parallel K_{AB})$
+                \end{itemize}
+            \item Alice e Bob decifrano i messaggi e ottengono $K_{AB}$.
+        \end{itemize}
+        \begin{itemize}
+            \item Un intercettatore vede solo messaggi cifrati; se la cifratura è CPA-secure (Chosen Plaintext Attack secure), non impara nulla su $K_{AB}$.
+            \item \textbf{Note:}
+                \begin{itemize}
+                    \item La TTP è necessaria per ogni scambio di chiavi.
+                    \item La TTP conosce tutte le chiavi di sessione ($K_{AB}$).
+                \end{itemize}
+            \item \textbf{Kerberos:} È un'applicazione reale che usa principi simili. Fornisce un server di autenticazione centralizzato (TTP) e si basa esclusivamente su crittografia simmetrica.
+        \end{itemize}
+    \item \textbf{Insicurezza del Protocollo Giocattolo contro Attacchi Attivi:}
+        \begin{itemize}
+            \item È vulnerabile a \textbf{replay attack}.
+            \item \textit{Esempio:} Un attaccante registra una sessione tra Alice e un commerciante Bob (es. un ordine di un libro). Successivamente, l'attaccante rigioca la sessione registrata a Bob. Bob pensa che Alice stia ordinando un'altra copia del libro.
+        \end{itemize}
+\end{itemize}
+
+\section{Scambio di Chiavi SENZA una TTP Online}
+È possibile generare chiavi condivise senza affidarsi a una TTP sempre online? \textbf{Sì!}
+Questo è il punto di partenza della \textbf{crittografia a chiave pubblica} moderna.
+\begin{itemize}
+    \item Merkle Puzzles (1974)
+    \item Diffie-Hellman (1976)
+    \item RSA (1977)
+\end{itemize}
+
+\subsection{Merkle Puzzles (1974)}
+Un metodo pionieristico per scambiare chiavi senza segreti pre-condivisi, sicuro solo contro intercettazione passiva.
+\begin{itemize}
+    \item \textbf{Idea:} Creare un meccanismo dove chi vuole stabilire la chiave (Bob) deve fare un certo lavoro, ma un intercettatore (Eve) deve fare un lavoro significativamente maggiore.
+    \item \textbf{Inefficiente:} Sì, ma concettualmente importante.
+    \item \textbf{Strumento principale: "Puzzles"}
+        \begin{itemize}
+            \item Problemi che possono essere risolti con "un certo sforzo".
+            \item \textit{Esempio di puzzle:} Sia $E(k,m)$ un cifrario simmetrico (es. AES) con chiave $k$ a 128 bit.
+                \begin{itemize}
+                    \item Un puzzle è $E(P, \text{"messaggio"})$ dove $P$ è una chiave formata da 96 zeri seguiti da 32 bit variabili: $P = 0^{96} \parallel b_1 \dots b_{32}$.
+                    \item "Risolvere" il puzzle significa trovare $P$ provando tutte le $2^{32}$ possibilità per i 32 bit variabili (brute force).
+                \end{itemize}
+        \end{itemize}
+    \item \textbf{Protocollo Merkle Puzzles:}
+        \begin{enumerate}
+            \item \textbf{Alice (Preparazione):}
+                \begin{itemize}
+                    \item Prepara un gran numero ($N$, es. $2^{32}$) di puzzle.
+                    \item Per ogni puzzle $i$ (da 1 a $N$):
+                        \begin{itemize}
+                            \item Sceglie una $P_i$ casuale (la parte variabile di 32 bit, $P_i \in \{0,1\}^{32}$).
+                            \item Sceglie un identificatore di puzzle $x_i$ casuale (es. 128 bit, $x_i \in \{0,1\}^{128}$) e una chiave segreta $k_i$ casuale (es. 128 bit, $k_i \in \{0,1\}^{128}$). Gli $x_i$ devono essere tutti diversi.
+                            \item Crea $puzzle_i = E(0^{96} \parallel P_i, \text{"Puzzle \#"} \parallel x_i \parallel k_i)$.
+                        \end{itemize}
+                    \item Invia tutti gli $N$ puzzle a Bob.
+                \end{itemize}
+            \item \textbf{Bob (Selezione e Soluzione):}
+                \begin{itemize}
+                    \item Sceglie \textbf{un} puzzle a caso dalla lista, diciamo $puzzle_j$.
+                    \item Risolve $puzzle_j$ tramite brute force su $P_j$. Questo richiede in media $2^{31}$ tentativi.
+                    \item Una volta trovato $P_j$, decifra $puzzle_j$ e ottiene $(\text{"Puzzle \#"} \parallel x_j \parallel k_j)$.
+                    \item $k_j$ è la chiave segreta condivisa.
+                    \item Invia $x_j$ (l'identificatore del puzzle) ad Alice pubblicamente.
+                \end{itemize}
+            \item \textbf{Alice (Identificazione):}
+                \begin{itemize}
+                    \item Riceve $x_j$.
+                    \item Cerca nella sua lista quale $k_i$ corrisponde a $x_j$. Questa è $k_j$.
+                    \item Ora Alice e Bob condividono $k_j$.
+                \end{itemize}
+        \end{enumerate}
+    \item \textbf{Analisi del Lavoro (Complessità):} (Assumendo $N$ puzzle, e difficoltà $D$ per risolvere un puzzle)
+        \begin{itemize}
+            \item \textbf{Alice:} Deve preparare $N$ puzzle. Lavoro $O(N)$.
+            \item \textbf{Bob:} Deve risolvere un puzzle. Lavoro $O(D)$ (es. $O(2^{32})$).
+            \item \textbf{Intercettatore (Eve):}
+                \begin{itemize}
+                    \item Vede tutti gli $N$ puzzle e $x_j$.
+                    \item Non sa quale dei $N$ puzzle è stato scelto da Bob.
+                    \item Per trovare $k_j$, Eve deve risolvere i puzzle uno per uno (in media $N/2$ puzzle) fino a trovare quello che contiene $x_j$.
+                    \item Lavoro per Eve: $O(N \cdot D)$. Se $N=D=2^{32}$, Eve fa $O((2^{32})^2) = O(2^{64})$ lavoro.
+                \end{itemize}
+            \item C'è un \textbf{vantaggio quadratico} per Alice/Bob rispetto a Eve se $N \approx D$.
+        \end{itemize}
+        \begin{figure}[H]
+            \centering
+            \begin{tikzpicture}[node distance=4cm]
+                \node[user] (alice) {Alice};
+                \node[user, right=of alice] (bob) {Bob};
+
+                \draw[comm_arrow] (alice.east) -- (bob.west) node[midway, above, font=\sffamily\scriptsize] {$puzzle_1, \dots, puzzle_{2^{32}}$};
+                \draw[comm_arrow] (bob.west) -- (alice.east) node[midway, below, font=\sffamily\scriptsize] {$x_j$};
+                
+                \node[below=0.5cm of alice, font=\sffamily\Large] {$k_j$};
+                \node[below=0.5cm of bob, font=\sffamily\Large] {$k_j$};
+            \end{tikzpicture}
+            \caption{Scambio con Merkle Puzzles.}
+            \label{fig:merkle_puzzles}
+        \end{figure}
+\end{itemize}
+
+\subsection{Il Protocollo Diffie-Hellman (1976)}
+Un metodo elegante ed efficiente per stabilire una chiave segreta condivisa su un canale insicuro, senza segreti pre-condivisi. È sicuro contro intercettatori passivi.
+\begin{itemize}
+    \item \textbf{Idea di Alto Livello:}
+        \begin{itemize}
+            \item Alice e Bob non condividono alcuna informazione segreta in anticipo.
+            \item Si scambiano messaggi pubblicamente.
+            \item Alla fine, concordano su una chiave segreta condivisa $K$, sconosciuta all'intercettatore.
+        \end{itemize}
+    \item \textbf{Base Matematica: Problema del Logaritmo Discreto (DLP)}
+        \begin{itemize}
+            \item \textbf{Radice Primitiva:} In aritmetica modulare, un numero $g$ è una radice primitiva modulo $p$ (un numero primo) se le potenze di $g$ ($g^1, g^2, \dots, g^{p-1} \pmod{p}$) generano tutti i numeri da 1 a $p-1$ in qualche ordine.
+            \item \textbf{Logaritmo Discreto:} Dati $g$, $p$, e $y = g^x \pmod{p}$, è computazionalmente difficile trovare $x$. $x$ è il logaritmo discreto di $y$ in base $g$ modulo $p$.
+                \begin{itemize}
+                    \item Calcolare $g^x \pmod{p}$ (esponenziazione modulare) è facile.
+                    \item Trovare $x$ dati $g, p, g^x \pmod{p}$ (logaritmo discreto) è difficile.
+                \end{itemize}
+            \item La sicurezza di Diffie-Hellman si basa sulla difficoltà del Problema del Logaritmo Discreto (DLP) o del correlato Problema Computazionale di Diffie-Hellman (CDH: dati $g^a \pmod p$ e $g^b \pmod p$, calcolare $g^{ab} \pmod p$).
+        \end{itemize}
+    \item \textbf{Protocollo Diffie-Hellman:}
+        \begin{enumerate}
+            \item \textbf{Parametri Pubblici (concordati e noti a tutti):}
+                \begin{itemize}
+                    \item Un grande numero primo $p$ (es. 2048 bit o più).
+                    \item Un intero $g$ (generatore, una radice primitiva modulo $p$, o un elemento di un sottogruppo di ordine elevato, $2 \le g \le p-2$).
+                \end{itemize}
+            \item \textbf{Alice:}
+                \begin{itemize}
+                    \item Sceglie un numero segreto casuale $a$ (es. $1 < a < p-1$).
+                    \item Calcola $A = g^a \pmod{p}$.
+                    \item Invia $A$ a Bob (pubblicamente).
+                \end{itemize}
+            \item \textbf{Bob:}
+                \begin{itemize}
+                    \item Sceglie un numero segreto casuale $b$ (es. $1 < b < p-1$).
+                    \item Calcola $B = g^b \pmod{p}$.
+                    \item Invia $B$ ad Alice (pubblicamente).
+                \end{itemize}
+            \item \textbf{Calcolo della Chiave Segreta Condivisa ($K$):}
+                \begin{itemize}
+                    \item \textbf{Alice calcola:} $K = B^a \pmod{p} = (g^b)^a \pmod{p} = g^{ba} \pmod{p}$.
+                    \item \textbf{Bob calcola:} $K = A^b \pmod{p} = (g^a)^b \pmod{p} = g^{ab} \pmod{p}$.
+                    \item Ora Alice e Bob condividono la stessa chiave segreta $K = g^{ab} \pmod{p}$.
+                \end{itemize}
+        \end{enumerate}
+        \begin{figure}[H]
+        \centering
+            \begin{tikzpicture}[node distance=2cm and 4cm]
+                \node[user] (alice) {Alice \\ \footnotesize Sceglie $a$ \\ Calcola $A=g^a \pmod p$};
+                \node[user, right=of alice] (bob) {Bob \\ \footnotesize Sceglie $b$ \\ Calcola $B=g^b \pmod p$};
+
+                \draw[comm_arrow] (alice.east) -- (bob.west) node[midway, above, font=\sffamily\scriptsize] {$A=g^a \pmod p$};
+                \draw[comm_arrow] (bob.west) -- (alice.east) node[midway, below, font=\sffamily\scriptsize] {$B=g^b \pmod p$};
+                
+                \node[below=1.5cm of alice, font=\sffamily\footnotesize, text width=3.5cm, align=center] {Alice calcola \\ $K = B^a \pmod p = g^{ab} \pmod p$};
+                \node[below=1.5cm of bob, font=\sffamily\footnotesize, text width=3.5cm, align=center] {Bob calcola \\ $K = A^b \pmod p = g^{ab} \pmod p$};
+                \node[below=2.5cm of $(alice)!0.5!(bob)$, font=\sffamily\normalsize] {Shared Secret Key: $K = g^{ab} \pmod p$};
+            \end{tikzpicture}
+            \caption{Protocollo Diffie-Hellman.}
+            \label{fig:diffie_hellman}
+        \end{figure}
+    \item \textbf{Sicurezza (contro intercettatore passivo Eve):}
+        \begin{itemize}
+            \item Eve vede: $p, g, A=g^a \pmod{p}, B=g^b \pmod{p}$.
+            \item Per calcolare $K = g^{ab} \pmod{p}$, Eve dovrebbe risolvere il CDH. Se Eve potesse risolvere il DLP, potrebbe trovare $a$ da $A$ (o $b$ da $B$) e poi calcolare $K$. Entrambi sono considerati difficili.
+            \item La difficoltà del miglior algoritmo noto (General Number Field Sieve - GNFS) per risolvere il DLP per un primo $p$ di $n$ bit è sub-esponenziale in $n$ (es. $\exp(O(n^{1/3} (\log n)^{2/3})))$.
+        \end{itemize}
+    \item \textbf{Vulnerabilità a Man-in-The-Middle (MiTM) Attack:}
+        \begin{itemize}
+            \item Il protocollo Diffie-Hellman base è \textbf{insicuro contro attacchi attivi} come il MiTM, perché i messaggi $A$ e $B$ non sono autenticati.
+            \item \textbf{Scenario MiTM:}
+                \begin{enumerate}
+                    \item Alice invia $A = g^a \pmod{p}$ a Bob. Eve (MiTM) intercetta $A$.
+                    \item Eve sceglie un suo segreto $z_A$, calcola $A' = g^{z_A} \pmod{p}$ e lo invia a Bob (fingendo sia Alice).
+                    \item Bob invia $B = g^b \pmod{p}$ ad Alice. Eve intercetta $B$.
+                    \item Eve sceglie un suo segreto $z_B$, calcola $B' = g^{z_B} \pmod{p}$ e lo invia ad Alice (fingendo sia Bob).
+                \end{enumerate}
+            \item \textbf{Risultato:}
+                \begin{itemize}
+                    \item \textbf{Alice calcola una chiave con Eve:} $K_{AE} = (B')^a \pmod{p} = (g^{z_B})^a \pmod{p} = g^{az_B} \pmod{p}$.
+                    \item \textbf{Bob calcola una chiave con Eve:} $K_{BE} = (A')^b \pmod{p} = (g^{z_A})^b \pmod{p} = g^{bz_A} \pmod{p}$.
+                    \item \textbf{Eve calcola due chiavi:}
+                        \begin{itemize}
+                            \item Con Alice: $K_{EA} = A^{z_B} \pmod{p} = (g^a)^{z_B} \pmod{p} = g^{az_B} \pmod{p}$.
+                            \item Con Bob: $K_{EB} = B^{z_A} \pmod{p} = (g^b)^{z_A} \pmod{p} = g^{bz_A} \pmod{p}$.
+                        \end{itemize}
+                    \item Eve è "in mezzo", può decifrare, leggere, modificare e re-cifrare tutti i messaggi.
+                \end{itemize}
+            \item \textbf{Soluzione:} Autenticare i valori scambiati ($A$ e $B$). Questo si fa tipicamente usando certificati digitali e firme digitali.
+        \end{itemize}
+        \begin{figure}[H]
+            \centering
+            \begin{tikzpicture}[node distance=2cm and 3.5cm]
+                \node[user] (alice) {Alice};
+                \node[attacker, right=of alice] (mitm) {MiTM (Eve)};
+                \node[user, right=of mitm] (bob) {Bob};
+
+                % Alice to MiTM
+                \draw[comm_arrow] (alice.east) -- (mitm.west) node[midway, above, font=\sffamily\scriptsize] {$A = g^a$};
+                % MiTM to Bob
+                \draw[comm_arrow] (mitm.east) -- (bob.west) node[midway, above, font=\sffamily\scriptsize] {$A' = g^{z_A}$};
+                
+                % Bob to MiTM
+                \draw[comm_arrow] (bob.west) -- (mitm.east) node[midway, below, font=\sffamily\scriptsize] {$B = g^b$};
+                % MiTM to Alice
+                \draw[comm_arrow] (mitm.west) -- (alice.east) node[midway, below, font=\sffamily\scriptsize] {$B' = g^{z_B}$};
+                
+                \node[below=1cm of alice, font=\sffamily\scriptsize, text width=3cm, align=center] {Chiave con Eve: $K_{AE} = g^{az_B}$};
+                \node[below=1cm of mitm, font=\sffamily\scriptsize, text width=3cm, align=center] {Con Alice: $K_{EA} = g^{az_B}$ \\ Con Bob: $K_{EB} = g^{bz_A}$};
+                \node[below=1cm of bob, font=\sffamily\scriptsize, text width=3cm, align=center] {Chiave con Eve: $K_{BE} = g^{bz_A}$};
+            \end{tikzpicture}
+            \caption{Attacco Man-in-the-Middle (MiTM) a Diffie-Hellman. (mod p omesso per brevità).}
+            \label{fig:dh_mitm}
+        \end{figure}
+\end{itemize}
+
+\end{document}

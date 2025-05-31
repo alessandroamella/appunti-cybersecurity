@@ -43,18 +43,17 @@ echo "Verifico che tutti i file necessari siano presenti..."
 
 FILES=(
   "01-introduzione.tex"
-  "02-networking.tex"
-  "03-aritmetica-binaria.tex"
-  "04-ip-subnetting.tex"
-  "05-ipv4-vlsm.tex"
-  "06-application-layer.tex"
-  "07-security.tex"
-  "08-wireless-1.tex"
-  "09-wireless-2.tex"
-  "10-wireless-protocols.tex"
-  "11-routing.tex"
-  "12-esercitazioni.tex"
-  "13-risoluzione-esame.tex"
+  "02-crittografia.tex"
+  "03-probabilita-mod.tex"
+  "04-stream-ciphers.tex"
+  "05-block-ciphers.tex"
+  "06-modalita-operative.tex"
+  "07-crittografia-pk.tex"
+  "08-network-security.tex"
+  "09-sicurezza-sistemi-permessi.tex"
+  "10-acl.tex"
+  "11-sicurezza-wireless.tex"
+  "12-buffer-overflow.tex"
 )
 
 # Generate the appropriate preamble
@@ -152,6 +151,42 @@ Questo documento è la versione compilata automaticamente di tutti i miei appunt
 Sentiti libero di utilizzare, condividere o contribuire a questi appunti attraverso la repository GitHub.
 
 \clearpage
+
+\chapter{Introduzione}
+\input{01-introduzione-content}
+
+\chapter{Crittografia}
+\input{02-crittografia-content}
+
+\chapter{Probabilità e Modelli}
+\input{03-probabilita-mod-content}
+
+\chapter{Stream Ciphers}
+\input{04-stream-ciphers-content}
+
+\chapter{Block Ciphers}
+\input{05-block-ciphers-content}
+
+\chapter{Modalità Operative}
+\input{06-modalita-operative-content}
+
+\chapter{Crittografia Asimmetrica}
+\input{07-crittografia-pk-content}
+
+\chapter{Network Security}
+\input{08-network-security-content}
+
+\chapter{Sicurezza dei Sistemi e Permessi}
+\input{09-sicurezza-sistemi-permessi-content}
+
+\chapter{ACL e Linux}
+\input{10-acl-content}
+
+\chapter{Sicurezza Wireless}
+\input{11-sicurezza-wireless-content}
+
+\chapter{Buffer Overflow}
+\input{12-buffer-overflow-content}
 
 \end{document}
 EOT

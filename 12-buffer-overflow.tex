@@ -1,0 +1,494 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+
+% --- Immagini e Disegni ---
+\usepackage{float}
+\usepackage{graphicx} % per immagini
+\usepackage{tikz} % per disegni
+\usetikzlibrary{shapes.geometric, positioning, calc, arrows.meta, shapes.multipart}
+% Stile per i nodi TikZ su sfondo nero
+\tikzstyle{memblock} = [rectangle, draw=white, fill=blue!20!white, text=black, minimum height=2em, minimum width=6em, text centered]
+\tikzstyle{memblock_red} = [memblock, fill=red!40!white]
+\tikzstyle{memblock_orange} = [memblock, fill=orange!60!white]
+\tikzstyle{memblock_green} = [memblock, fill=green!40!black, text=white]
+\tikzstyle{mem_label} = [text=white, font=\footnotesize]
+\tikzstyle{stack_arrow} = [-{Stealth[length=3mm, width=2mm]}, white, thick]
+
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Appunti su Attacchi di Buffer Overflow},
+    pdfauthor={Basato sulle slide del Prof.},
+    colorlinks=true,
+    linkcolor=cyan,
+    urlcolor=magenta,
+    citecolor=green
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\definecolor{darkbackground}{RGB}{30,30,30} % Un nero non assoluto, più riposante
+\definecolor{lighttext}{RGB}{240,240,240}
+\pagecolor{darkbackground}
+\color{lighttext}
+
+% --- Evidenziazione del codice (richiede -shell-escape) ---
+% Compilare con: pdflatex -shell-escape nomefile.tex
+\usepackage{minted}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines=true,
+    style=monokai, % Stile adatto a sfondo scuro
+    bgcolor=darkbackground!80!black % Sfondo del blocco minted leggermente diverso
+}
+\newminted{c}{bgcolor=black!80, textcolor=white}
+\newminted{asm}{bgcolor=black!80, textcolor=white}
+
+% --- Titolo ---
+\title{\textbf{Appunti su Attacchi di Buffer Overflow}}
+\author{Basato sulle slide del Professore}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Focus sugli Attacchi: Bug come Opportunità}
+
+\subsection{Il Software e i Bug}
+Il software, specialmente quello complesso, è raramente esente da \textbf{bug} (difetti).
+Questi possono manifestarsi come:
+\begin{itemize}
+    \item Funzionalità che non operano come previsto o non funzionano affatto.
+    \item \textbf{Crashes} (interruzioni anomale) del programma, che portano a inaffidabilità e potenziale perdita di dati.
+\end{itemize}
+
+\subsection{Bug come Opportunità per l'Attacker}
+Per un utente malintenzionato (attacker), i bug non sono semplici inconvenienti, ma rappresentano \textbf{opportunità} per compromettere un sistema.
+
+\subsection{Exploits}
+Un \textbf{exploit} è una tecnica, o un frammento di codice, che sfrutta una specifica vulnerabilità (bug) per trasformarla in un'arma. L'obiettivo è utilizzare gli errori di programmazione a proprio vantaggio.
+
+\subsection{Usi Tipici degli Exploits}
+Gli exploit derivati da bug possono essere utilizzati per:
+\begin{itemize}
+    \item \textbf{Aggirare Controlli di Autenticazione e Autorizzazione:}
+    Superare meccanismi di login o permessi.
+    \begin{itemize}
+        \item \textit{Esempio Pratico:} Un attacker potrebbe inserire una stringa particolare in un campo di login che, a causa di un bug, bypassa la verifica della password, permettendo l'accesso come un altro utente.
+    \end{itemize}
+
+    \item \textbf{Elevare i Privilegi (Privilege Escalation):}
+    Ottenere permessi superiori, come quelli di amministratore (\texttt{admin} o \texttt{root}).
+    \begin{itemize}
+        \item \textit{Esempio Pratico:} Un programma con privilegi limitati, se vulnerabile, potrebbe essere indotto a eseguire comandi con i privilegi dell'amministratore, dando all'attacker il controllo completo del sistema.
+    \end{itemize}
+
+    \item \textbf{Dirottare Programmi (Code Execution):}
+    Forzare un programma a eseguire codice non intenzionale o \textbf{arbitrario} fornito dall'attacker. Questo è un obiettivo comune degli attacchi di buffer overflow.
+    \begin{itemize}
+        \item \textit{Esempio Pratico:} Un server web vulnerabile potrebbe eseguire un piccolo programma (shellcode) inviato dall'attacker attraverso una richiesta manipolata, aprendo una backdoor.
+    \end{itemize}
+
+    \item \textbf{Consentire l'Accesso Persistente:}
+    Installare meccanismi (es. backdoor) per mantenere l'accesso non autorizzato al sistema anche dopo riavvii o la chiusura della sessione iniziale.
+\end{itemize}
+
+\subsection{Incidenti Importanti nella Storia dei Buffer Overflow}
+\begin{itemize}
+    \item \textbf{1988 - Morris Internet Worm:} Utilizzò un buffer overflow nel demone \texttt{fingerd} per la sua diffusione.
+    \item \textbf{1995:} Scoperta di un buffer overflow in NCSA httpd 1.3, pubblicato da Thomas Lopatic.
+    \item \textbf{1996 - "Smashing the Stack for Fun and Profit":} Articolo di Aleph One su Phrack magazine, che rese la tecnica di exploitation più accessibile.
+    \item \textbf{2001 - Code Red worm:} Sfruttò un buffer overflow in Microsoft IIS 5.0.
+    \item \textbf{2003 - Slammer worm:} Sfruttò un buffer overflow in Microsoft SQL Server 2000.
+    \item \textbf{2004 - Sasser worm:} Sfruttò un buffer overflow in LSASS di Windows 2000/XP.
+\end{itemize}
+
+\subsection{Definizione di Buffer Overflow}
+Secondo NISTIR 7298 (Glossary of Key Information Security Terms, Luglio 2019), un \textbf{buffer overflow} (noto anche come buffer overrun o buffer overwrite) è:
+\begin{quote}
+    \textit{una condizione su un'interfaccia in cui è possibile inserire più input in un buffer o un'area di conservazione dei dati rispetto alla capacità assegnata, sovrascrivendo altre informazioni.}
+\end{quote}
+Gli avversari sfruttano tale condizione per:
+\begin{itemize}
+    \item Mandare in \textbf{crash} un sistema (Denial of Service).
+    \item Inserire codice appositamente predisposto (shellcode) che consente loro di ottenere il \textbf{controllo del sistema}.
+\end{itemize}
+
+\newpage
+\section{Esecuzione del Programma: Le Basi}
+
+\subsection{I Compilatori}
+\begin{itemize}
+    \item I computer non eseguono codice sorgente (es. C++, Java) direttamente.
+    \item Eseguono \textbf{codice macchina} (sequenze binarie).
+    \item I \textbf{compilatori} traducono il codice sorgente in codice macchina.
+    \item L'\textbf{assembly} è una rappresentazione testuale del codice macchina, più leggibile per gli umani.
+\end{itemize}
+\textit{Esempio:} Un semplice programma C viene compilato in istruzioni assembly (es. x86-64) che corrispondono a specifici codici operativi macchina.
+
+\begin{minted}{c}
+// Esempio C
+#include <stdio.h>
+int main(int argc, char** argv) {
+    if (argc > 1) {
+        puts(argv[1]);
+    } else {
+        puts("Hello world");
+    }
+    return 1;
+}
+\end{minted}
+
+\subsection{Memoria del Computer (Layout di un Processo)}
+La memoria virtuale di un programma in esecuzione (processo) è tipicamente organizzata in segmenti:
+\begin{itemize}
+    \item \textbf{Memoria del Sistema Operativo (OS Memory):} Riservata al kernel, per system calls (aprire file, networking, ecc.).
+    \item \textbf{Memoria Programma (Code/Text Segment):} Contiene le istruzioni eseguibili (codice macchina). Solitamente di sola lettura.
+    \item \textbf{Memoria Dati (Data Segment):}
+        \begin{itemize}
+            \item Variabili globali e statiche.
+            \item Dati allocati dinamicamente (sullo \textbf{Heap}).
+        \end{itemize}
+    \item \textbf{Stack:} Area di memoria LIFO (Last-In, First-Out) usata per:
+        \begin{itemize}
+            \item Variabili locali delle funzioni.
+            \item Parametri passati alle funzioni.
+            \item Informazioni per il controllo del flusso (es. indirizzo di ritorno).
+        \end{itemize}
+\end{itemize}
+L'\textbf{Instruction Pointer (IP)} o \textbf{Program Counter (PC)} è un registro della CPU che contiene l'indirizzo della prossima istruzione da eseguire.
+
+\subsection{Lo Stack in Dettaglio}
+\begin{itemize}
+    \item Ogni volta che una funzione viene chiamata, viene creato un nuovo \textbf{stack frame} (o activation record) sullo stack.
+    \item Uno stack frame contiene:
+        \begin{itemize}
+            \item \textbf{Variabili locali} della funzione.
+            \item \textbf{Parametri} passati alla funzione.
+            \item L'\textbf{indirizzo di ritorno (Saved IP):} l'indirizzo nel codice del chiamante a cui tornare dopo che la funzione chiamata ha terminato. \textbf{Questo è un elemento cruciale per gli attacchi di stack buffer overflow.}
+            \item Il valore del \textbf{Frame Pointer (FP) salvato (Saved FP)} del chiamante: per ripristinare lo stato dello stack del chiamante.
+        \end{itemize}
+    \item Il frame viene distrutto (deallocato) quando la funzione termina.
+    \item Lo stack, su molte architetture (es. x86), \textbf{cresce verso indirizzi di memoria più bassi}.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sf\scriptsize, node distance=0.1cm]
+    % Memory layout
+    \node (text_seg) [memblock, minimum height=4em, minimum width=10em] {Text (Codice)};
+    \node (data_seg) [memblock, above =of text_seg, minimum height=3em] {Data};
+    \node (heap_seg) [memblock, above =of data_seg, minimum height=4em] {Heap $\uparrow$};
+    \node (stack_seg) [memblock, above =of heap_seg, minimum height=5em] {$\downarrow$ Stack};
+
+    \node [mem_label, left=0.5cm of text_seg] {0 (Low Address)};
+    \node [mem_label, left=0.5cm of stack_seg] {Max (High Address)};
+
+    \draw[stack_arrow] ($(heap_seg.north) + (0,0.1)$) -- ($(heap_seg.north) + (0,0.8)$);
+    \draw[stack_arrow] ($(stack_seg.south) + (0,-0.1)$) -- ($(stack_seg.south) + (0,-0.8)$);
+
+    % Stack detail
+    \begin{scope}[xshift=8cm, yshift=-1cm]
+        \node (top_stack) [mem_label] {Stack Top (Low Address)};
+        \node (var_loc_q) [memblock, below=0.3cm of top_stack, fill=blue!60!black] {Variabili Locali Q};
+        \node (saved_fp_q) [memblock, below=of var_loc_q, fill=orange!70!black] {Saved FP (di P)};
+        \node (ret_addr_q) [memblock, below=of saved_fp_q, fill=red!70!black] {\textbf{Indirizzo Ritorno (in P)}};
+        \node (param_q) [memblock, below=of ret_addr_q, fill=green!60!black] {Parametri per Q};
+        \node (dots) [below=of param_q, text=white] {... (Stack Frame di P)};
+        \node (bottom_stack) [mem_label, below=0.3cm of dots] {Stack Bottom (High Address)};
+        \draw[stack_arrow] ($(top_stack.south) + (0,-0.1)$) -- ($(bottom_stack.north) + (0,0.1)$);
+        \node[rotate=90, anchor=south, text=white, font=\sf\small] at ($(var_loc_q.west) + (-0.8,0.5)$) {Stack Frame di Q};
+    \end{scope}
+\end{tikzpicture}
+\caption{Layout generale della memoria di un processo e dettaglio di uno Stack Frame.}
+\label{fig:memory_layout_stack_frame}
+\end{figure}
+
+
+\subsection{Meccanismo di Chiamata di una Funzione}
+Sia \texttt{P} la funzione chiamante e \texttt{Q} la funzione chiamata.
+\begin{enumerate}
+    \item \textbf{P:} \textit{Pushes} (inserisce) i parametri per \texttt{Q} sullo stack.
+    \item \textbf{P:} Esegue l'istruzione \texttt{call Q}. Questa:
+        \begin{itemize}
+            \item \textit{Pushes} l'\textbf{indirizzo di ritorno} (l'istruzione in \texttt{P} dopo la \texttt{call}) sullo stack.
+            \item Salta all'inizio del codice di \texttt{Q} (modifica l'IP).
+        \end{itemize}
+    \item \textbf{Q:} \textit{Pushes} il valore corrente del Frame Pointer (FP) di \texttt{P} sullo stack (per salvarlo).
+    \item \textbf{Q:} Imposta il suo nuovo FP facendolo puntare alla cima attuale dello stack.
+    \item \textbf{Q:} Alloca spazio per le sue variabili locali (muovendo lo Stack Pointer, SP, verso il basso).
+    \item \textbf{Q:} Esegue il suo corpo di istruzioni.
+    \item \textbf{Q:} Dealloca le sue variabili locali (SP = FP).
+    \item \textbf{Q:} \textit{Pops} il vecchio FP (di \texttt{P}) dallo stack, ripristinandolo.
+    \item \textbf{Q:} Esegue l'istruzione \texttt{return} (\texttt{ret}). Questa:
+        \begin{itemize}
+            \item \textit{Pops} l'\textbf{indirizzo di ritorno} (pushato da \texttt{P}) dallo stack e lo carica nell'IP.
+            \item L'esecuzione riprende in \texttt{P}.
+        \end{itemize}
+    \item \textbf{P:} (Opzionale, a seconda della convenzione) \textit{Pops} i parametri per \texttt{Q} dallo stack.
+    \item \textbf{P:} Continua l'esecuzione.
+\end{enumerate}
+
+\subsection{Review Concetti Chiave Esecuzione}
+\begin{enumerate}
+    \item I programmi in esecuzione sono presenti nella memoria (RAM).
+    \item Il codice assembly è nella memoria del programma.
+        \begin{itemize}
+            \item La CPU tiene traccia della prossima istruzione da eseguire nel registro IP/PC.
+        \end{itemize}
+    \item La memoria dati è strutturata come una pila di frame (stack frames).
+        \begin{itemize}
+            \item Ogni invocazione di funzione (\texttt{call}) aggiunge un frame alla pila.
+            \item Ogni frame contiene:
+                \begin{itemize}
+                    \item IP salvato a cui tornare (e indirizzo del frame precedente, Saved FP).
+                    \item Variabili locali e parametri.
+                \end{itemize}
+        \end{itemize}
+\end{enumerate}
+
+
+\newpage
+\section{Stack Buffer Overflows: L'Attacco}
+
+\subsection{Definizione e Causa}
+Uno \textbf{stack buffer overflow} si verifica quando un buffer (es. un array di caratteri), allocato nello stack frame di una funzione come variabile locale, viene riempito oltre la sua capacità. Questo causa la sovrascrittura di dati adiacenti sullo stack.
+\begin{itemize}
+    \item Termine colloquiale: \textbf{stack smashing}.
+    \item Causa comune: Errore di programmazione, ad esempio l'uso di funzioni come \texttt{strcpy()} che non controllano la dimensione della destinazione.
+\end{itemize}
+
+\begin{minted}{c}
+// Esempio di programma vulnerabile
+#include <string.h> // per strcpy
+#include <stdio.h>  // per puts
+
+void print_string(char *s) {
+    char buffer[32];       // Buffer locale, max 31 char + NULL
+    strcpy(buffer, s);     // VULNERABILITÀ!
+    puts(buffer);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc > 1) {
+        print_string(argv[1]); // Passa input da riga di comando
+    }
+    return 0;
+}
+\end{minted}
+Se si esegue \texttt{./programma "StringaMoltoLungaCheSuperaITrentadueCaratteri..."}:
+\texttt{strcpy} scriverà oltre i limiti di \texttt{buffer}, sovrascrivendo il Saved FP e, crucialmente, l'\textbf{Indirizzo di Ritorno salvato}.
+
+\subsection{Conseguenza Iniziale: Crash del Programma}
+Se l'indirizzo di ritorno viene sovrascritto con dati "casuali" (parte della stringa lunga), al momento del \texttt{ret} dalla funzione \texttt{print\_string}, l'IP salterà a un indirizzo invalido, causando un \textbf{Segmentation Fault}.
+\begin{itemize}
+    \item Risultato: Attacco di tipo \textbf{Denial-of-Service (DoS)}.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sf\scriptsize, node distance=0cm]
+    % Stack Frame (normale)
+    \node (local_vars_norm) [memblock, fill=blue!60!black] {buffer[32]};
+    \node (saved_fp_norm) [memblock, below=of local_vars_norm, fill=orange!70!black] {Saved FP};
+    \node (ret_addr_norm) [memblock, below=of saved_fp_norm, fill=red!70!black] {\textbf{Saved IP}};
+    \node (params_norm) [memblock, below=of ret_addr_norm, fill=green!60!black] {Parametro 's'};
+    \node[above=0.1cm of local_vars_norm, text=white] {Stack prima dell'overflow};
+
+    % Stack Frame (overflow)
+    \begin{scope}[xshift=5cm]
+        \node (buffer_overflow_part) [memblock_red, minimum height=1.6em, fill=red!40!black, text=white] {Parte Eccedente Input};
+        \node (buffer_part) [memblock, fill=blue!60!black, minimum height=1.6em, below=of buffer_overflow_part, yshift=1.6em*0.5] {buffer[32] pieno};
+        % Sovrascrittura
+        \node (overwritten_fp) [memblock_red, below=of buffer_part, fill=red!60!black, text=white] {\textit{FP Sovrascritto}};
+        \node (overwritten_ip) [memblock_red, below=of overwritten_fp, fill=red!80!black, text=white] {\textit{\textbf{IP Sovrascritto}}};
+        \node (overwritten_param) [memblock_red, below=of overwritten_ip, fill=red!40!black, text=white] {\textit{Parametro Sovrascritto}};
+        \node[above=0.1cm of buffer_overflow_part, text=white] {Stack \textbf{dopo} l'overflow};
+        
+        \draw[decorate, decoration={brace, amplitude=5pt}, white, thick]
+            ($(buffer_part.north west)+(-0.2,0)$) -- ($(buffer_part.south west)+(-0.2,0)$)
+            node[midway, xshift=-0.8cm, text=white] {Buffer};
+
+        \draw[decorate, decoration={brace, amplitude=5pt}, white, thick]
+            ($(buffer_overflow_part.north east)+(0.2,0)$) -- ($(overwritten_param.south east)+(0.2,0)$)
+            node[midway, xshift=1cm, text=white] {Overflow};
+    \end{scope}
+\end{tikzpicture}
+\caption{Effetto di un Buffer Overflow sullo Stack.}
+\label{fig:stack_overflow_effect}
+\end{figure}
+
+\subsection{Smashing the Stack per Eseguire Codice}
+L'obiettivo dell'attacker è sostituire l'indirizzo di ritorno salvato con un indirizzo che punti a codice malevolo (\textbf{shellcode}) da lui fornito.
+\begin{itemize}
+    \item \textbf{Idea Chiave:} Inserire lo shellcode nell'input che causa l'overflow e far puntare l'IP salvato (sovrascritto) all'indirizzo di questo shellcode (ora presente sullo stack).
+\end{itemize}
+Struttura dell'input malevolo:
+\texttt{[Padding per riempire il buffer][Shellcode][Nuovo Indirizzo di Ritorno (punta allo Shellcode)]}
+
+\subsection{Shellcode}
+\begin{itemize}
+    \item È il \textbf{codice macchina} che l'attacker vuole eseguire.
+    \item Obiettivo tipico: avviare una \textbf{shell} (es. \texttt{/bin/sh} su Linux) con i privilegi del programma vulnerabile.
+    \item Specifico per architettura CPU e OS.
+    \item Può essere generato con tool come \textbf{Metasploit} o \textbf{pwntools}.
+    \item Esempio concettuale di shellcode (per avviare una shell):
+    \begin{minted}{c}
+    // In C, l'idea sarebbe:
+    // execve("/bin/sh", args, env);
+    // Questo poi viene tradotto in codice macchina.
+    \end{minted}
+\end{itemize}
+
+\subsubsection{Restrizioni sul Contenuto dello Shellcode}
+\begin{enumerate}
+    \item \textbf{Indipendente dalla Posizione (Position-Independent Code - PIC):}
+    Non può usare indirizzi assoluti, solo relativi (offset dall'IP corrente), poiché la sua posizione esatta sullo stack non è nota a priori.
+    \item \textbf{Nessun Valore NULL (Byte Zero - \texttt{0x00}):}
+    Funzioni come \texttt{strcpy} terminano la copia al primo NULL. Uno shellcode non deve contenere NULL, tranne eventualmente alla fine dell'intero payload.
+    \item \textbf{Sopravvivere a Modifiche dell'Input:}
+    Se il programma vulnerabile modifica l'input (es. to-lowercase), lo shellcode deve essere robusto o progettato per evitarlo.
+\end{enumerate}
+
+\subsection{Hitting the Target: Indovinare l'Indirizzo dello Shellcode}
+Problema: Gli indirizzi dello stack cambiano (ASLR, variabili d'ambiente).
+Soluzione: \textbf{NOP Sled} (o "Pista da Sci" NOP).
+\begin{itemize}
+    \item \textbf{NOP (No Operation):} Istruzione assembly (es. \texttt{0x90} su x86) che non fa nulla.
+    \item \textbf{Idea Chiave:} Precedere lo shellcode con una lunga sequenza di NOP.
+\end{itemize}
+Struttura dell'input con NOP Sled:
+\texttt{[Lunga sequenza di NOP][Shellcode][Nuovo Ind. Ritorno (punta a un punto qualsiasi della NOP Sled)]}
+L'IP "scivola" sui NOP fino a raggiungere lo shellcode.
+
+\subsection{Alcune Funzioni Comuni della Libreria C Standard Non Sicure}
+\begin{table}[H]
+\centering
+\caption{Funzioni C Standard Non Sicure e Potenzialmente Vulnerabili}
+\label{tab:unsafe_c_functions}
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\rowcolor{gray!50!black} % Riga di intestazione con colore leggermente diverso
+\textbf{Funzione} & \textbf{Descrizione del Rischio} \\
+\hline
+\texttt{gets(char *str)} & Legge da \texttt{stdin} in \texttt{str} senza controllo di lunghezza. \textbf{MAI USARE.} \\
+\texttt{sprintf(char *str, ...)} & Scrive output formattato in \texttt{str}. Vulnerabile se \texttt{str} è troppo piccolo. \\
+\texttt{strcat(char *dest, char *src)} & Concatena \texttt{src} a \texttt{dest}. Vulnerabile se \texttt{dest} non ha spazio. \\
+\texttt{strcpy(char *dest, char *src)} & Copia \texttt{src} in \texttt{dest}. Vulnerabile se \texttt{dest} è più piccolo di \texttt{src}. \\
+\texttt{vsprintf(...)} & Simile a \texttt{sprintf} ma con \texttt{va\_list}. Stessi rischi. \\
+\hline
+\end{tabular}
+\end{table}
+\textbf{Alternative Sicure:} Generalmente includono una \texttt{n} (es. \texttt{strncpy}, \texttt{snprintf}, \texttt{fgets}) che accettano un parametro per la dimensione massima.
+
+\subsection{Altre Forme di Attacchi di Overflow}
+\begin{itemize}
+    \item \textbf{Heap Overflows:} Su buffer allocati nello heap (\texttt{malloc}, \texttt{new}).
+    \item \textbf{Global Data Area Overflows:} Su buffer in aree dati globali/statiche.
+    \item \textbf{Format String Overflows:} Sfruttano uso scorretto di funzioni di formattazione (es. \texttt{printf(user\_input)}).
+    \item \textbf{Integer Overflows:} Risultati aritmetici che eccedono la capacità del tipo intero, portando a "wrap-around" e possibili allocazioni errate.
+\end{itemize}
+
+\newpage
+\section{Difesa Contro i Buffer Overflows}
+
+\subsection{1. Stack Canaries (o StackGuard)}
+\begin{itemize}
+    \item \textbf{Idea:} Proteggere l'indirizzo di ritorno e il Saved FP.
+    \item \textbf{Meccanismo:}
+        \begin{enumerate}
+            \item Il compilatore inserisce un valore casuale e segreto (\textbf{canary}) sullo stack prima dell'indirizzo di ritorno.
+            \item Il canary viene impostato all'inizio di ogni funzione.
+            \item Prima che la funzione ritorni, si controlla se il canary è stato modificato.
+            \item Se modificato (segno di overflow), il programma termina immediatamente, prevenendo il salto all'IP corrotto.
+        \end{enumerate}
+    \item \textbf{Limitazioni:} Non protegge variabili locali \textit{prima} del canary; bypassabile in certi scenari.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\sf\scriptsize, node distance=0cm]
+    % Stack Frame con Canary
+    \node (buffer_can) [memblock, fill=blue!60!black, minimum width=8em] {buffer[32]};
+    \node (canary_val) [memblock_green, below=of buffer_can, minimum width=8em] {\textbf{Canary (es. 0xDEADBEEF)}};
+    \node (saved_fp_can) [memblock, below=of canary_val, fill=orange!70!black, minimum width=8em] {Saved FP};
+    \node (ret_addr_can) [memblock, below=of saved_fp_can, fill=red!70!black, minimum width=8em] {\textbf{Saved IP}};
+    \node[above=0.1cm of buffer_can, text=white] {Stack con Canary (prima dell'attacco)};
+
+    % Stack Frame con Canary + Overflow
+    \begin{scope}[xshift=6cm]
+        \node (buffer_can_over) [memblock_red, fill=red!40!black, text=white, minimum height=1.4em, minimum width=8em] {Input Eccessivo};
+         \node (buffer_part_can) [memblock, fill=blue!60!black, minimum height=1.4em, minimum width=8em, below=of buffer_can_over, yshift=1.4em*0.5] {buffer[32] pieno};
+        \node (canary_corrupted) [memblock_red, below=of buffer_part_can, fill=red!60!black, text=white, minimum width=8em] {\textit{\textbf{Canary Sovrascritto!}}};
+        \node (saved_fp_corrupted) [memblock_red, below=of canary_corrupted, fill=red!70!black, text=white, minimum width=8em] {\textit{Saved FP Sovrascritto}};
+        \node (ret_addr_corrupted) [memblock_red, below=of saved_fp_corrupted, fill=red!80!black, text=white, minimum width=8em] {\textit{\textbf{Saved IP Sovrascritto}}};
+        \node[above=0.1cm of buffer_can_over, text=white] {Stack con Canary (\textbf{attacco rilevato})};
+
+        \draw[->, red, ultra thick, shorten >=2pt, shorten <=2pt] ($(canary_corrupted.east)+(0.1,0)$) -- ($(canary_corrupted.east)+(1,0)$) node[right, text=red, font=\sf\small] {CHECK FALLITO! USCITA};
+    \end{scope}
+\end{tikzpicture}
+\caption{Stack Canary e rilevamento di un Buffer Overflow.}
+\label{fig:stack_canary}
+\end{figure}
+
+\subsection{2. Stack Non Eseguibile (NX Bit / DEP)}
+\begin{itemize}
+    \item \textbf{Idea:} Impedire l'esecuzione di codice dallo stack.
+    \item \textbf{Meccanismo:} CPU e OS marcano le pagine di memoria dello stack come leggibili/scrivibili ma \textbf{non eseguibili} (Write XOR Execute - W\textasciicircum X).
+    \item \textbf{Impatto:} Se l'IP salta a shellcode sullo stack, si genera un'eccezione. Non previene l'overflow, ma l'esecuzione diretta di shellcode dallo stack.
+    \item \textbf{Bypass:} Tecniche come \textbf{Return-to-libc (ret2libc)} o \textbf{Return-Oriented Programming (ROP)} che riutilizzano codice esistente eseguibile.
+\end{itemize}
+
+\subsection{3. Address-Space Layout Randomization (ASLR)}
+\begin{itemize}
+    \item \textbf{Idea:} Rendere imprevedibili gli indirizzi di memoria.
+    \item \textbf{Meccanismo:} L'OS randomizza le posizioni di partenza di stack, heap, librerie ad ogni caricamento del programma.
+    \item \textbf{Impatto:} Rende difficile indovinare l'indirizzo della NOP sled o di gadget ROP. Non impedisce lo sfruttamento se si possono "leakare" indirizzi o se l'entropia è bassa (sistemi a 32 bit).
+    \item \textbf{Efficacia:} Più efficace su sistemi a 64 bit.
+\end{itemize}
+
+\subsection{4. Write Safe Code! (La Difesa Fondamentale)}
+Il messaggio più importante è che se i programmi non sono codificati correttamente fin dall'inizio, restano soggetti a potenziali attacchi.
+\begin{itemize}
+    \item \textbf{Validazione dell'Input:} Controllare sempre lunghezza e formato.
+    \item \textbf{Uso di Funzioni di Libreria Sicure:} Es. \texttt{strncpy}, \texttt{snprintf}, \texttt{fgets}.
+    \item \textbf{Controllo dei Limiti (Bounds Checking).}
+    \item \textbf{Uso di Linguaggi "Memory-Safe":} Es. Java, Python, Rust, Go.
+    \item \textbf{Code Review e Testing Statico/Dinamico.}
+\end{itemize}
+
+\newpage
+\section{The Metasploit Project}
+\begin{itemize}
+    \item \textbf{URL:} \url{https://www.metasploit.com/}
+    \item È un framework open-source per penetration testing, sviluppo di exploit e ricerca.
+    \item Include una piattaforma per sviluppare, testare e usare exploit code.
+    \item Può essere usato per creare shellcode e sfruttare vulnerabilità di buffer overflow note.
+\end{itemize}
+
+\end{document}

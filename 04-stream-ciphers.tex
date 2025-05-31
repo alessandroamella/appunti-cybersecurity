@@ -1,0 +1,560 @@
+\documentclass{article}
+
+% --- Encoding e lingua ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Margini e layout ---
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% --- Font sans-serif ---
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts} % Per \mathbb
+
+% --- Liste personalizzate ---
+\usepackage{enumitem}
+
+% --- Immagini ---
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{graphicx}
+\graphicspath{{images/}} % Specifica la cartella per le immagini
+\usetikzlibrary{shapes.geometric, positioning, calc, arrows.meta, fit, backgrounds, shadows}
+
+% --- Hyperlink ---
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={Appunti sui Cifrari a Flusso},
+    colorlinks=true,
+    linkcolor=cyan,
+    filecolor=magenta,
+    urlcolor=teal,
+    citecolor=green,
+    bookmarksopen=true,
+    bookmarksnumbered=true
+}
+
+% --- Colori e sfondo nero ---
+\usepackage{xcolor}
+\definecolor{darkbg}{RGB}{23, 23, 23} % Un nero non assoluto
+\definecolor{lighttext}{RGB}{220, 220, 220}
+\definecolor{highlight}{RGB}{100, 180, 255} % Un blu per evidenziare
+\definecolor{codebg}{RGB}{40, 42, 54} % Colore sfondo per minted (Monokai)
+\definecolor{codenumber}{RGB}{120,120,120}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+% --- Evidenziazione del codice (richiede -shell-escape) ---
+% Compilare con: pdflatex -shell-escape nomefile.tex
+\usepackage{minted}
+\setminted{
+    frame=lines,
+    framesep=2mm,
+    baselinestretch=1.1,
+    fontsize=\small,
+    breaklines=true,
+    style=monokai, % Stile di highlighting (dark)
+    bgcolor=codebg,
+    numbersep=5pt,
+    linenos=false, % cambiare a true per numeri di linea
+    gobble=0 % numero di spazi da rimuovere all'inizio di ogni linea
+}
+\setmintedinline{bgcolor=codebg} % Sfondo per codice inline
+
+% --- Stili TikZ per tema scuro ---
+\tikzstyle{block_dark} = [rectangle, draw=highlight, fill=darkbg!80!codebg, thick,
+    text width=6em, text centered, minimum height=2.5em, text=lighttext, rounded corners=3pt,
+    drop shadow={opacity=0.4, shadow xshift=0.05cm, shadow yshift=-0.05cm, fill=black}]
+\tikzstyle{op_dark} = [circle, draw=highlight, fill=blue!60!darkbg, thick,
+    minimum size=1.5em, text=lighttext,
+    drop shadow={opacity=0.4, shadow xshift=0.05cm, shadow yshift=-0.05cm, fill=black}]
+\tikzstyle{data_dark} = [rectangle, draw=white, fill=gray!60!black, text=white, font=\sf\footnotesize, minimum height=1.2em, inner sep=2pt]
+\tikzstyle{arrow_dark} = [-{Stealth[length=3mm, width=2mm]}, thick, white]
+\tikzstyle{key_arrow_dark} = [-{Stealth[length=3mm, width=2mm]}, thick, white, dashed]
+\tikzstyle{label_dark} = [text=lighttext, font=\footnotesize, align=center]
+\tikzstyle{device_dark} = [rectangle, draw=highlight, fill=darkbg!70!codebg, minimum width=3cm, minimum height=1.8cm, text=lighttext, font=\sffamily\small, rounded corners=3pt, drop shadow]
+\tikzstyle{attacker_dark} = [cloud, draw=red!70!white, fill=red!40!darkbg, cloud puffs=10, minimum width=2.5cm, text=white, font=\sffamily\small, drop shadow]
+
+
+% --- Titolo ---
+\title{\textbf{Appunti sui Cifrari a Flusso}}
+\author{Basato sulle slide del Prof. Luciano Bononi}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduzione ai Cifrari Simmetrici}
+
+Un \textbf{cifrario simmetrico} è un sistema crittografico in cui la stessa chiave viene utilizzata sia per la cifratura che per la decifratura.
+
+\begin{itemize}
+    \item \textbf{Definizione:} Un cifrario simmetrico definito su un insieme di chiavi $\mathcal{K}$, un insieme di messaggi in chiaro (Plaintext) $\mathcal{P}$, e un insieme di messaggi cifrati (Ciphertext) $\mathcal{C}$, è una coppia di algoritmi "efficienti" $(E, D)$:
+    \begin{itemize}
+        \item \textbf{E (Encryption):} $E: \mathcal{K} \times \mathcal{P} \to \mathcal{C}$ (prende una chiave e un plaintext, restituisce un ciphertext)
+        \item \textbf{D (Decryption):} $D: \mathcal{K} \times \mathcal{C} \to \mathcal{P}$ (prende una chiave e un ciphertext, restituisce un plaintext)
+    \end{itemize}
+    \item \textbf{Proprietà Fondamentale:} Per ogni messaggio $m \in \mathcal{P}$ e per ogni chiave $k \in \mathcal{K}$, deve valere:
+    \[ D(k, E(k,m)) = m \]
+    \item \textbf{Caratteristiche:}
+    \begin{itemize}
+        \item $E$ (cifratura) è spesso \textit{randomizzata} (ad esempio, usando un Initialization Vector - IV).
+        \item $D$ (decifratura) è \textit{sempre deterministica}.
+    \end{itemize}
+\end{itemize}
+
+\section{Operazione Booleana: XOR ($\oplus$)}
+L'operazione XOR (OR esclusivo) è fondamentale nei cifrari a flusso.
+\begin{itemize}
+    \item \textbf{Definizione:} Lo XOR di due stringhe binarie $A$ e $B$ della stessa lunghezza $n$ (cioè $A, B \in \{0,1\}^n$) è la loro addizione bit a bit modulo 2.
+    \item \textbf{Tabella di Verità per singolo bit:}
+    \begin{center}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{X} & \textbf{Y} & \textbf{X $\boldsymbol{\oplus}$ Y} \\
+        \hline
+        0 & 0 & 0 \\
+        0 & 1 & 1 \\
+        1 & 0 & 1 \\
+        1 & 1 & 0 \\
+        \hline
+    \end{tabular}
+    \end{center}
+    \item \textbf{Proprietà Chiave:}
+    \begin{itemize}
+        \item $A \oplus A = \mathbf{0}$ (dove $\mathbf{0}$ è una stringa di zeri)
+        \item $A \oplus \mathbf{0} = A$
+        \item $A \oplus B = B \oplus A$ (commutativa)
+        \item $(A \oplus B) \oplus C = A \oplus (B \oplus C)$ (associativa)
+        \item Se $C = A \oplus B$, allora $A = C \oplus B$ e $B = C \oplus A$. Questa è la proprietà cruciale per la cifratura/decifratura.
+    \end{itemize}
+\end{itemize}
+\textbf{Esempio pratico:}
+\begin{minted}{text}
+Plaintext (m): 0110111
+Key (k):       1011010
+--------------------
+Ciphertext (c):1101101  (m XOR k)
+
+Per decifrare:
+Ciphertext (c):1101101
+Key (k):       1011010
+--------------------
+Plaintext (m): 0110111  (c XOR k)
+\end{minted}
+
+\section{One-Time Pad (OTP) - Gilbert S. Vernam 1917}
+L'OTP è il primo esempio di cifrario "perfettamente sicuro".
+\begin{itemize}
+    \item \textbf{Definizione:}
+    \begin{itemize}
+        \item Lo spazio delle chiavi $\mathcal{K}$, dei plaintext $\mathcal{P}$, e dei ciphertext $\mathcal{C}$ sono tutti uguali: $\{0,1\}^n$ (stringhe binarie di lunghezza $n$).
+        \item \textbf{Cifratura:} $E(k, m) = k \oplus m = c$
+        \item \textbf{Decifratura:} $D(k, c) = k \oplus c = m$
+    \end{itemize}
+    \item \textbf{Condizioni Fondamentali per la Sicurezza dell'OTP:}
+    \begin{enumerate}
+        \item La chiave $k$ deve essere usata \textbf{una sola volta} (One-Time).
+        \item La chiave $k$ deve essere \textbf{veramente casuale} (distribuzione uniforme).
+        \item La chiave $k$ deve avere la \textbf{stessa lunghezza del messaggio} $m$.
+    \end{enumerate}
+    \item \textbf{Verifica che OTP è un cifrario:}
+    \[ D(k, E(k,m)) = D(k, k \oplus m) = k \oplus (k \oplus m) = (k \oplus k) \oplus m = \mathbf{0} \oplus m = m \]
+    \item \textbf{Pro e Contro dell'OTP:}
+    \begin{itemize}
+        \item \textbf{Pro:}
+        \begin{itemize}
+            \item \textit{Segretezza Perfetta} (se le condizioni sono rispettate).
+            \item Cifratura e decifratura molto veloci.
+        \end{itemize}
+        \item \textbf{Contro:}
+        \begin{itemize}
+            \item \textit{Chiavi lunghe}: la chiave deve essere lunga quanto il messaggio.
+            \item \textit{Distribuzione sicura della chiave}: problema pratico significativo.
+            \item \textit{Sincronizzazione della chiave}.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Segretezza Perfetta (Information Theoretic Security - Shannon 1949)}
+\begin{itemize}
+    \item \textbf{Idea intuitiva:} Un cifrario è perfettamente sicuro se il ciphertext $c$ non rivela \textit{alcuna informazione} sul plaintext $m$, tranne eventualmente la sua lunghezza.
+    \item \textbf{Definizione Formale:} Un cifrario $(E, D)$ ha segretezza perfetta se per ogni coppia di messaggi $m_0, m_1 \in \mathcal{P}$ della stessa lunghezza, e per ogni ciphertext $c \in \mathcal{C}$:
+    \[ \Pr_{k \leftarrow \mathcal{K}}[E(k, m_0) = c] = \Pr_{k \leftarrow \mathcal{K}}[E(k, m_1) = c] \]
+    dove $k \leftarrow \mathcal{K}$ indica che la chiave $k$ è scelta uniformemente a caso da $\mathcal{K}$.
+    \item \textbf{Nota:} Questa definizione non fa alcuna assunzione sulla potenza computazionale dell'attaccante. Per questo è detta anche \textit{sicurezza incondizionata}.
+    \item \textbf{L'OTP ha Segretezza Perfetta (Dimostrazione):}
+    \begin{enumerate}
+        \item Vogliamo calcolare $\Pr[E(k, m) = c]$. Questo è il numero di chiavi $k$ tali che $k \oplus m = c$, diviso per il numero totale di chiavi $|\mathcal{K}|$.
+        \item Per un dato $m$ e un dato $c$, esiste \textbf{esattamente una} chiave $k$ tale che $k \oplus m = c$. Questa chiave è $k = m \oplus c$.
+        \item Quindi, $\#\{k \in \mathcal{K} : E(k,m) = c\} = 1$.
+        \item Di conseguenza, $\Pr[E(k, m) = c] = \frac{1}{|\mathcal{K}|}$.
+        \item Questa probabilità $\frac{1}{|\mathcal{K}|}$ è \textbf{costante} e non dipende da $m$.
+        \item L'OTP soddisfa la definizione di segretezza perfetta.
+    \end{enumerate}
+    \item \textbf{Limitazione della Segretezza Perfetta (Teorema di Shannon):}
+    Un cifrario ha segretezza perfetta \textbf{solo se} lo spazio delle chiavi $|\mathcal{K}|$ è grande almeno quanto lo spazio dei plaintext $|\mathcal{P}|$.
+    \[ |\mathcal{K}| \geq |\mathcal{P}| \]
+    Questo implica che la lunghezza della chiave deve essere almeno pari alla lunghezza del messaggio.
+\end{itemize}
+
+\section{Generatori Pseudocasuali (PRNG) e Cifrari a Flusso}
+Per superare il problema della lunghezza della chiave dell'OTP, si introducono i PRNG.
+\begin{itemize}
+    \item \textbf{Idea:} Invece di usare una chiave $k$ lunga e veramente casuale, usiamo una chiave $s$ (chiamata \textbf{seed}) corta e veramente casuale per generare una sequenza di bit pseudocasuale $G(s)$ lunga quanto il messaggio.
+    \[ c = m \oplus G(s) \quad \text{e} \quad m = c \oplus G(s) \]
+    \item \textbf{Pseudorandom Generator (PRG):}
+    \begin{itemize}
+        \item Un PRG è una funzione deterministica $G$ che espande un seed corto e casuale in una sequenza più lunga che "sembra" casuale.
+        \item $G: \{0,1\}^s \to \{0,1\}^n$, dove $s$ è la lunghezza del seed e $n$ è la lunghezza della sequenza pseudocasuale, con $n \gg s$.
+        \item \textbf{Seed:} La vera chiave segreta, corta e scelta casualmente.
+        \item \textbf{Output (Keystream):} La sequenza pseudocasuale generata.
+        \item Deve essere \textit{efficientemente calcolabile}.
+    \end{itemize}
+    \item \textbf{Requisiti di un PRNG per uso crittografico (CSPRNG):}
+    \begin{enumerate}
+        \item \textbf{Randomness (proprietà statistiche):} L'output deve passare test statistici di casualità.
+        \item \textbf{Unpredictability (imprevedibilità):}
+        \begin{itemize}
+            \item Dato un pezzo dell'output, deve essere computazionalmente infattibile prevedere i bit successivi.
+            \item \textbf{Next-bit test:} Se un algoritmo, dati i primi $k$ bit dell'output, non può predire il $(k+1)$-esimo bit con probabilità significativamente maggiore di $1/2$.
+        \end{itemize}
+        \item \textbf{Requisiti per il Seed:} Deve essere segreto e imprevedibile (generato da un True Random Number Generator - TRNG).
+    \end{itemize}
+    \item \textbf{Esempi di PRNG:}
+    \begin{itemize}
+        \item \textit{Deboli (NON usare per crittografia):} Linear Congruential Generator (LCG), \texttt{glibc random()}.
+        \item \textit{Forti (esempi di CSPRNG):}
+        \begin{itemize}
+            \item \textbf{Blum Blum Shub (BBS):}
+            \begin{itemize}
+                \item Scegli $p, q$ primi grandi, $p \equiv 3 \pmod 4, q \equiv 3 \pmod 4$.
+                \item $n = p \cdot q$. Scegli seed $s_0$ casuale, $\text{gcd}(s_0, n)=1$.
+                \item Iterazione: $s_{i+1} = s_i^2 \pmod n$.
+                \item Output: $B_{i+1} = s_{i+1} \pmod 2$ (LSB di $s_{i+1}$).
+                \item Sicurezza basata sulla difficoltà di fattorizzare $n$.
+            \end{itemize}
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Cifrari a Flusso (Stream Ciphers):}
+    \begin{itemize}
+        \item \textbf{Struttura Base:}
+        \begin{figure}[H]
+            \centering
+            \begin{tikzpicture}[node distance=1.5cm and 2cm, scale=0.8, transform shape,
+                block/.style={rectangle, draw=white, fill=gray!30!black, text width=5em, text centered, minimum height=2em, text=lighttext},
+                op/.style={circle, draw=white, fill=blue!50!black, minimum size=1em, text=lighttext},
+                input/.style={text=lighttext},
+                label/.style={text=lighttext, font=\footnotesize}]
+
+                % Encryption Side
+                \node[block, text width=2em] (k_enc) {$k$};
+                \node[block, below=0.5cm of k_enc, fill=green!50!black] (G_enc) {G};
+                \draw[arrow_dark, thick, dashed] (k_enc.south) -- (G_enc.north);
+                \node[block, below=0.5cm of G_enc, fill=teal!60!black, text width=7em] (Gk_enc) {$G(k)$};
+                \draw[arrow_dark, thick] (G_enc.south) -- (Gk_enc.north);
+
+                \node[block, below=0.5cm of Gk_enc, fill=orange!70!black, text width=7em] (m_enc) {$m$};
+                \node[op, right=0.8cm of Gk_enc, yshift=-0.75cm] (xor_enc) {$\oplus$};
+                \node[block, below=0.5cm of m_enc, fill=white, text=black, text width=7em] (c_enc) {$c$};
+
+                \draw[arrow_dark, thick] (Gk_enc.east) -| (xor_enc.north);
+                \draw[arrow_dark, thick] (m_enc.east) -| (xor_enc.south);
+                \draw[arrow_dark, thick] (xor_enc.east) -| (c_enc.west);
+                \node[label, below=0.2cm of c_enc, xshift=1.0cm, text=lighttext] (eq_enc) {$E(k, m) = G(k) \oplus m$};
+
+                % Decryption Side (Shifted to the right)
+                \begin{scope}[xshift=9cm]
+                    \node[block, text width=2em] (k_dec) {$k$};
+                    \node[block, below=0.5cm of k_dec, fill=green!50!black] (G_dec) {G};
+                    \draw[arrow_dark, thick, dashed] (k_dec.south) -- (G_dec.north);
+                    \node[block, below=0.5cm of G_dec, fill=teal!60!black, text width=7em] (Gk_dec) {$G(k)$};
+                    \draw[arrow_dark, thick] (G_dec.south) -- (Gk_dec.north);
+
+                    \node[block, below=0.5cm of Gk_dec, fill=white, text=black, text width=7em] (c_dec) {$c$};
+                    \node[op, right=0.8cm of Gk_dec, yshift=-0.75cm] (xor_dec) {$\oplus$};
+                    \node[block, below=0.5cm of c_dec, fill=orange!70!black, text width=7em] (m_dec) {$m$};
+
+                    \draw[arrow_dark, thick] (Gk_dec.east) -| (xor_dec.north);
+                    \draw[arrow_dark, thick] (c_dec.east) -| (xor_dec.south);
+                    \draw[arrow_dark, thick] (xor_dec.east) -| (m_dec.west);
+                    \node[label, below=0.2cm of m_dec, xshift=1.0cm, text=lighttext] (eq_dec) {$D(k, c) = G(k) \oplus c$};
+                \end{scope}
+
+                % Warnings
+                \node[label_dark, text width=12em, text centered, right=1.5cm of G_enc, yshift=-0.5cm, fill=red!70!darkbg, rounded corners, draw=white, inner sep=2mm] (warning) {
+                    \begin{itemize}[leftmargin=*, noitemsep, label=\color{white}$\bullet$]
+                        \item $k$ deve essere casuale
+                        \item $k$ non deve essere usato più volte
+                    \end{itemize}
+                };
+            \end{tikzpicture}
+            \caption{Struttura base di un cifrario a flusso}
+        \end{figure}
+        \item \textbf{Struttura Generica:} (Vedi Slide 26 per un diagramma dettagliato). Utilizza uno stato interno $s_i$, una funzione di aggiornamento dello stato $f$, e una funzione di generazione del keystream $g$.
+        \begin{figure}[H]
+            \centering
+            % \includegraphics[width=0.8\textwidth]{generic_stream_cipher_diagram} % Immagine da Slide 26
+            \fbox{\parbox{0.8\textwidth}{\centering Immagine da Slide 26: Struttura generica di un cifrario a flusso (con stato interno, funzioni f e g, K e IV).}}
+            \caption{Struttura generica di un cifrario a flusso (da Slide 26)}
+        \end{figure}
+        \item \textbf{Sicurezza dei Cifrari a Flusso:}
+        \begin{itemize}
+            \item \textbf{NON possono avere segretezza perfetta!} (Poiché il seed è più corto del keystream).
+            \item La sicurezza dipende \textbf{interamente dalla forza del PRNG sottostante}.
+            \item Se il PRNG è un CSPRNG, si parla di \textit{sicurezza computazionale}.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\section{Cifrari a Flusso nel Mondo Reale}
+\subsection{RC4 (Rivest Cipher 4)}
+\begin{itemize}
+    \item Progettato da Ron Rivest (1987). Usato in SSL/TLS (deprecato), WEP, WPA.
+    \item \textbf{Funzionamento:}
+    \begin{enumerate}
+        \item \textbf{Inizializzazione (Key Scheduling Algorithm - KSA):}
+        Usa una chiave (seed) di lunghezza variabile per permutare un array $S$ di 256 byte.
+        \begin{minted}{pseudocode}
+/* Inizializzazione S e T */
+for i = 0 to 255 do
+    S[i] = i;
+    T[i] = key[i mod key_length];
+endfor
+
+/* Permutazione iniziale di S */
+j = 0;
+for i = 0 to 255 do
+    j = (j + S[i] + T[i]) mod 256;
+    Swap(S[i], S[j]);
+endfor
+        \end{minted}
+        \item \textbf{Generazione del Keystream (Pseudo-Random Generation Algorithm - PRGA):}
+        Genera un byte di keystream alla volta.
+        \begin{minted}{pseudocode}
+i = 0;
+j = 0;
+while (generating_keystream)
+    i = (i + 1) mod 256;
+    j = (j + S[i]) mod 256;
+    Swap(S[i], S[j]);
+    t = (S[i] + S[j]) mod 256;
+    keystream_byte = S[t];
+    // keystream_byte XOR plaintext_byte
+endwhile
+        \end{minted}
+    \end{enumerate}
+    \item \textbf{Schema RC4 (da Slide 31 e 35):}
+    \begin{figure}[H]
+        \centering
+        % \includegraphics[width=\textwidth]{rc4_summary_diagram} % Immagine da Slide 35
+         \fbox{\parbox{0.8\textwidth}{\centering Immagine da Slide 31/35: Schema di funzionamento di RC4 (KSA e PRGA).}}
+        \caption{Schema di funzionamento di RC4 (da Slide 31/35)}
+    \end{figure}
+    \item \textbf{Debolezze di RC4:}
+    \begin{itemize}
+        \item \textit{Bias nell'output iniziale}: Si consiglia di scartare i primi N byte (es. RC4-drop[256]).
+        \item \textit{Attacchi related-key}: Come quelli su WEP (attacco FMS).
+        \item Debolezze statistiche. Deprecato in TLS 1.3.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Cifrari a Flusso Moderni (es. eSTREAM: ChaCha20)}
+\begin{itemize}
+    \item Spesso incorporano un \textbf{Nonce} (Number used ONCE).
+    \[ E(k, m, r) = m \oplus \text{PRG}(k, r) \]
+    dove $r$ è il nonce.
+    \item \textbf{Nonce:} Un valore che non si ripete per una data chiave $k$. La coppia $(k, r)$ non deve \textbf{mai} essere usata più di una volta.
+    \item \textbf{Vantaggio del Nonce:} Permette di riutilizzare la stessa chiave $k$ per più messaggi, a patto che il nonce $r$ sia diverso.
+\end{itemize}
+
+\section{Attacchi a OTP e Cifrari a Flusso}
+
+\subsection{Attacco 1: Two-Time Pad (Riutilizzo della Chiave/Seed)}
+\textbf{NON usare MAI la stessa chiave (o seed+PRG, o keystream) più di una volta.}
+\begin{itemize}
+    \item \textbf{Scenario:}
+    Alice cifra $m_1$ e $m_2$ con lo stesso keystream $KS = G(k)$:
+    $c_1 = m_1 \oplus KS$
+    $c_2 = m_2 \oplus KS$
+    \item \textbf{Attacco:}
+    L'attaccante calcola $c_1 \oplus c_2$:
+    \[ c_1 \oplus c_2 = (m_1 \oplus KS) \oplus (m_2 \oplus KS) = m_1 \oplus m_2 \]
+    \item \textbf{Conseguenze:}
+    \begin{itemize}
+        \item Il keystream $KS$ è eliminato.
+        \item Se l'attaccante conosce $m_1$, recupera $m_2 = (m_1 \oplus m_2) \oplus m_1$.
+        \item Anche senza conoscere $m_1$ o $m_2$, $m_1 \oplus m_2$ può rivelare informazioni a causa della ridondanza dei dati.
+    \end{itemize}
+    \item \textbf{Esempi Storici e Pratici:}
+    \begin{itemize}
+        \item \textit{Progetto Venona}: Riutilizzo di chiavi OTP da parte dei sovietici.
+        \item \textit{MS-PPTP}: Stessa chiave RC4 per entrambe le direzioni.
+        \begin{figure}[H]
+            \centering
+            \begin{tikzpicture}[scale=0.7, transform shape,
+                device/.style={rectangle, draw=white, fill=gray!50!black, minimum width=2.5cm, minimum height=1.5cm, text=white, font=\sffamily\small},
+                data/.style={rectangle, draw=white, fill=blue!40!black, minimum height=0.6cm, text=white, font=\sffamily\tiny},
+                arrow/.style={->, thick, white},
+                label/.style={text=white, font=\sffamily\scriptsize, align=center}]
+
+                % Client side
+                \node[device] (client) {Client (k)};
+                \node[data, right=1cm of client, yshift=0.5cm] (m1) {$m_1$};
+                \node[data, right=1cm of client] (m2) {$m_2$};
+                \node[data, right=1cm of client, yshift=-0.5cm] (m3) {$m_3$};
+                \draw[arrow_dark] (client.east) -- (m1.west);
+                \draw[arrow_dark] (client.east) -- (m2.west);
+                \draw[arrow_dark] (client.east) -- (m3.west);
+                \node[label, below=0.3cm of m2, text width=5cm] (client_enc) {$[ m_1 || m_2 || m_3 ] \oplus \textbf{PRG(k)}$};
+
+                % Server side
+                \node[device, right=5cm of client] (server) {Server (k)};
+                \node[data, left=1cm of server, yshift=0.5cm] (s1) {$s_1$};
+                \node[data, left=1cm of server] (s2) {$s_2$};
+                \node[data, left=1cm of server, yshift=-0.5cm] (s3) {$s_3$};
+                \draw[arrow_dark] (s1.east) -- (server.west);
+                \draw[arrow_dark] (s2.east) -- (server.west);
+                \draw[arrow_dark] (s3.east) -- (server.west);
+                \node[label, below=0.3cm of s2, text width=5cm] (server_enc) {$[ s_1 || s_2 || s_3 ] \oplus \textbf{PRG(k)}$};
+
+                \node[label, below=1cm of client_enc, xshift=3.5cm, text width=10cm, fill=red!60!darkbg, rounded corners, draw=white, inner sep=2mm] {Problema: Stessa chiave $k$ usata per generare PRG(k) in entrambe le direzioni. Necessarie chiavi diverse per $C \to S$ e $S \to C$};
+            \end{tikzpicture}
+            \caption{MS-PPTP e riutilizzo della chiave}
+        \end{figure}
+        \item \textit{WEP (Wired Equivalent Privacy) per Wi-Fi}:
+        Seed per RC4: $IV || k_{wep}$. IV di 24 bit $\implies$ collisioni IV rapide.
+        \begin{figure}[H]
+            \centering
+            \begin{tikzpicture}[scale=0.75, transform shape,
+                node distance=1cm,
+                device/.style={rectangle, draw=white, fill=gray!50!black, minimum width=2.5cm, minimum height=1.5cm, text=white, font=\sffamily\small},
+                data_part/.style={rectangle, draw=white, fill=blue!30!black, minimum height=1.2em, text=white, font=\sffamily\tiny, inner sep=1pt},
+                long_data/.style={rectangle, draw=white, fill=green!40!black, minimum height=1.5em, text=white, font=\sffamily\scriptsize},
+                arrow/.style={->, thick, white},
+                label/.style={text=white, font=\sffamily\scriptsize, align=center},
+                key_label/.style={text=white, font=\sffamily\tiny, align=left},
+                highlight_box/.style={red, very thick, rounded corners}]
+
+                \node[device] (client) {Client ($k_{wep}$)};
+                \node[label, above right=0.05cm and 0.2cm of client, anchor=south west, text=red!80!white, font=\sffamily\bfseries\tiny] {Chiave a lungo termine};
+
+                \node[data_part, below right=0.3cm and 0.1cm of client, fill=orange!60!black] (m_data) {m};
+                \node[data_part, right=0pt of m_data, fill=orange!80!black] (crc_data) {CRC(m)};
+
+                \node[long_data, below=0.2cm of m_data, xshift=0.8cm, text width=8em] (prg_out) {PRG( IV $|| k_{wep}$ )};
+                \node[circle, draw=white, fill=gray!20!black, minimum size=0.8em, below left=0.1cm and -0.15cm of prg_out] (xor_op) {$\oplus$};
+                \draw[arrow_dark] ($(m_data.south)!0.5!(crc_data.south)$) -- (xor_op);
+                \draw[arrow_dark] (prg_out.west) -| (xor_op);
+
+                \node[data_part, text width=2.5em, fill=teal!50!black, below right=0.1cm and -0.8cm of xor_op] (iv_tx) {IV};
+                \node[long_data, text width=8em, fill=teal!70!black, right=0pt of iv_tx] (ciphertext_tx) {ciphertext};
+                \draw[arrow_dark] (xor_op.south) |- (ciphertext_tx.west);
+                \draw[arrow_dark] (iv_tx.east) -- (ciphertext_tx.west);
+
+                \node[device, right=2cm of ciphertext_tx] (ap) {Access Point ($k_{wep}$)};
+                \draw[arrow_dark] (ciphertext_tx.east) -- (ap.west);
+
+                \node[label, below left=0.3cm and -1cm of client, text width=5cm] (iv_details) {
+                    IV: 24 bits $\implies$ collisioni!\\
+                    $k_{sessione_1} = \text{IV}_1 || k_{wep}$\\
+                    $k_{sessione_2} = \text{IV}_2 || k_{wep}$\\
+                    Se $\text{IV}_1 = \text{IV}_2 \implies$ stesso keystream! (Two-time pad)
+                };
+                 \node[label, below right=0.2cm and -1cm of ap, text width=5cm, fill=red!60!darkbg, rounded corners, draw=white, inner sep=1mm] (related_text) {
+                    Anche se $\text{IV}_1 \neq \text{IV}_2$, le chiavi $\text{IV}_1 || k_{wep}$ e $\text{IV}_2 || k_{wep}$ sono \textbf{correlate}, rendendo RC4 vulnerabile (es. attacco FMS).
+                };
+            \end{tikzpicture}
+            \caption{WEP e problemi con IV e chiavi correlate}
+        \end{figure}
+    \end{itemize}
+    \item \textbf{Contromisure al Two-Time Pad:}
+    \begin{itemize}
+        \item \textbf{NON RIUTILIZZARE MAI LA CHIAVE (seed).}
+        \item Per comunicazioni di rete: negoziare una nuova chiave di sessione.
+        \item Usare un \textbf{Nonce} correttamente.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Attacco 2: Mancanza di Integrità (OTP/Stream Cipher è Malleabile)}
+OTP e cifrari a flusso simili forniscono confidenzialità ma \textbf{NON integrità} né \textbf{autenticazione}.
+\begin{itemize}
+    \item \textbf{Malleabilità:} Un attaccante può modificare il ciphertext $c$ in $c^*$ in modo che il plaintext risultante $m^*$ sia correlato a $m$ in modo prevedibile, senza conoscere $k$ o $m$.
+    \item \textbf{Scenario e Attacco:}
+    Alice invia $c = m \oplus KS$. Mallory intercetta $c$.
+    Mallory vuole cambiare $m$ in $m^* = m \oplus p_{diff}$.
+    Mallory crea $c^* = c \oplus p_{diff}$.
+    Bob decifra $m^* = c^* \oplus KS = (c \oplus p_{diff}) \oplus KS = (m \oplus KS \oplus p_{diff}) \oplus KS = m \oplus p_{diff}$.
+    \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[scale=0.8, transform shape,
+        node distance=1.5cm and 2.5cm,
+        user/.style={rectangle, draw=white, fill=blue!60!black, minimum width=2.5cm, minimum height=1.5cm, text=white, font=\sffamily\bfseries},
+        process/.style={rectangle, draw=white, fill=green!50!black, minimum width=2cm, minimum height=1cm, text=white, font=\sffamily\bfseries},
+        data/.style={text=white, font=\sffamily\textit},
+        attacker/.style={cloud, draw=red!70!white, fill=red!30!black, cloud puffs=10, minimum width=2cm, text=white, font=\sffamily\small},
+        arrow/.style={->, thick, white},
+        key_arrow/.style={->, thick, white, dashed},
+        label/.style={text=white, font=\sffamily\scriptsize, align=center}]
+
+        \node[user] (alice) {Alice};
+        \node[data, left=1cm of alice] (m_in) {$m$}; \draw[arrow_dark] (m_in) -- (alice);
+        \node[process, below=of alice] (enc) {E};
+        \node[data, left=0.5cm of enc, yshift=-0.2cm] (k_alice) {$k$}; \draw[key_arrow_dark] (k_alice) -- (enc);
+        \draw[arrow_dark] (alice) -- (enc);
+
+        \node[data, right=1cm of enc] (c_orig_label) {$c = m \oplus k$};
+        \draw[arrow_dark] (enc.east) -- (c_orig_label.west);
+
+        \coordinate (c_path_mid) at ($(c_orig_label.east) + (1.5,0)$);
+        \node[attacker_dark, below=0.5cm of c_path_mid] (mallory) {Mallory};
+        \node[data, above=0.1cm of mallory] (c_to_mallory) {$c$};
+        \draw[arrow_dark, dotted] (c_orig_label.east) |- (c_to_mallory);
+        \node[data, below=0.1cm of mallory, text width=6em] (c_star_mod) {$c^* = c \oplus p_{diff}$};
+        \draw[arrow_dark, dotted] (mallory) -- (c_star_mod);
+
+        \node[user, right=4cm of alice] (bob) {Bob};
+        \node[process, below=of bob] (dec) {D};
+        \node[data, right=0.5cm of dec, yshift=-0.2cm] (k_bob) {$k$}; \draw[key_arrow_dark] (k_bob) -- (dec);
+        \draw[arrow_dark] (bob) -- (dec);
+
+        \node[data, left=1cm of dec] (c_star_label) {$c^*$};
+        \draw[arrow_dark, dotted] (c_star_mod) -| (c_star_label.west);
+        \draw[arrow_dark] (c_star_label) -- (dec);
+
+        \node[data, right=1cm of bob] (m_star_out) {$m^*$};
+        \draw[arrow_dark] (dec) -- (m_star_out.west);
+
+        \node[label, below=0.3cm of dec, text width=10cm, fill=gray!20!darkbg, rounded corners, draw=white, inner sep=2mm] (m_star_expl) {
+        $k \oplus c^* = k \oplus (c \oplus p_{diff}) = k \oplus (m \oplus k \oplus p_{diff})$ \\
+        $= (k \oplus k) \oplus m \oplus p_{diff} = \mathbf{0} \oplus m \oplus p_{diff} = m \oplus p_{diff}$ \\
+        Quindi Bob riceve $m^* = m \oplus p_{diff}$
+        };
+    \end{tikzpicture}
+    \caption{Attacco di malleabilità}
+    \end{figure}
+    \item \textbf{Contromisura:} Usare un \textbf{Message Authentication Code (MAC)} o cifrari autenticati (Authenticated Encryption - AEAD, es. AES-GCM, ChaCha20-Poly1305).
+\end{itemize}
+
+\section{Quando un PRNG è "Sicuro"?}
+Due nozioni principali per la sicurezza di un PRNG, che si dimostrano essere equivalenti:
+\begin{enumerate}
+    \item \textbf{Unpredictable PRNG (PRNG Imprevedibile):}
+    Dato un qualsiasi prefisso del suo output, nessun attaccante con potenza computazionale polinomiale può predire il prossimo bit con probabilità significativamente migliore di $1/2$. (Legato al "next-bit test").
+    \item \textbf{Secure PRNG (PRNG Indistinguibile/Sicuro):}
+    L'output (per un seed casuale) è computazionalmente indistinguibile da una stringa veramente casuale della stessa lunghezza. Nessun attaccante polinomiale può distinguerli.
+\end{enumerate}
+\textbf{Teorema di Yao:} Un PRNG è imprevedibile se e solo se è un PRNG sicuro (indistinguibile).
+
+\end{document}
