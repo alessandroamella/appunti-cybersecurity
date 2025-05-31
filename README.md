@@ -1,13 +1,13 @@
-# Appunti di Reti di Calcolatori
+# Appunti di Cybersecurity
 
-> 📥 **Scarica gli ultimi appunti**: [Ultima Release](https://github.com/alessandroamella/appunti-reti/releases/latest)
+> 📥 **Scarica gli ultimi appunti**: [Ultima Release](https://github.com/alessandroamella/appunti-cybersecurity/releases/latest)
 
-Appunti per il corso di Reti di Calcolatori, Laurea in Informatica, Unibo, 2025.
+Appunti per il corso di Cybersecurity, Laurea in Informatica, Unibo, 2025.
 
 ## Informazioni sul Corso
 
-- [Pagina del corso](https://www.unibo.it/it/studiare/insegnamenti-competenze-trasversali-moocs/insegnamenti/insegnamento/2024/455456)
-- [Materiale del professore (slide, appunti, esami)](https://virtuale.unibo.it/course/view.php?id=47974)
+- [Pagina del corso](https://www.unibo.it/it/studiare/insegnamenti-competenze-trasversali-moocs/insegnamenti/insegnamento/2024/455457)
+- [Materiale del professore (slide, appunti, esami)](https://virtuale.unibo.it/course/view.php?id=64497)
 
 ## Setup e Release
 
@@ -55,4 +55,5 @@ Lo script `fix_minted_indent.sh` corregge l'indentazione dei blocchi di codice m
 Alessandro Amella
 
 - [GitHub](https://github.com/alessandroamella)
+
 # appunti-cybersecurity
