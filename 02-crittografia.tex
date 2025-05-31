@@ -219,24 +219,25 @@ $K_{pub}$ può essere distribuita, $K_{priv}$ è segreta. È infattibile derivar
     \node[block, below=0.5cm of plaintext_b] (dec_b) {$D$};
     \node[right=0.3cm of dec_b, yshift=0.7cm] (bob_label) {Bob};
 
-    % Keys for Bob
-    \node[key_pair_node, above right=0.2cm and 2cm of enc_a] (bob_keys) {Bob's Keys};
+    % Keys for Bob - Moved higher up
+    \node[key_pair_node, above right=1.5cm and 2cm of enc_a] (bob_keys) {Bob's Keys};
     \node[key_block, text width=5em, below=0.2cm of bob_keys, xshift=-1cm] (pub_k_bob) {Public Key $K_{pub\_Bob}$};
     \node[key_block, text width=5em, fill=red!50!darkbg, draw=red, below=0.2cm of bob_keys, xshift=1cm] (priv_k_bob) {Private Key $K_{priv\_Bob}$};
     \node[draw,dashed,fit=(pub_k_bob)(priv_k_bob)(bob_keys), inner sep=0.2cm, rounded corners, line width=0.3pt, draw=gray] {};
 
-    % Public Repository (conceptual)
+    % Public Repository (conceptual) - Adjusted position
     \node[rectangle, draw=highlight, dashed, below right=0.1cm and 0.1cm of pub_k_bob, minimum width=3.5cm, minimum height=1.5cm, line width=0.3pt, label={[text=highlight, yshift=0.2cm]above:Public Repository}] (repo) {};
     \draw[->, shorten >=1pt, color=highlight, dashed] (pub_k_bob.south) to[bend right=10] (repo.north west);
 
+    % Ciphertext node - Moved lower
+    \node[below=2cm of bob_keys] (cipher_text) {Ciphertext};
 
-    % Data flow
+    % Data flow - Adjusted paths to avoid overlapping
     \draw[data_flow] (plaintext_a) -- (enc_a);
-    \draw[data_flow] (pub_k_bob) -| (enc_a);
-    \node[right=0.5cm of enc_a] (cipher_text) {Ciphertext};
+    \draw[data_flow] (pub_k_bob) to[bend left=20] (enc_a);
     \draw[data_flow] (enc_a) -- (cipher_text);
     \draw[data_flow] (cipher_text) -- node[midway, above, text width=3cm, text centered] {Network} (dec_b);
-    \draw[data_flow] (priv_k_bob) -| (dec_b);
+    \draw[data_flow] (priv_k_bob) to[bend right=20] (dec_b);
     \draw[data_flow] (dec_b) -- (plaintext_b);
 
 \end{tikzpicture}

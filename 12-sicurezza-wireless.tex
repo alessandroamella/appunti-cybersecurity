@@ -142,9 +142,9 @@ L'ambiente wireless è intrinsecamente più vulnerabile di quello cablato. I pun
         \node[label_dark, below=0.1cm of atk2] {(b) Passive attack};
         
         % Active Attack (Masquerade, Data Mod)
-        \node[block_dark, right=of s1, xshift=1.5cm] (c3) {Client};
+        \node[block_dark, right=of s1] (c3) {Client};
         \node[block_dark, right=of c3] (s3) {Server};
-        \node[block_dark, below=of c3, xshift=1.25cm, yshift=0.3cm] (atk3) {Attacker};
+        \node[block_dark, below=of c3, xshift=1.2cm, yshift=0.3cm] (atk3) {Attacker};
         \draw[arrow_dark] (c3) -- (atk3);
         \draw[arrow_dark] (atk3) -- (s3);
         \node[label_dark, below=0.1cm of atk3] {(c) Active (masquerade, mod)};
@@ -346,33 +346,25 @@ Permanent MAC: 00:00:00:00:00:00 (XEROX CORPORATION)
 \end{itemize}
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=0.7cm, every node/.style={text=lighttext}]
-        % Swimlanes
-        \node (client_label) [label_dark, above] {Client};
-        \draw[line_dark] (client_label.south west) ++(0,-0.2) -- ++(0,-5) node(client_line_end){};
-        \node (ap_label) [label_dark, right=3cm of client_label, above] {Access Point};
-        \draw[line_dark] (ap_label.south west) ++(0,-0.2) -- ++(0,-5) node(ap_line_end){};
+    \begin{tikzpicture}[
+        every node/.style={text=lighttext},
+        >=latex
+    ]
+        % Entities
+        \node[block_dark] (client) at (0,0) {Client};
+        \node[block_dark] (ap) at (6,0) {Access Point};
+        \node[block_dark, fill=red!70!darkbg] (attacker) at (3,-3) {Attacker};
 
-        % Authentication Phase
-        \node[label_dark, left=0.2cm of client_label, yshift=-0.8cm, text width=2cm, align=right] {Authentication phase};
-        \draw[arrow_dark] ($(client_label.south)+(0,-1cm)$) -- node[above,sloped] {Request} ($(ap_label.south)+(0,-1cm)$);
-        \draw[arrow_dark] ($(ap_label.south)+(0,-1.5cm)$) -- node[above,sloped] {Response} ($(client_label.south)+(0,-1.5cm)$);
-        
-        % Association Phase
-        \node[label_dark, left=0.2cm of client_label, yshift=-2.3cm, text width=2cm, align=right] {Association phase};
-        \draw[arrow_dark] ($(client_label.south)+(0,-2.5cm)$) -- node[above,sloped] {Request} ($(ap_label.south)+(0,-2.5cm)$);
-        \draw[arrow_dark] ($(ap_label.south)+(0,-3cm)$) -- node[above,sloped] {Response} ($(client_label.south)+(0,-3cm)$);
+        % Normal connection steps
+        \draw[->] (client) -- node[above] {1. Authentication} (ap);
+        \draw[->] (client) -- node[above=0.3cm] {2. Association} (ap);
+        \draw[<->] (client) -- node[above=0.6cm] {3. Normal Communication} (ap);
 
-        % Normal Communication
-        \node[label_dark, left=0.2cm of client_label, yshift=-3.8cm, text width=2cm, align=right] {Normal communication};
-        \draw[arrow_dark, <->, dashed] ($(client_label.south)+(0,-4cm)$) -- ($(ap_label.south)+(0,-4cm)$);
-
-        % Deauth attack (example injection)
-        \node[block_dark, fill=red!70!darkbg, left=0.5cm of client_line_end, yshift=2cm, text width=1.5cm] (attacker) {Attacker};
-        \draw[arrow_dark, red, thick] (attacker.east) ++(0,0.2) -- node[above,sloped,black] {Fake Deauth to Client} ($(client_label.south)+(0,-1.8cm)$);
-        \draw[arrow_dark, red, thick] (attacker.east) ++(0,-0.2) -- node[below,sloped,black] {Fake Deauth to AP} ($(ap_label.south)+(0,-1.8cm)$);
+        % Attack
+        \draw[->, red, thick] (attacker) -- node[left] {Fake Deauth} (client);
+        \draw[->, red, thick] (attacker) -- node[right] {Fake Deauth} (ap);
     \end{tikzpicture}
-    \caption{Attacco di Deautenticazione/Dissociazione (schema semplificato di interazione).}
+    \caption{Attacco di Deautenticazione (schema semplificato).}
     \label{fig:deauth_attack}
 \end{figure}
 
@@ -403,16 +395,19 @@ Permanent MAC: 00:00:00:00:00:00 (XEROX CORPORATION)
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=0.7cm, every node/.style={text=lighttext}]
-    \node (client_label) [label_dark, above] {Client Station};
-    \draw[line_dark] (client_label.south west) ++(0,-0.2) -- ++(0,-3.5);
-    \node (ap_label) [label_dark, right=3cm of client_label, above] {Access Point};
-    \draw[line_dark] (ap_label.south west) ++(0,-0.2) -- ++(0,-3.5);
+\begin{tikzpicture}[
+    every node/.style={text=lighttext},
+    >=latex
+]
+    % Entities
+    \node[block_dark] (client) at (0,0) {Client};
+    \node[block_dark] (ap) at (6,0) {Access Point};
 
-    \draw[arrow_dark] ($(client_label.south)+(0,-0.5cm)$) -- node[above,sloped] {Auth request} ($(ap_label.south)+(0,-0.5cm)$);
-    \draw[arrow_dark] ($(ap_label.south)+(0,-1.2cm)$) -- node[above,sloped] {$n$ = challenge} ($(client_label.south)+(0,-1.2cm)$);
-    \draw[arrow_dark] ($(client_label.south)+(0,-1.9cm)$) -- node[above,sloped] {RC4$_{wep\_key}(n)$} ($(ap_label.south)+(0,-1.9cm)$);
-    \draw[arrow_dark, dashed] ($(ap_label.south)+(0,-2.6cm)$) -- node[above,sloped] {Accept/Reject} ($(client_label.south)+(0,-2.6cm)$);
+    % Authentication steps
+    \draw[->] (client) -- node[above] {1. Authentication Request} (ap);
+    \draw[<-] (client) -- node[above=0.5cm] {2. Challenge ($n$)} (ap);
+    \draw[->] (client) -- node[above=1cm] {3. Response (RC4$_{wep\_key}(n)$)} (ap);
+    \draw[<-, dashed] (client) -- node[above=1.5cm] {4. Accept/Reject} (ap);
 \end{tikzpicture}
 \caption{Autenticazione WEP Shared Key.}
 \label{fig:wep_shared_key}
@@ -422,13 +417,13 @@ Permanent MAC: 00:00:00:00:00:00 (XEROX CORPORATION)
     \centering
     \begin{tikzpicture}[every node/.style={text=lighttext}]
         \draw[line_dark] (0,0) rectangle (5,0.5) node[midway] {IV (24 bit)};
-        \node[label_dark, right=0.1cm of {(5,0.25)}] {Key ID (opz.)};
+        \node[label_dark, above=0.2cm of {(5,0.25)}] {Key ID (opz.)};
         \draw[line_dark] (0,-0.2) rectangle (5,-0.7) node[midway] {Data};
         \draw[line_dark] (0,-1.4) rectangle (5,-1.9) node[midway] {ICV (CRC32)};
         
         % Braces for encrypted part
-        \draw [decorate,decoration={brace,amplitude=5pt,mirror}, line_dark]
-              (5.2,0.5) -- (5.2,-0.7) node [label_dark,midway,xshift=0.8cm] {Encrypted};
+        \draw [decorate,decoration={brace,amplitude=5pt}, line_dark]
+              (5.2,0.5) -- (5.2,-0.7) node [label_dark,midway,xshift=1cm] {Encrypted};
         
         \node[label_dark, below=0.5cm of {(2.5,-1.9)}] {Pacchetto WEP (semplificato)};
     \end{tikzpicture}
@@ -476,14 +471,14 @@ Sviluppati per ovviare ai problemi di WEP. IEEE 802.11i è lo standard.
         \node[draw, minimum height=1cm, minimum width=1.5cm, anchor=west, right=0 of msdu.east] (crc) {CRC};
         
         % MAC Header Brace
-        \draw [decorate,decoration={brace,amplitude=5pt}, line_dark]
-              ($(mac_ctrl.south west)+(-0.1,-0.1)$) -- ($(src_addr.south east)+(0.1,-0.1)$) 
-              node [label_dark,midway,yshift=-0.5cm] {MAC header};
+        \draw [decorate,decoration={brace,mirror,amplitude=5pt}, line_dark]
+              ($(mac_ctrl.south west)+(-0.1,-0.2)$) -- ($(src_addr.south east)+(0.1,-0.2)$) 
+              node [label_dark,midway,yshift=-0.4cm] {MAC header};
 
         % MAC Trailer Brace
-        \draw [decorate,decoration={brace,amplitude=5pt}, line_dark]
-              ($(crc.south west)+(-0.1,-0.1)$) -- ($(crc.south east)+(0.1,-0.1)$) 
-              node [label_dark,midway,yshift=-0.5cm] {MAC trailer};
+        \draw [decorate,decoration={brace,mirror,amplitude=5pt}, line_dark]
+              ($(crc.south west)+(-0.1,-0.2)$) -- ($(crc.south east)+(0.1,-0.2)$) 
+              node [label_dark,midway,yshift=-0.4cm] {MAC trailer};
     \end{tikzpicture}
     \caption{Formato Generale IEEE 802 MPDU.}
     \label{fig:mpdu_format}

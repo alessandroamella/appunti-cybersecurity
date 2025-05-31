@@ -25,11 +25,11 @@ I cifrari a blocchi sono algoritmi crittografici che operano su blocchi di dati 
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=2.5cm, auto, every node/.style={text=white}]
+\begin{tikzpicture}[node distance=3cm, auto, every node/.style={text=primarytext}]
     \node [ioblock, text width=3cm] (pt) {PT Block ($n$ bit)};
-    \node [block, text width=2cm, right of=pt] (ed) {E, D};
-    \node [keyblock, text width=2cm, below of=ed, yshift=1cm] (key) {Key};
-    \node [ioblock, text width=3cm, right of=ed] (ct) {CT Block ($n$ bit)};
+    \node [block, text width=2cm, right=3cm of pt] (ed) {E, D};
+    \node [keyblock, text width=2cm, below=2cm of ed] (key) {Key};
+    \node [ioblock, text width=3cm, right=3cm of ed] (ct) {CT Block ($n$ bit)};
 
     \draw [dataline] (pt) -- (ed);
     \draw [dataline] (ed) -- (ct);
@@ -55,41 +55,47 @@ I cifrari a blocchi sono algoritmi crittografici che operano su blocchi di dati 
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=1cm and 0.5cm, every node/.style={text=white}]
-    \node (key_master) [keyblock, text width=3cm, minimum height=1.5em] {key $k$};
-    \node (key_exp) [rectangle, draw=cyan, fill=cyan!30!black, minimum width=10cm, minimum height=2cm, below=0.2cm of key_master, align=center] {key expansion};
-
-    \node (k1) [keyblock, below left=0.5cm and 1.5cm of key_exp.south, text width=1.5cm] {$k_1$};
-    \node (k2) [keyblock, right=0.5cm of k1, text width=1.5cm] {$k_2$};
-    \node (k3) [keyblock, right=0.5cm of k2, text width=1.5cm] {$k_3$};
-    \node (ki) [keyblock, below right=0.5cm and 1.5cm of key_exp.south, text width=1.5cm] {$k_I$};
-    \node [text=white, left=0.2cm of ki.north] (dots_key) {\dots};
-
-
-    \node (m_in) [left=3cm of k2, yshift=-1.5cm] {plaintext $m$};
-    \node (r1) [block, text width=2cm, below=0.5cm of k1] {$R(k_1,m)$};
-    \node (r2) [block, text width=2cm, below=0.5cm of k2] {$R(k_2,m_1)$};
-    \node (r3) [block, text width=2cm, below=0.5cm of k3] {$R(k_3,m_2)$};
-    \node (ri) [block, text width=2cm, below=0.5cm of ki] {$R(k_I,m_{I-1})$};
-    \node [text=white, right=0.3cm of r3] (dots_block) {\dots \dots};
-    \node (c_out) [right=3cm of r2, yshift=1.5cm, below=1cm of ri] {ciphertext $c$};
-    \node [text=white, right=0.5cm of ki, yshift=1cm, align=left] {nbr. of \\ iterations = $I$};
-
-
-    \draw [keyline] (key_exp.south) |- (k1.north);
-    \draw [keyline] (key_exp.south) |- (k2.north);
-    \draw [keyline] (key_exp.south) |- (k3.north);
-    \draw [keyline] (key_exp.south) |- (ki.north);
-
-    \draw [dataline] (m_in) -- (r1);
-    \draw [dataline] (r1) -- node[above] {$m_1$} (r2);
-    \draw [dataline] (r2) -- node[above] {$m_2$} (r3);
-    \draw [dataline] (r3) -- (dots_block);
-    \draw [dataline] (dots_block) -- (ri);
-    \draw [dataline] (ri) -- (c_out);
+\begin{tikzpicture}[
+    scale=0.9,
+    box/.style={draw, rectangle, minimum width=2cm, minimum height=1cm},
+    key/.style={draw, fill=orange!15, minimum width=2cm, minimum height=0.8cm},
+    round/.style={draw, fill=gray!15, minimum width=2.5cm, minimum height=0.8cm}
+]
+    % Key k at top
+    \node[key, minimum width=3cm] (key) at (0,0) {key $k$};
     
-    \node[text width=10cm, below=1cm of r2, text centered, color=yellow] {$R(k,m)$ is called a \textbf{round function}};
-    \node[text width=10cm, below=1.5cm of r2, text centered] {for 3DES ($I \approx 48$), for AES-128 ($I=10$)};
+    % Key expansion box
+    \node[box, fill=blue!15, minimum width=12cm, minimum height=2cm] (expansion) at (0,-2) {key expansion};
+    \node[anchor=east] at (5.8,-2) {nbr. of iterations = $I$};
+    
+    % Key boxes below expansion
+    \node[key] (k1) at (-5,-4) {$k_1$};
+    \node[key] (k2) at (-1.5,-4) {$k_2$};
+    \node[key] (kI) at (1.5,-4) {$k_I$};
+    \node[key] (k3) at (5,-4) {$k_3$};
+    
+    % Round function boxes
+    \node[round] (r1) at (-5,-6) {$R(k_1,m)$};
+    \node[round] (r2) at (-1.5,-6) {$R(k_2,m_1)$};
+    \node[round] (rI) at (1.5,-6) {$R(k_I,m_{I-1})$};
+    \node[round] (r3) at (5,-6) {$R(k_3,m_2)$};
+    
+    % Input and dots
+    \node (input) at (-8,-6) {plaintext $m$};
+    \node (dots) at (8,-6) {$\cdots$};
+    
+    % Vertical connections from expansion to keys
+    \foreach \x in {k1,k2,kI,k3}
+        \draw[-] (expansion.south) -- (\x.north);
+    
+    % Horizontal data flow with proper path routing
+    \draw[blue, thick, ->] (input) -- (r1);
+    \draw[blue, thick, ->] (r1.east) -- node[above] {$m_1$} (r2.west);
+    \draw[blue, thick, ->] (r2.east) to[bend left=20] node[above] {$m_2$} (r3.west);
+    \draw[blue, thick, ->] (r3.east) -- (dots);
+    
+    % Key to expansion connection
+    \draw[-] (key.south) -- (expansion.north);
 
 \end{tikzpicture}
 \caption{Cifrario a blocchi costruito per iterazione.}
@@ -103,6 +109,7 @@ Generalmente, i cifrari a blocchi possono essere più lenti dei cifrari a flusso
 \caption{Performance Ciphers (Crypto++ 5.6.0, AMD Opteron, 2.2 GHz, Linux)}
 \begin{tabular}{|l|l|l|c|}
 \hline
+\rowcolor{bg_custom}
 \textbf{Tipo}   & \textbf{Cipher} & \textbf{Block/Key Size (bits)} & \textbf{Speed (MB/sec)} \\ \hline
 Stream & RC4           & -                              & 126                     \\
 Stream & Salsa20/12    & -                              & 643                     \\
@@ -148,47 +155,69 @@ DES è basato su una Rete di Feistel. Permette di costruire una funzione inverti
 \textit{Nota}: AES \textbf{non} usa una rete di Feistel.
 
 \begin{figure}[H]
-\centering
-\begin{tikzpicture}[scale=0.8, transform shape, node distance=1.5cm and 1cm, every node/.style={text=white}]
-    % Encryption round i-1 to i
-    \node (L_prev) [ioblock, text width=1.5cm, minimum height=2.5em] {$L_{i-1}$};
-    \node (R_prev) [ioblock, text width=1.5cm, minimum height=2.5em, below = 0.5cm of L_prev] {$R_{i-1}$};
-    \node (f_i) [block, text width=1.5cm, minimum height=2.5em, right = of R_prev] {$f_i$};
-    \node (xor_enc) [sum, right = of L_prev] {$\oplus$};
-    \node (L_curr) [ioblock, text width=1.5cm, minimum height=2.5em, right = of xor_enc] {$L_i$};
-    \node (R_curr) [ioblock, text width=1.5cm, minimum height=2.5em, below = 0.5cm of L_curr] {$R_i$};
-
-    \draw [dataline] (L_prev.east) -- (xor_enc.west);
-    \draw [dataline] (R_prev.east) -- (L_curr.west);
-    \draw [dataline] (R_prev.east) -- (f_i.west);
-    \draw [dataline] (f_i.east) -| (xor_enc.south);
-    \draw [dataline] (xor_enc.east) -- (R_curr.west); % Errore nella slide originale, dovrebbe essere R_i = L_{i-1} XOR f(...)
-                                               % L_i = R_{i-1}
-    % Correggo secondo la definizione standard
-    \node[above=0.1cm of L_prev] (label_L_prev) {$n$-bits};
-    \node[above=0.1cm of R_prev] (label_R_prev) {$n$-bits};
+    \centering
+    \begin{tikzpicture}[
+        scale=0.9,
+        node distance=2cm and 3cm,
+        % Define styles
+        block/.style={rectangle, draw=black, thick, fill=white, minimum width=2cm, minimum height=1cm, text=black},
+        round/.style={circle, draw=black, thick, fill=white, minimum size=0.8cm, text=black},
+        input/.style={rectangle, draw=black, thick, fill=gray!10, minimum width=1.8cm, minimum height=0.8cm, text=black},
+        output/.style={rectangle, draw=black, thick, fill=gray!20, minimum width=1.8cm, minimum height=0.8cm, text=black},
+        arrow/.style={->, thick, black}
+    ]
     
-    \node (L_next_std) [ioblock, text width=1.5cm, minimum height=2.5em, right = of xor_enc] {$L_i (=R_{i-1})$};
-    \node (R_next_std) [ioblock, text width=1.5cm, minimum height=2.5em, below = 0.5cm of L_next_std] {$R_i (=L_{i-1} \oplus f_i)$};
+    % Input nodes (left side)
+    \node (Lin) [input] at (0,2) {$L_{i-1}$};
+    \node (Rin) [input] at (0,0) {$R_{i-1}$};
     
-    \coordinate (joint_R_prev) at ($(R_prev.east) + (0.5cm, 0)$);
-    \draw[dataline] (R_prev.east) -- (joint_R_prev) |- (L_next_std.west);
-    \draw[dataline] (joint_R_prev) -- (f_i.west);
-    \draw[dataline] (L_prev.east) -- (xor_enc.north);
-    \draw[dataline] (f_i.east) -| (xor_enc.south);
-    \draw[dataline] (xor_enc.east) -- (R_next_std.west);
+    % Function block
+    \node (f) [block] at (4,0) {$f_i$};
     
-    % Legenda
-    \node [below=1.5cm of R_prev, align=left, text width=10cm] {
-    In simboli (corretto rispetto slide 8):\\
-    $L_i = R_{i-1}$\\
-    $R_i = L_{i-1} \oplus f_i(R_{i-1}, k_i)$
+    % XOR operation
+    \node (xor) [round] at (4,2) {$\oplus$};
+    
+    % Output nodes (right side)
+    \node (Lout) [output] at (8,2) {$L_i$};
+    \node (Rout) [output] at (8,0) {$R_i$};
+    
+    % Arrows - clean and logical flow
+    % R_{i-1} goes straight to L_i
+    \draw [arrow] (Rin.east) -- (6,0) |- (Lout.west);
+    
+    % R_{i-1} also goes to function f_i
+    \draw [arrow] (Rin.east) -- (f.west);
+    
+    % L_{i-1} goes to XOR
+    \draw [arrow] (Lin.east) -- (xor.west);
+    
+    % f_i output goes to XOR
+    \draw [arrow] (f.north) -- (xor.south);
+    
+    % XOR output goes to R_i
+    \draw [arrow] (xor.east) -- (Rout.west);
+    
+    % Labels for bit width
+    \node [above=0.3cm of Lin, text=black] {$n$ bits};
+    \node [above=0.3cm of Rin, text=black] {$n$ bits};
+    \node [above=0.3cm of Lout, text=black] {$n$ bits};
+    \node [above=0.3cm of Rout, text=black] {$n$ bits};
+    
+    % Key input to function (optional - can be removed if not needed)
+    \node [above=0.5cm of f, text=black] {$k_i$};
+    \draw [arrow] (4,1) -- (f.north);
+    
+    % Clean equations below
+    \node [below=1.5cm of Rin, align=left, text=black] {
+        \textbf{Feistel Round:}\\[0.3cm]
+        $L_i = R_{i-1}$\\[0.2cm]
+        $R_i = L_{i-1} \oplus f_i(R_{i-1}, k_i)$
     };
-\end{tikzpicture}
-\caption{Un round della Rete di Feistel (notazione input $L_{i-1}, R_{i-1}$, output $L_i, R_i$).}
-\label{fig:feistel_round}
+    
+    \end{tikzpicture}
+    \caption{Feistel Network Round (Input: $L_{i-1}, R_{i-1}$ $\rightarrow$ Output: $L_i, R_i$)}
+    \label{fig:feistel_round}
 \end{figure}
-
 
 \subsection{Struttura Generale di DES}
 \begin{enumerate}
@@ -252,49 +281,52 @@ Input: 32 bit da $R_{i-1}$, sotto-chiave $k_i$ da 48 bit. Output: 32 bit.
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=1.5cm, every node/.style={text=white}]
-    \node (R_in) [ioblock, text width=4em] {$R_{i-1}$ (32 bit)};
-    \node (E_box) [block, text width=2em, below=0.5cm of R_in] {E};
-    \node (after_E) [text width=4em, text centered, below=0.2cm of E_box] {48 bit};
-    \node (k_i_in) [keyblock, text width=4em, right=2cm of R_in] {$k_i$ (48 bit)};
-    \node (xor_f) [sum, below=0.7cm of k_i_in, yshift=0.25cm] {$\oplus$};
-    \node (S_boxes_label) [text width=10em, text centered, below=0.5cm of xor_f] {S-Boxes ($S_1 \dots S_8$)};
-    \node (S_box_1) [block, text width=1.5em, below=0.2cm of S_boxes_label, xshift=-3.5em] {$S_1$};
-    \node (S_box_2) [block, text width=1.5em, right=0.2cm of S_box_1] {$S_2$};
-    \node (S_dots) [text=white, right=0.2cm of S_box_2] {\dots};
-    \node (S_box_8) [block, text width=1.5em, right=0.2cm of S_dots] {$S_8$};
-    \node (after_S) [text width=4em, text centered, below=0.2cm of S_dots, yshift=0.3cm] {32 bit};
-    \node (P_box) [block, text width=2em, below=0.5cm of after_S] {P};
-    \node (f_out) [ioblock, text width=4em, below=0.5cm of P_box] {Output (32 bit)};
-
-    \draw[dataline] (R_in) -- (E_box);
-    \draw[dataline] (E_box) -- (after_E);
-    \draw[dataline] (after_E) -- (xor_f.west);
-    \draw[keyline] (k_i_in) -- (xor_f.north);
-    \draw[dataline] (xor_f.south) -- (S_boxes_label);
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    box/.style={draw, rectangle, minimum width=2cm, minimum height=1cm, fill=gray!20},
+    iobox/.style={draw, rectangle, minimum width=2.5cm, minimum height=1cm, fill=blue!20},
+    keybox/.style={draw, rectangle, minimum width=2.5cm, minimum height=1cm, fill=orange!20},
+    xor/.style={circle, draw, minimum size=0.8cm},
+    >=latex
+]
+    % Input and key nodes
+    \node[iobox] (input) at (0,0) {$R_{i-1}$ (32 bit)};
+    \node[keybox] (key) at (6,0) {$k_i$ (48 bit)};
     
-    \coordinate (s_input_split_point) at ($(S_boxes_label.south) + (0, -0.1cm)$);
-    \draw[dataline, thick] (s_input_split_point) -- (S_box_1.north);
-    \draw[dataline, thick] (s_input_split_point) -- (S_box_2.north);
-    \draw[dataline, thick] (s_input_split_point) -- (S_box_8.north);
+    % Expansion box
+    \node[box, align=center] (expand) at (0,-2) {Expansion E\\(32 $\rightarrow$ 48 bit)};
     
-    \coordinate (s_output_join_point) at ($(after_S.north) + (0, 0.1cm)$);
-    \draw[dataline, thick] (S_box_1.south) -- (s_output_join_point);
-    \draw[dataline, thick] (S_box_2.south) -- (s_output_join_point);
-    \draw[dataline, thick] (S_box_8.south) -- (s_output_join_point);
-
-    \draw[dataline] (after_S) -- (P_box);
-    \draw[dataline] (P_box) -- (f_out);
+    % XOR operation
+    \node[xor] (xor) at (3,-2) {$\oplus$};
     
-    \node [text width=8cm, align=left, left=0.5cm of R_in, yshift=-3cm, color=yellow] {
-    Funzione $f(k_i, R_{i-1})$:
-    \begin{itemize}[noitemsep,nolistsep]
-        \item Input: $R_{i-1}$ (32b), $k_i$ (48b)
-        \item Output: 32b
-    \end{itemize}
+    % S-boxes (simplified representation)
+    \node[box, align=center] (sboxes) at (3,-4) {S-boxes ($S_1$ to $S_8$)\\(48 $\rightarrow$ 32 bit)};
+    
+    % Permutation box
+    \node[box] (perm) at (3,-6) {Permutation P};
+    
+    % Output
+    \node[iobox] (output) at (3,-8) {Output (32 bit)};
+    
+    % Arrows
+    \draw[->] (input) -- (expand);
+    \draw[->] (expand) -- (xor);
+    \draw[->] (key) -| (xor);
+    \draw[->] (xor) -- (sboxes);
+    \draw[->] (sboxes) -- (perm);
+    \draw[->] (perm) -- (output);
+    
+    % Add explanatory text on the right
+    \node[align=left, anchor=west] at (8,-4) {
+        \textbf{DES f-function:}\\
+        1. Expands 32-bit input to 48 bits\\
+        2. XORs with 48-bit round key\\
+        3. Splits into 8 blocks of 6 bits\\
+        4. Each block through an S-box (6$\rightarrow$4 bits)\\
+        5. Final permutation of 32 bits
     };
 \end{tikzpicture}
-\caption{Struttura della funzione $f$ di DES.}
+\caption{Simplified structure of the DES f-function.}
 \end{figure}
 
 \subsection{Effetto Valanga (Avalanche Effect)}
@@ -317,6 +349,7 @@ Piccolo cambiamento in input (PT o chiave) $\rightarrow$ grande cambiamento in o
 \centering
 \caption{Tempo medio per ricerca esaustiva (dalla slide, valori indicativi)}
 \begin{tabular}{|c|c|c|c|c|}
+\rowcolor{bg_custom}
 \hline
 \textbf{Key Size} & \textbf{Cipher} & \textbf{Alternative Keys} & \textbf{Time @ $10^9$ dec/s} & \textbf{Time @ $10^{13}$ dec/s} \\ \hline
 56 bits  & DES        & $\approx 7.2 \times 10^{16}$ & $\approx 1.125$ years & $\approx 1$ hour \\
@@ -345,12 +378,12 @@ Piccolo cambiamento in input (PT o chiave) $\rightarrow$ grande cambiamento in o
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=2cm and 1.5cm, every node/.style={text=white}]
+\begin{tikzpicture}[node distance=2cm and 1cm, every node/.style={text=primarytext}]
     \node (m) [ioblock] {$m$};
-    \node (Ek2) [block, right=of m, text width=3cm] {$E(k_2, \cdot)$};
-    \node (intermediate) [circle, fill=red!70!black, minimum size=0.5em, right=of Ek2, yshift=0cm, label={[yshift=-0.8cm, xshift=-0.2cm, color=red]:Meet Here}] {};
-    \node (Ek1) [block, right=of intermediate, text width=3cm] {$E(k_1, \cdot)$};
-    \node (c) [ioblock, right=of Ek1] {$c$};
+    \node (Ek2) [block, right=1.5cm of m, text width=3cm] {$E(k_2, \cdot)$};
+    \node (intermediate) [circle, fill=red!70!black, minimum size=0.5em, right=1cm of Ek2, yshift=0cm, label={[yshift=-0.8cm, xshift=-0.2cm, color=red]:Meet Here}] {};
+    \node (Ek1) [block, right=1cm of intermediate, text width=3cm] {$E(k_1, \cdot)$};
+    \node (c) [ioblock, right=1.5cm of Ek1] {$c$};
 
     \draw [dataline] (m) -- (Ek2);
     \draw [dataline] (Ek2) -- (intermediate);
@@ -441,6 +474,7 @@ Piccolo cambiamento in input (PT o chiave) $\rightarrow$ grande cambiamento in o
 \centering
 \caption{Parametri AES}
 \begin{tabular}{|l|c|c|c|}
+\rowcolor{bg_custom}
 \hline
 \textbf{Versione} & \textbf{Key Length (Nk words)} & \textbf{Block Size (Nb words)} & \textbf{Number of Rounds (Nr)} \\ \hline
 AES-128  & 4 (128 bit) & 4 (128 bit) & 10 \\
@@ -466,7 +500,7 @@ AES-256  & 8 (256 bit) & 4 (128 bit) & 14 \\ \hline
 Applica trasformazioni all'intero blocco in ogni round.
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=1.5cm and 0.7cm, every node/.style={text=white}]
+\begin{tikzpicture}[node distance=1.5cm and 0.7cm, every node/.style={text=primarytext}]
     \node (input) [ioblock, text width=1.5cm, minimum height=5em] {input};
     
     % Round 1
@@ -476,7 +510,7 @@ Applica trasformazioni all'intero blocco in ogni round.
     \node (s1_2) [block, text width=1.5em, below=0.2cm of s1_1] {$S_2$};
     \node (s1_dots) [rotate=90, below=0.1cm of s1_2] {\dots};
     \node (s1_8) [block, text width=1.5em, below=0.1cm of s1_dots] {$S_N$}; % N instead of 8 for generality
-    \node (perm1) [rectangle, draw=green, fill=green!20!black, minimum height=5em, minimum width=2em, right=0.5cm of s1_2, yshift=0.8em] {};
+    \node (perm1) [rectangle, draw=green, fill=green!20!black, minimum height=6em, minimum width=2em, right=0.5cm of s1_2, yshift=0.8em] {};
     \node at (perm1.center) [rotate=90, text=white] {Permutation};
 
     % Round 2
@@ -486,7 +520,7 @@ Applica trasformazioni all'intero blocco in ogni round.
     \node (s2_2) [block, text width=1.5em, below=0.2cm of s2_1] {$S_2$};
     \node (s2_dots) [rotate=90, below=0.1cm of s2_2] {\dots};
     \node (s2_8) [block, text width=1.5em, below=0.1cm of s2_dots] {$S_N$};
-    \node (perm2) [rectangle, draw=green, fill=green!20!black, minimum height=5em, minimum width=2em, right=0.5cm of s2_2, yshift=0.8em] {};
+    \node (perm2) [rectangle, draw=green, fill=green!20!black, minimum height=6em, minimum width=2em, right=0.5cm of s2_2, yshift=0.8em] {};
      \node at (perm2.center) [rotate=90, text=white] {Permutation};
 
     \node (dots_rounds) [right=0.5cm of perm2, yshift=0.8em] {\dots \dots};
@@ -523,10 +557,10 @@ Applica trasformazioni all'intero blocco in ogni round.
     \draw[dataline] (sr_8.east) -- (output.west |- sr_8.east);
     
     \node [below=0.5cm of input, text width=2cm, align=center] {Substitution layer};
-    \node [below=0.5cm of perm1, text width=2cm, align=center, xshift=-0.5cm] {Permutation layer};
+    \node [below=1cm of perm1, text width=2cm, align=center, xshift=-0.5cm] {Permutation layer};
 
-    \draw [->, draw=yellow, thick, decorate, decoration={brace,amplitude=5pt,mirror}, xshift=0pt, yshift=0pt]
-        ($(perm2.south east)+ (0.5cm, -1.5cm)$) -- ($(perm1.south west)+(-0.5cm, -1.5cm)$) node[midway,yshift=-0.5cm, text=yellow] {Inversion for each step};
+    \draw [->, draw=primarytext, thick, decorate, decoration={brace,amplitude=5pt,mirror}, xshift=0pt, yshift=0pt]
+        ($(perm2.south east)+ (0.5cm, -1.2cm)$) -- ($(perm1.south west)+(-0.5cm, -1.5cm)$) node[midway,yshift=-0.5cm, text=primarytext] {Inversion for each step};
 
 \end{tikzpicture}
 \caption{AES come Substitution-Permutation Network (Schema generico).}
@@ -555,7 +589,7 @@ Output: ciphertext.
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=1cm and 0.5cm, scale=0.9, transform shape, every node/.style={text=white}]
+    \begin{tikzpicture}[node distance=1cm and 0.5cm, scale=0.9, transform shape, every node/.style={text=primarytext}]
         \node (plaintext) [ioblock, text width=5cm] {Plaintext (16 bytes)};
         \node (add_key0) [block, text width=5cm, below=0.5cm of plaintext] {AddRoundKey (w[0-3])};
         \node (key_expand) [keyblock, text width=3cm, right=1cm of plaintext, yshift=-0.75cm] {Key (16 bytes) $\rightarrow$ Expand Key};
@@ -568,7 +602,7 @@ Output: ciphertext.
         \node (add_key1) [block, text width=5cm, below=0.5cm of mix_cols1] {AddRoundKey (w[4-7], etc.)};
         
         % Now define the box that fits around them
-        \node (round1_box) [rectangle, draw=yellow, rounded corners, fit=(sub_bytes1)(shift_rows1)(mix_cols1)(add_key1), inner sep=0.3cm, label={[xshift=0.4cm, yshift=-0.2cm, color=yellow, font=\small]Round 1..$N_r-1$}] {};
+        \node (round1_box) [rectangle, draw=primarytext, rounded corners, fit=(sub_bytes1)(shift_rows1)(mix_cols1)(add_key1), inner sep=0.3cm, label={[xshift=0.4cm, yshift=-0.2cm, color=primarytext, font=\small]Round 1..$N_r-1$}] {};
         
         \draw[keyline] ($(key_expand.south) + (0,-1.5cm)$) -| (add_key1.east);
     

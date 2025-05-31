@@ -131,7 +131,7 @@ def create_x509_diagram():
     # Signed certificate (data block)
     add_box(
         0.5,
-        1.5,
+        1.0,
         4,
         1.2,
         "Certificato Firmato:\n"
@@ -145,14 +145,14 @@ def create_x509_diagram():
     # Arrow from Unsigned Cert to Signed Cert (showing data included)
     ax.plot(
         [x_uc + w_uc, x_uc + w_uc, 3, 3],
-        [y_uc + h_uc / 2, 3.5, 3.5, 1.5 + 1.2],
+        [y_uc + h_uc / 2, 3.5, 3.5, 1.0 + 1.2],
         color=line_color,
         lw=1.0,
         linestyle="--",
     )
     # Arrow from Sign to Signed Cert (showing signature included)
     add_arrow(
-        x_s + w_s, y_s + h_s / 2, 3, 1.5 + 1.2 / 2
+        x_s + w_s, y_s + h_s / 2, 3, 1.0 + 1.2 / 2
     )  # Signature to signed cert block
 
     # --- Use verified certificate (Right side) ---
@@ -257,18 +257,18 @@ def create_x509_diagram():
         x_sc_in + w_sc_in / 2,
         y_sc_in - (1.2 + 0.8 + 0.8 + 0.3),
         x_sc_in + w_sc_in / 2,
-        1.5,
+        1.0,
     )  # From below verification text
     add_text(
         x_sc_in + w_sc_in / 2,
-        1.2,
+        0.7,
         "Usa certificato verificato per\nottenere la chiave pubblica di Bob",
         size=9,
         va="top",
     )
     add_box(
         x_sc_in + w_sc_in / 2 - 1,
-        0.3,
+        0.1,
         2,
         0.6,
         "Chiave Pubblica di Bob",

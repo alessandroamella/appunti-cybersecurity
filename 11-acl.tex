@@ -194,8 +194,9 @@ UNIX utilizza un modello ibrido.
     level 1/.style={sibling distance=25mm, level distance=12mm},
     level 2/.style={sibling distance=15mm, level distance=12mm},
     level 3/.style={sibling distance=10mm, level distance=12mm},
-    dir/.style={rectangle, draw=cyan, fill=blue!50!black, text=white, minimum size=6mm, font=\tiny, inner sep=1pt},
-    file/.style={rectangle, draw=green, fill=green!40!black, text=white, minimum size=6mm, font=\tiny, inner sep=1pt},
+    dir/.style={rectangle, draw=cyan, fill=blue!50!black, text=primarytext, minimum size=6mm, font=\small, inner sep=1pt},
+    file/.style={rectangle, draw=green, fill=green!40!black, text=primarytext, minimum size=6mm, font=\small, inner sep=1pt},
+    scale=1.2,
     tree_link/.style={draw=gray!70} % Stile per i collegamenti dell'albero
 ]
 \node[dir] (root) {/}
@@ -252,52 +253,98 @@ int open(const char *pathname, int flags); // flags: O_RDONLY, O_WRONLY, O_RDWR
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=0.4cm and 0.8cm, % ridotta distanza orizzontale
-    % Stili ereditati da quelli globali, ma posso sovrascriverli se necessario
+    node distance=2cm,
+    proc/.style={
+        rectangle, 
+        draw=blue!60,
+        fill=blue!10,
+        minimum width=2.5cm,
+        minimum height=2.5cm,
+        align=center,
+        text=black
+    },
+    fdt/.style={
+        rectangle,
+        draw=green!60,
+        fill=green!10,
+        minimum width=3cm,
+        minimum height=6cm,
+        align=center,
+        text=black
+    },
+    fdentry/.style={
+        rectangle,
+        draw=black!30,
+        fill=white,
+        minimum height=1cm,
+        minimum width=2.8cm,
+        align=center,
+        text=black
+    },
+    obj/.style={
+        rectangle,
+        draw=red!60,
+        fill=red!10,
+        minimum height=2cm,
+        minimum width=2.5cm,
+        align=center,
+        text=black
+    },
+    hw/.style={
+        rectangle,
+        draw=purple!60,
+        fill=purple!10,
+        minimum height=2cm,
+        minimum width=2.5cm,
+        align=center,
+        text=black
+    },
+    arrow/.style={-stealth, thick, draw=gray!60}
 ]
 
-% Process Descriptor Table (semplificato)
-\node[proc] (process_table) {Process \\ Descriptor \\ Table};
+% Process Table - leftmost
+\node[proc] (proc) at (0,0) {Process\\Table};
 
-% File Descriptor Table
-\node[fdt, right=1.5cm of process_table] (file_desc_table) {File Descriptor Table};
-\node[fdentry, at=(file_desc_table.north west), yshift=-0.15cm, xshift=0.1cm] (fd0) {0: STDIN};
-\node[fdentry, below=0.05cm of fd0] (fd1) {1: STDOUT};
-\node[fdentry, below=0.05cm of fd1] (fd2) {2: STDERR};
-\node[fdentry, below=0.05cm of fd2] (fd3) {3: File};
-\node[font=\Large, below=0.2cm of fd3, text=white, xshift=0.8cm] (dots) {\vdots};
+% File Descriptor Table - center, but empty
+\node[fdt] (fdt) at (4,0) {};
+% Add label above the FDT box
+\node[text=primarytext] at ($(fdt.north)+(0,0.3)$) {File Descriptor Table};
 
-% Hardware/File Objects
-\node[obj, right=1cm of fd0] (stdin_obj) {Keyboard \\ File Object};
-\node[hw, right=0.8cm of stdin_obj] (keyboard_hw) {Tastiera};
-\path[fdlink] (stdin_obj.east) -- (keyboard_hw.west) node[midway, text=white, font=\Large] {$=$};
+% File descriptors inside FDT
+\node[fdentry] (fd0) at ($(fdt.north)-(0,1.2cm)$) {0: stdin};
+\node[fdentry] (fd1) at ($(fd0.south)-(0,0.6cm)$) {1: stdout};
+\node[fdentry] (fd2) at ($(fd1.south)-(0,0.6cm)$) {2: stderr};
+\node[fdentry] (fd3) at ($(fd2.south)-(0,0.6cm)$) {3: file};
 
-\node[obj, right=1cm of fd1, yshift=-0.2cm] (stdout_obj) {Monitor \\ File Object};
-\node[hw, right=0.8cm of stdout_obj] (monitor_hw1) {Monitor};
-\path[fdlink] (stdout_obj.east) -- (monitor_hw1.west) node[midway, text=white, font=\Large] {$=$};
+% File objects - with increased vertical spacing
+\node[obj] (stdin) at (8,3) {Keyboard\\Object};
+\node[obj] (stdout) at (8,0.8) {Screen\\Object};
+\node[obj] (stderr) at (8,-1.4) {Screen\\Object};
+\node[obj] (file) at (8,-3.6) {File\\Object};
 
-% STDERR punta allo stesso monitor di STDOUT
-\node[obj, right=1cm of fd2, yshift=0.1cm] (stderr_obj) {Monitor \\ File Object};
-\path[fdlink] (stderr_obj.east) -| ($(monitor_hw1.west) + (-0.1,0)$) node[midway, text=white, font=\Large] {$=$};
+% Hardware - rightmost, aligned with objects
+\node[hw] (kb) at (12,3) {Keyboard\\Device};
+\node[hw] (mon) at (12,-0.3) {Monitor\\Device};
+\node[hw] (disk) at (12,-3.6) {Disk\\Device};
 
+% Connections from Process Table to FDT
+\draw[arrow] (proc.east) .. controls +(right:1cm) and +(left:0.5cm) .. ($(fdt.west)+(0,1cm)$);
+\draw[arrow] (proc.east) .. controls +(right:1cm) and +(left:0.5cm) .. ($(fdt.west)+(0,-1cm)$);
 
-\node[obj, below=0.3cm of stderr_obj, xshift=0cm, yshift=-0.1cm] (file_obj) {I/O \\ File Object}; % Posizionato per fd3
-\node[hw, right=0.8cm of file_obj] (disk_hw) {Disco/File};
-\path[fdlink] (file_obj.east) -- (disk_hw.west) node[midway, text=white, font=\Large] {$=$};
+% Connections from FD entries to objects
+\draw[arrow] (fd0.east) -- (stdin.west);
+\draw[arrow] (fd1.east) -- (stdout.west);
+\draw[arrow] (fd2.east) -- (stderr.west);
+\draw[arrow] (fd3.east) -- (file.west);
 
-
-% Links da FDT entries to Objects
-\draw[fdlink] (fd0.east) -- (stdin_obj.west);
-\draw[fdlink] (fd1.east) -- (stdout_obj.west);
-\draw[fdlink] (fd2.east) -- (stderr_obj.west);
-\draw[fdlink] (fd3.east) -- (file_obj.west);
-
-% Link da Process Table a FDT (simbolico)
-\draw[fdlink] ($(process_table.east)+(0,0.3cm)$) .. controls +(0.2,0) and +(-0.2,0) .. ($(file_desc_table.west)+(0,0.3cm)$);
-\draw[fdlink] ($(process_table.east)+(0,-0.3cm)$) .. controls +(0.2,0) and +(-0.2,0) .. ($(file_desc_table.west)+(0,-0.3cm)$);
+% Connections from objects to hardware
+\draw[arrow] (stdin.east) -- (kb.west);
+\draw[arrow] (stdout.east) -- (mon.west);
+\draw[arrow] (stderr.east) -- (mon.west);
+\draw[arrow] (file.east) -- (disk.west);
 
 \end{tikzpicture}
-\caption{Tabella dei File Descriptor e oggetti associati in UNIX (modello ibrido).}
+\caption{File Descriptor Table and associated objects in UNIX.}
 \label{fig:fd_table_unix}
 \end{figure}
 

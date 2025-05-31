@@ -17,40 +17,46 @@ La crittografia simmetrica (es. 3DES, AES) utilizza la \textbf{stessa chiave seg
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=2.5cm and 1.5cm, auto, every node/.style={text=lighttext}]
-        % Alice
-        \node[document, label=above:Alice] (alice_pt) {Testo Chiaro};
-        \node[process, right=of alice_pt] (encrypt) {E};
-        \node[key_shape, below=0.5cm of encrypt, label=left:\scriptsize Chiave Segreta] (key_a) {Key};
-        \node[data, right=of encrypt] (alice_ct) {Testo Cifrato};
+    \begin{tikzpicture}[
+        box/.style={draw, minimum width=2cm, minimum height=1cm},
+        arrow/.style={->, thick},
+        key/.style={draw, circle, minimum size=0.8cm}
+    ]
+        % Alice side
+        \node[box] (alice) at (0,0) {Alice};
+        \node[box] (enc) at (3,0) {Cifratura};
         
         % Network
-        \node[cloud, right=1cm of alice_ct, text width=5em] (network) {Rete o Storage};
+        \node[cloud, draw, minimum width=2.5cm] (net) at (6,0) {Rete};
         
-        % Bob
-        \node[data, right=1cm of network] (bob_ct) {Testo Cifrato};
-        \node[process, right=of bob_ct] (decrypt) {D};
-        \node[key_shape, below=0.5cm of decrypt, label=right:\scriptsize Chiave Segreta] (key_b) {Key};
-        \node[document, right=of decrypt, label=above:Bob] (bob_pt) {Testo Chiaro};
+        % Bob side
+        \node[box] (dec) at (9,0) {Decifratura};
+        \node[box] (bob) at (12,0) {Bob};
         
-        % Frecce
-        \draw[arrow] (alice_pt) -- (encrypt);
-        \draw[arrow] (encrypt) -- (alice_ct);
-        \draw[arrow] (alice_ct) -- (network);
-        \draw[arrow] (network) -- (bob_ct);
-        \draw[arrow] (bob_ct) -- (decrypt);
-        \draw[arrow] (decrypt) -- (bob_pt);
+        % Keys
+        \node[key] (key1) at (3,-2) {K};
+        \node[key] (key2) at (9,-2) {K};
         
-        % Key sharing path
-        \draw[dashed_arrow, red!70!white, thick, bend right=45] (key_a.south) to node[midway, below, font=\tiny\sffamily, text=red!70!white] {Scambio sicuro necessario} (key_b.south);
+        % Arrows
+        \draw[arrow] (alice) -- (enc);
+        \draw[arrow] (enc) -- (net);
+        \draw[arrow] (net) -- (dec);
+        \draw[arrow] (dec) -- (bob);
+        
+        % Key connections
+        \draw[arrow, dashed, red] (key1) -- (enc);
+        \draw[arrow, dashed, red] (key2) -- (dec);
+        \draw[arrow, dashed, red] (key1) to[bend right=20] node[below] {Scambio sicuro necessario} (key2);
     \end{tikzpicture}
-    \caption{Flusso della Crittografia Simmetrica.}
+    \caption{Schema semplificato della crittografia simmetrica. La stessa chiave K deve essere condivisa in modo sicuro tra mittente e destinatario.}
     \label{fig:simmetrica}
 \end{figure}
 
+I principali problemi della crittografia simmetrica sono:
+
 \begin{itemize}
-    \item \textbf{Scambio della Chiave:} Come fanno Alice e Bob a scambiarsi la chiave segreta in modo sicuro la prima volta, specialmente se non si sono mai incontrati? Questo è il problema della \textit{distribuzione della chiave}.
-    \item \textbf{Gestione delle Chiavi:} Se Alice volesse comunicare con 100 persone diverse in modo sicuro, dovrebbe gestire 100 chiavi segrete diverse. In un sistema con $n$ utenti che vogliono comunicare tutti con tutti, servono $n(n-1)/2$ chiavi.
+    \item \textbf{Scambio della Chiave:} Come possono Alice e Bob scambiarsi la chiave segreta in modo sicuro, specialmente se non si sono mai incontrati? Questo è il problema della \textit{distribuzione della chiave}.
+    \item \textbf{Gestione delle Chiavi:} Per comunicare con $n$ persone diverse in modo sicuro, servono $n(n-1)/2$ chiavi diverse. Ad esempio, per 100 persone servono 4950 chiavi!
 \end{itemize}
 
 \subsection{Motivazione della Crittografia Asimmetrica}
@@ -315,6 +321,7 @@ Schema di cifratura RSA (ISO standard) usando una funzione hash $H$ e uno schema
         \centering
         \begin{tabular}{|l|l|}
             \hline
+            \rowcolor{bg_custom}
             \textbf{\sffamily Forza Simmetrica (bit)} & \textbf{\sffamily Dimensione Modulo RSA (bit)} \\ \hline \hline
             80                               & 1024                              \\ \hline
             128                              & 3072                              \\ \hline
@@ -342,60 +349,47 @@ Fornisce autenticazione, integrità e non ripudio.
 \subsection{Processo Generale di Firma Digitale}
 \begin{figure}[H]
     \centering
-    \resizebox{\textwidth}{!}{%
-    \begin{tikzpicture}[node distance=2cm and 1.5cm, auto, >=Stealth, every node/.style={font=\sffamily\scriptsize}]
-        % Bob (Signer)
-        \node[person, label=above:Bob (Firmatario)] (bob) {Bob};
-        \node[document, below left=0.8cm and 0.2cm of bob] (msg_m) {Messaggio M};
-        \node[process, fill=orange!50!darkbg, right=of msg_m] (hash1) {$H(\cdot)$};
-        \node[data, text width=3em, right=of hash1] (h_val) {$h$};
-        \node[key_shape, fill=red!60!darkbg, text=white, below=0.3cm of h_val, label=left:$\texttt{sk}_{\text{Bob}}$] (bob_sk) {Priv K};
-        \node[process, fill=purple!50!darkbg, text width=4em, right=of h_val] (sign_algo) {Sign};
-        \node[data, text width=3em, fill=purple!20!darkbg, right=of sign_algo] (signature_s) {$S$};
+    \begin{tikzpicture}[
+        node distance=1.5cm,
+        box/.style={draw, rectangle, minimum width=2cm, minimum height=1cm},
+        >=stealth
+    ]
+        % Left side (Bob - Signer)
+        \node[draw, circle] (bob) at (0,0) {Bob};
+        \node[box] (msg) at (0,-2) {M};
+        \node[box] (hash) at (2,-2) {Hash};
+        \node[box] (sign) at (4,-2) {Sign};
+        \node[box] (sk) at (4,-4) {sk$_{\text{Bob}}$};
         
-        \draw[arrow] (msg_m) -- (hash1);
-        \draw[arrow] (hash1) -- (h_val);
-        \draw[arrow] (h_val) -- (sign_algo);
-        \draw[arrow] (bob_sk) -| (sign_algo.south);
-        \draw[arrow] (sign_algo) -- (signature_s);
+        % Arrows for Bob's side
+        \draw[->] (msg) -- (hash);
+        \draw[->] (hash) -- (sign);
+        \draw[->] (sk) -- (sign);
         
-        \node[cloud, right=2cm of signature_s, label=above:Rete] (network) {$(M, S)$};
-        \draw[arrow] (msg_m.east) -| ($(network.west)+(-0.5,0.3)$);
-        \draw[arrow] (signature_s.east) -| ($(network.west)+(-0.5,-0.3)$);
-
-        % Alice (Verifier)
-        \node[person, label=above:Alice (Verificatore), right=2cm of network] (alice) {Alice};
-        \node[document, below left=0.8cm and -0.5cm of alice] (msg_m_recv) {Messaggio M};
-        \node[data, text width=3em, fill=purple!20!darkbg, below right=0.8cm and -0.5cm of alice] (signature_s_recv) {$S$};
+        % Network transmission
+        \node[draw, cloud] (network) at (6,-2) {(M, S)};
+        \draw[->] (sign) -- (network);
         
-        \node[process, fill=orange!50!darkbg, right=of msg_m_recv] (hash2) {$H(\cdot)$};
-        \node[data, text width=3em, right=of hash2] (h_prime_val) {$h'$};
+        % Right side (Alice - Verifier)
+        \node[draw, circle] (alice) at (12,0) {Alice};
+        \node[box] (msg2) at (8,-2) {M};
+        \node[box] (hash2) at (10,-2) {Hash};
+        \node[box] (verify) at (12,-2) {Verify};
+        \node[box] (pk) at (12,-4) {pk$_{\text{Bob}}$};
+        \node[box] (result) at (14,-2) {Valid/Invalid};
         
-        \node[process, fill=green!50!darkbg, text width=4em, right=of signature_s_recv] (verify_algo) {Verify};
-        \node[key_shape, fill=green!60!darkbg, text=white, below=0.3cm of signature_s_recv, label=left:$\texttt{pk}_{\text{Bob}}$] (bob_pk) {Pub K};
-        \node[data, text width=3em, right=of verify_algo] (h_verified) {$h_{\text{ver}}$};
+        % Arrows for Alice's side
+        \draw[->] (network) -- (msg2);
+        \draw[->] (msg2) -- (hash2);
+        \draw[->] (hash2) -- (verify);
+        \draw[->] (pk) -- (verify);
+        \draw[->] (verify) -- (result);
         
-        \node[process, diamond, draw=yellow!70!white, fill=yellow!20!darkbg, aspect=1.5, right=of h_prime_val, yshift=-0.8cm, minimum  width=3em, minimum height=3em] (compare) {$h' == h_{\text{ver}}?$};
-        \node[data, fill=green!70!darkbg, text width=3em, below=0.8cm of compare, xshift=-1cm] (valid) {Valida};
-        \node[data, fill=red!70!darkbg, text width=3em, below=0.8cm of compare, xshift=1cm] (invalid) {Non Valida};
-
-        \draw[arrow] (msg_m_recv) -- (hash2);
-        \draw[arrow] (hash2) -- (h_prime_val);
-        \draw[arrow] (signature_s_recv) -- (verify_algo);
-        \draw[arrow] (bob_pk) -| (verify_algo.south);
-        \draw[arrow] (verify_algo) -- (h_verified);
-        
-        \draw[arrow] (h_prime_val.east) -- (compare.west);
-        \draw[arrow] (h_verified.east) |- (compare.north);
-        \draw[arrow] (compare.south) -- node[midway, left, font=\tiny] {Sì} (valid);
-        \draw[arrow] (compare.south) -- node[midway, right, font=\tiny] {No} (invalid);
-        
-        \draw[dashed_arrow] ($(network.east)+(0.5,0.3)$) |- (msg_m_recv.west);
-        \draw[dashed_arrow] ($(network.east)+(0.5,-0.3)$) |- (signature_s_recv.west);
-
+        % Labels
+        \node at (0,1) {Firmatario};
+        \node at (12,1) {Verificatore};
     \end{tikzpicture}
-    }
-    \caption{Processo di Firma e Verifica Digitale.}
+    \caption{Processo di Firma e Verifica Digitale (Versione Semplificata).}
     \label{fig:digital_signature}
 \end{figure}
 \begin{enumerate}
@@ -453,66 +447,48 @@ $\texttt{pk}_{\text{Bob}} = (55, 3)$, $\texttt{sk}_{\text{Bob}} = (55, 27)$.
 \end{enumerate}
 \begin{figure}[H]
     \centering
-    \resizebox{0.9\textwidth}{!}{%
-    \begin{tikzpicture}[node distance=1.5cm and 1cm, auto, >=Stealth]
-        % Plain Text input
-        \node[document, label=above:Testo in Chiaro] (plain_text) {};
+    \begin{tikzpicture}[
+        node distance=2cm,
+        box/.style={draw, rectangle, minimum width=2cm, minimum height=1cm},
+        >=stealth
+    ]
+        % Left side (Bob)
+        \node[draw, circle] (bob) at (0,0) {Bob};
+        \node[box] (doc) at (0,-2) {Documento};
+        \node[box] (hash) at (3,-2) {Hash};
+        \node[box] (sign) at (6,-2) {Firma};
+        \node[box] (sk) at (6,-4) {Chiave Privata};
         
-        % Hashing
-        \node[process, fill=orange!50!darkbg, below=of plain_text, xshift=-1.5cm, label=left:1-way hash] (hash_h) {H};
-        \draw[arrow] (plain_text) -- (hash_h);
-        \node[data, text width=3em, fill=green!50!darkbg, right=0.5cm of hash_h, yshift=-0.5cm, label=below:Hash Value] (hash_val) {256 bit};
-        \draw[arrow] (hash_h) -- (hash_val);
+        % Network
+        \node[draw, cloud] (network) at (8,-2) {Rete};
         
-        % Signing
-        \node[process, fill=purple!50!darkbg, right=1cm of hash_val, yshift=0.5cm] (sign_e) {E (Firma)};
-        \node[key_shape, fill=red!60!darkbg, text=white, below=0.3cm of sign_e, label=left:Bob's Private Key] (priv_key) {Priv K};
-        \draw[arrow] (hash_val) -- (sign_e);
-        \draw[arrow] (priv_key) -| (sign_e.south);
+        % Right side (Cathy)
+        \node[draw, circle] (cathy) at (14,0) {Cathy};
+        \node[box] (doc2) at (10,-2) {Documento};
+        \node[box] (hash2) at (12,-2) {Hash};
+        \node[box] (verify) at (14,-2) {Verifica};
+        \node[box] (pk) at (14,-4) {Chiave Pubblica};
+        \node[box] (result) at (16,-2) {Valido/Non Valido};
         
-        % Signature output
-        \node[data, pattern=north east lines, pattern color=lighttext!50, text width=4em, right=0.5cm of sign_e] (signature) {Firma};
-        \draw[arrow] (sign_e) -- (signature);
-
-        % Network transmission
-        \node[cloud, text width=4em, right=2cm of signature, yshift=-1cm] (network) {Rete};
-        \draw[arrow] (plain_text.east) -| node[pos=0.25, above, font=\tiny] {Testo} (network.west |- plain_text);
-        \draw[arrow] (signature.east) -| node[pos=0.25, below, font=\tiny] {Firma} (network.west |- signature);
-
-        % Receiving end
-        \node[document, right=2cm of network, yshift=1cm, label=above:Testo in Chiaro] (recv_plain_text) {};
-        \node[data, pattern=north east lines, pattern color=lighttext!50, text width=4em, right=2cm of network, yshift=-1cm, label=above:Firma] (recv_signature) {};
+        % Arrows
+        \draw[->] (doc) -- (hash);
+        \draw[->] (hash) -- (sign);
+        \draw[->] (sk) -- (sign);
+        \draw[->] (sign) -- (network);
         
-        % Hashing received text
-        \node[process, fill=orange!50!darkbg, right=1cm of recv_plain_text, label=left:1-way hash] (recv_hash_h) {H};
-        \draw[arrow] (recv_plain_text) -- (recv_hash_h);
-        \node[data, text width=3em, fill=green!50!darkbg, below=of recv_hash_h, xshift=0.5cm] (recv_hash_val1) {256 bit};
-        \draw[arrow] (recv_hash_h) -- (recv_hash_val1);
+        \draw[->] (network) -- (doc2);
+        \draw[->] (doc2) -- (hash2);
+        \draw[->] (hash2) -- (verify);
+        \draw[->] (pk) -- (verify);
+        \draw[->] (verify) -- (result);
         
-        % Verifying signature
-        \node[process, fill=blue!50!darkbg, right=1cm of recv_signature, label=left:Verifica] (recv_verify_d) {D (Verifica)};
-        \node[key_shape, fill=green!60!darkbg, text=white, below=0.3cm of recv_verify_d, label=left:Bob's Public Key] (pub_key) {Pub K};
-        \draw[arrow] (recv_signature) -- (recv_verify_d);
-        \draw[arrow] (pub_key) -| (recv_verify_d.south);
-        \node[data, text width=3em, fill=green!50!darkbg, below=of recv_verify_d, xshift=0.5cm] (recv_hash_val2) {256 bit};
-        \draw[arrow] (recv_verify_d) -- (recv_hash_val2);
-        
-        % Comparison
-        \node[process, diamond, draw=yellow!70!white, fill=yellow!20!darkbg, aspect=1.2, right=1cm of recv_hash_val1, yshift=0.2cm, minimum size=1.5cm] (compare) {?};
-        \node[font=\tiny, below=0.1cm of compare] (accept_label) {Accetta se uguali};
-        \draw[arrow] (recv_hash_val1) -- (compare.west);
-        \draw[arrow] (recv_hash_val2) -- (compare.south);
-        
-        % Bob and Cathy labels
-        \node[person, below=2.5cm of hash_h, label=below:Bob] (bob_label) {};
-        \node[person, below=2.5cm of recv_verify_d, label=below:Cathy] (cathy_label) {};
-        
+        % Labels
+        \node at (0,1) {Firmatario};
+        \node at (14,1) {Verificatore};
     \end{tikzpicture}
-    }
-    \caption{Firma Digitale per Documenti Lunghi (con Hash).}
+    \caption{Firma Digitale per Documenti Lunghi (Versione Semplificata).}
     \label{fig:long_doc_signature}
 \end{figure}
-\textbf{NB (Slide):} L'algoritmo di cifratura $E$ (es. RSA$^{-1}$) per la firma, in pratica prende in input un digest di messaggio di lunghezza fissa, chiamato messaggio codificato. Questo è generato dal messaggio originale $m$ usando padding, salting e funzioni hash.
 
 \subsection{Vantaggi della Firma Digitale}
 \begin{itemize}
@@ -599,6 +575,7 @@ Per un livello di sicurezza computazionale equivalente:
     \renewcommand{\arraystretch}{1.2} % Aumenta lo spazio tra le righe
     \begin{tabular}{|p{2.5cm}|p{3.5cm}|p{2.5cm}|p{2.5cm}|}
         \hline
+        \rowcolor{bg_custom}
         \textbf{\sffamily Symmetric Key Algorithms (bits)} & \textbf{\sffamily Diffie-Hellman, Digital Signature Algorithm (L=pk, N=sk bits)} & \textbf{\sffamily RSA (size of $n$ in bits)} & \textbf{\sffamily ECC (modulus size in bits)} \\ \hline \hline
         80  & L = 1024 \newline N = 160 & 1024  & 160-223 \\ \hline
         112 & L = 2048 \newline N = 224 & 2048  & 224-255 \\ \hline

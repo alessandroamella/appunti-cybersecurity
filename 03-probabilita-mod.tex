@@ -10,9 +10,9 @@
 \tableofcontents
 \newpage
 
-\part{Probabilità Discreta (Richiamo)}
+\section{Probabilità Discreta (Richiamo)}
 
-\section{Distribuzione di Probabilità}
+\subsection{Distribuzione di Probabilità}
 
 \begin{itemize}
     \item \textbf{Universo (U) o Spazio Campionario (Sample Space)}: È l'insieme di tutti i possibili risultati di un esperimento. Deve essere un insieme \textbf{finito}.
@@ -40,7 +40,7 @@
     \end{itemize}
 \end{itemize}
 
-\section{Esempi Particolari di Distribuzioni}
+\subsection{Esempi Particolari di Distribuzioni}
 \begin{itemize}
     \item \textbf{Distribuzione Uniforme}: Ogni elemento $x$ nell'universo U ha la stessa probabilità.
     \[ P(x) = \frac{1}{|U|} \]
@@ -52,7 +52,7 @@
     \end{itemize}
 \end{itemize}
 
-\section{Eventi}
+\subsection{Eventi}
 \begin{itemize}
     \item \textbf{Evento (A)}: Un evento è un \textbf{sottoinsieme} dell'universo U ($A \subseteq U$). Rappresenta un insieme di risultati di interesse.
     \item \textbf{Probabilità di un Evento (Pr[A])}: È la somma delle probabilità di tutti gli elementi $x$ che appartengono all'evento A.
@@ -75,7 +75,7 @@
     \end{itemize}
 \end{itemize}
 
-\section{Unione di Eventi}
+\subsection{Unione di Eventi}
 Siano $A_1$ e $A_2$ due eventi.
 \begin{itemize}
     \item L'unione $A_1 \cup A_2$ ("$A_1$ oppure $A_2$") è anch'essa un evento.
@@ -87,7 +87,7 @@ Siano $A_1$ e $A_2$ due eventi.
     \[ \text{Pr}[A_1 \cup A_2] = \text{Pr}[A_1] + \text{Pr}[A_2] \]
 \end{itemize}
 
-\section{Variabili Aleatorie (Random Variables)}
+\subsection{Variabili Aleatorie (Random Variables)}
 \begin{itemize}
     \item \textbf{Definizione}: Una variabile aleatoria $X$ è una funzione $X : U \to V$.
     \item Esempio (Lancio Dado):
@@ -106,13 +106,13 @@ Siano $A_1$ e $A_2$ due eventi.
     \end{itemize}
 \end{itemize}
 
-\section{Algoritmi Randomizzati vs. Deterministici}
+\subsection{Algoritmi Randomizzati vs. Deterministici}
 \begin{itemize}
     \item \textbf{Algoritmo Deterministico}: $y \leftarrow A(m)$. L'output è sempre lo stesso per un dato input.
     \item \textbf{Algoritmo Randomizzato}: $y \leftarrow A(m)$. L'output è una variabile aleatoria.
 \end{itemize}
 
-\section{Indipendenza}
+\subsection{Indipendenza}
 \begin{itemize}
     \item \textbf{Eventi Indipendenti}: A e B sono indipendenti se:
     \[ \text{Pr}[A \cap B] = \text{Pr}[A] \cdot \text{Pr}[B] \]
@@ -120,7 +120,7 @@ Siano $A_1$ e $A_2$ due eventi.
     \[ \text{Pr}[X=a \text{ and } Y=b] = \text{Pr}[X=a] \cdot \text{Pr}[Y=b] \]
 \end{itemize}
 
-\section{Operazione XOR e sue Proprietà}
+\subsection{Operazione XOR e sue Proprietà}
 \begin{itemize}
     \item \textbf{XOR ($\oplus$)}: Addizione bit a bit modulo 2.
     \begin{center}
@@ -153,7 +153,7 @@ Siano $A_1$ e $A_2$ due eventi.
         Poiché $\text{Pr}[Z=0]=1/2$, allora $\text{Pr}[Z=1]=1/2$. Quindi $Z$ è uniforme.
 \end{itemize}
 
-\section{Il Paradosso del Compleanno}
+\subsection{Il Paradosso del Compleanno}
 \begin{itemize}
     \item \textbf{Concetto}: In un gruppo, la probabilità che almeno due persone condividano lo stesso compleanno è sorprendentemente alta.
     \item \textbf{Teorema Generale}: Siano $r_1, \dots, r_n$ variabili aleatorie i.i.d. su $U$.
@@ -202,9 +202,9 @@ Siano $A_1$ e $A_2$ due eventi.
     \end{center}
 \end{itemize}
 
-\part{Teoria dei Numeri}
+\section{Teoria dei Numeri}
 
-\section{Background e Applicazioni}
+\subsection{Background e Applicazioni}
 La teoria dei numeri è usata per costruire:
 \begin{itemize}
     \item Protocolli di scambio di chiavi (es. Diffie-Hellman)
@@ -212,7 +212,7 @@ La teoria dei numeri è usata per costruire:
     \item Cifratura a chiave pubblica (es. RSA)
 \end{itemize}
 
-\section{Il Modulo e la Congruenza}
+\subsection{Il Modulo e la Congruenza}
 \begin{itemize}
     \item \textbf{Operazione Modulo ($a \pmod n$)}: Se $a$ è un intero e $n$ è un intero positivo (chiamato \textbf{modulo}), $a \pmod n$ è il resto della divisione di $a$ per $n$.
     \[ a = qn + r, \quad \text{dove } 0 \le r < n. \quad r = a \pmod n. \]
@@ -226,7 +226,7 @@ La teoria dei numeri è usata per costruire:
     \end{enumerate}
 \end{itemize}
 
-\section{Operazioni Aritmetiche Modulari}
+\subsection{Operazioni Aritmetiche Modulari}
 Proprietà valide $\pmod n$:
 \begin{enumerate}
     \item $[(a \pmod n) + (b \pmod n)] \pmod n = (a + b) \pmod n$
@@ -240,7 +240,7 @@ Esempio ($\pmod 8$): $11 \pmod 8 = 3$, $15 \pmod 8 = 7$.
     \item $(3 \times 7) \pmod 8 = 21 \pmod 8 = 5$.
 \end{itemize}
 
-\section{Notazione $\mathbb{Z}_N$ e Aritmetica in $\mathbb{Z}_N$}
+\subsection{Notazione $\mathbb{Z}_N$ e Aritmetica in $\mathbb{Z}_N$}
 \begin{itemize}
     \item $\mathbb{Z}_N$: È l'insieme degli interi $\{0, 1, 2, \dots, N-1\}$.
     \item Esempi (in $\mathbb{Z}_{12}$):
@@ -251,7 +251,7 @@ Esempio ($\pmod 8$): $11 \pmod 8 = 3$, $15 \pmod 8 = 7$.
     \end{itemize}
 \end{itemize}
 
-\section{Esponenziazione Modulare}
+\subsection{Esponenziazione Modulare}
 Calcolare $a^b \pmod n$. Si esegue tramite moltiplicazioni ripetute, riducendo modulo $n$ ad ogni passo.
 Esempio: Calcolare $11^7 \pmod{13}$.
 \begin{itemize}
@@ -262,7 +262,7 @@ Esempio: Calcolare $11^7 \pmod{13}$.
     \item $\equiv 12 \times 11 \pmod{13} \equiv (-1) \times (-2) \pmod{13} \equiv 2 \pmod{13}$.
 \end{itemize}
 
-\section{Massimo Comun Divisore (GCD) e Algoritmo Euclideo}
+\subsection{Massimo Comun Divisore (GCD) e Algoritmo Euclideo}
 \begin{itemize}
     \item \textbf{GCD(a, b)}: Il più grande intero positivo che divide sia $a$ che $b$.
     \item \textbf{Relativamente Primi}: $a, b$ sono relativamente primi se $\text{gcd}(a,b) = 1$.
@@ -298,7 +298,7 @@ Euclid(a,b)
 \end{center}
 
 
-\section{Algoritmo Euclideo Esteso (EEA)}
+\subsection{Algoritmo Euclideo Esteso (EEA)}
 \begin{itemize}
     \item \textbf{Identità di Bézout}: Esistono interi $x, y$ tali che $ax + by = \text{gcd}(a,b)$.
     \item L'EEA calcola $d = \text{gcd}(a,b)$ e i coefficienti $x, y$.
@@ -330,7 +330,7 @@ Euclid(a,b)
     Quindi, $\text{gcd}(93, 57) = 3$. E $93 \cdot (8) + 57 \cdot (-13) = 744 - 741 = 3$.
 \end{itemize}
 
-\section{Inversione Modulare}
+\subsection{Inversione Modulare}
 \begin{itemize}
     \item L'inverso moltiplicativo di $x \pmod N$ è $y$ (scritto $x^{-1}$) tale che $x \cdot y \equiv 1 \pmod N$.
     \item \textbf{Esistenza}: $x \in \mathbb{Z}_N$ ha un inverso $\iff \text{gcd}(x, N) = 1$.
@@ -343,7 +343,7 @@ Euclid(a,b)
     \end{itemize}
 \end{itemize}
 
-\section{Teorema di Fermat (Piccolo Teorema)}
+\subsection{Teorema di Fermat (Piccolo Teorema)}
 Se $p$ è primo e $x$ è un intero non divisibile per $p$ ($x \in \mathbb{Z}_p^*$), allora:
 \[ x^{p-1} \equiv 1 \pmod p \]
 \begin{itemize}
@@ -351,7 +351,7 @@ Se $p$ è primo e $x$ è un intero non divisibile per $p$ ($x \in \mathbb{Z}_p^*
     \item Per calcolare l'inverso: $x^{-1} \equiv x^{p-2} \pmod p$.
 \end{itemize}
 
-\section{Applicazione: Generazione di Numeri Primi Casuali}
+\subsection{Applicazione: Generazione di Numeri Primi Casuali}
 \begin{enumerate}
     \item Scegli un intero casuale $p$ grande.
     \item Verifica se $a^{p-1} \equiv 1 \pmod p$ (es. $a=2$).
@@ -359,7 +359,7 @@ Se $p$ è primo e $x$ è un intero non divisibile per $p$ ($x \in \mathbb{Z}_p^*
 \end{enumerate}
 (Test di primalità probabilistico; in pratica si usa Miller-Rabin).
 
-\section{Funzione Totiente di Eulero ($\phi(N)$)}
+\subsection{Funzione Totiente di Eulero ($\phi(N)$)}
 \begin{itemize}
     \item \textbf{Definizione}: $\phi(N)$ è il numero di interi positivi $<N$ e coprimi con $N$.
     \[ \phi(N) = |\mathbb{Z}_N^*| \]
@@ -372,7 +372,7 @@ Se $p$ è primo e $x$ è un intero non divisibile per $p$ ($x \in \mathbb{Z}_p^*
     \end{itemize}
 \end{itemize}
 
-\section{Teorema di Eulero}
+\subsection{Teorema di Eulero}
 Se $\text{gcd}(x, N) = 1$ (cioè $x \in \mathbb{Z}_N^*$), allora:
 \[ x^{\phi(N)} \equiv 1 \pmod N \]
 \begin{itemize}
@@ -381,7 +381,7 @@ Se $\text{gcd}(x, N) = 1$ (cioè $x \in \mathbb{Z}_N^*$), allora:
     \item \textbf{Base del criptosistema RSA}.
 \end{itemize}
 
-\section{Il Problema della Fattorizzazione}
+\subsection{Il Problema della Fattorizzazione}
 \begin{itemize}
     \item \textbf{Problema}: Dato un intero composto $N$, trovare i suoi fattori primi.
     \item \textbf{Difficoltà}: Fattorizzare interi molto grandi è computazionalmente difficile.

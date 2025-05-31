@@ -267,7 +267,7 @@ Un modello comune (Lu \& Xu, IEEE IoT Journal 2019) per analizzare la sicurezza 
 \begin{tabular}{|p{0.15\textwidth}|p{0.4\textwidth}|p{0.35\textwidth}|}
 \hline
 \rowcolor{bg_custom}
-\textcolor{black}{\textbf{Livello}} & \textcolor{black}{\textbf{Descrizione e Focus Attacco}} & \textcolor{black}{\textbf{Tipi di Attacco}} \\
+\textcolor{primarytext}{\textbf{Livello}} & \textcolor{primarytext}{\textbf{Descrizione e Focus Attacco}} & \textcolor{primarytext}{\textbf{Tipi di Attacco}} \\
 \hline
 \textbf{Sensing} & Oggetti fisici e sensori. \newline \textbf{Focus:} confidenzialità. &
     \begin{itemize}[nosep, leftmargin=*, itemsep=-2pt, before=\vspace{-0.5\baselineskip}, after=\vspace{-\baselineskip}]
@@ -311,8 +311,8 @@ Diagramma che illustra i flussi tipici nell'edge layer.
 \begin{tikzpicture}[node distance=2.5cm and 1.5cm, auto]
     % Nodi
     \node[cloud_white, text width=4em] (cloud) {Cloud Services};
-    \node[sensor_white, below left=0.8cm and 0.3cm of cloud, label={[label_white]below:IoT Nodes}] (iot_node1) {N1};
-    \node[sensor_white, below right=0.8cm and 0.3cm of cloud, label={[label_white]below:IoT Nodes}] (iot_node2) {N2};
+    \node[sensor_white, below left=1.2cm and 1.5cm of cloud, label={[label_white]below:IoT Nodes}] (iot_node1) {N1};
+    \node[sensor_white, below right=1.2cm and 1.5cm of cloud, label={[label_white]below:IoT Nodes}] (iot_node2) {N2};
     \node[block_white, text width=4em, below=1.5cm of cloud] (gateway) {IoT Gateway};
     \node[block_white, text width=5em, below left=0.8cm and 0.3cm of gateway] (mobile) {Mobile Devices};
     \node[sensor_white, right=1.5cm of gateway, label={[label_white]right:Sensors}] (sensor1) {S1};
@@ -321,7 +321,7 @@ Diagramma che illustra i flussi tipici nell'edge layer.
 
     % Connessioni
     \path[line_white] (iot_node1.east) -- (gateway.west);
-    \path[line_white] (iot_node2.east) -- (gateway.west);
+    \path[line_white] (iot_node2.west) -- (gateway.north east);
     \path[line_white] (gateway.north) -- (cloud.south);
     \path[line_white] (mobile.north) -- (gateway.south west);
     \path[line_white] (gateway.east) -- (sensor1.west);

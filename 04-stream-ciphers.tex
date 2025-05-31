@@ -413,33 +413,33 @@ OTP e cifrari a flusso simili forniscono confidenzialità ma \textbf{NON integri
     Bob decifra $m^* = c^* \oplus KS = (c \oplus p_{diff}) \oplus KS = (m \oplus KS \oplus p_{diff}) \oplus KS = m \oplus p_{diff}$.
     \begin{figure}[H]
         \centering
-        \begin{tikzpicture}[node distance=2cm]
+        \begin{tikzpicture}[node distance=1.5cm]
             % Alice
             \node[user] (alice) {Alice};
-            \node[above=0.5cm of alice] (msg) {$m$};
+            \node[above=0.3cm of alice] (msg) {$m$};
             
             % Encryption
-            \node[block, below=1.5cm of alice] (encrypt) {$\oplus$};
-            \node[left=1cm of encrypt] (key1) {$k$};
+            \node[block, below=1cm of alice] (encrypt) {$\oplus$};
+            \node[left=0.7cm of encrypt] (key1) {$k$};
             
             % Ciphertext
-            \node[right=3cm of encrypt] (cipher) {$c = m \oplus k$};
+            \node[right=2cm of encrypt] (cipher) {$c = m \oplus k$};
             
             % Mallory (attacker)
-            \node[attacker, below=1cm of cipher] (mallory) {Mallory};
+            \node[attacker, below=0.7cm of cipher] (mallory) {Mallory};
             
             % Modified ciphertext
-            \node[right=2cm of mallory] (modified) {$c^* = c \oplus p_{diff}$};
+            \node[right=1.5cm of mallory] (modified) {$c^* = c \oplus p_{diff}$};
             
             % Bob
-            \node[user, right=4cm of cipher] (bob) {Bob};
+            \node[user, right=2.5cm of cipher] (bob) {Bob};
             
             % Decryption
-            \node[block, below=1.5cm of bob] (decrypt) {$\oplus$};
-            \node[right=1cm of decrypt] (key2) {$k$};
+            \node[block, below=1cm of bob] (decrypt) {$\oplus$};
+            \node[right=0.7cm of decrypt] (key2) {$k$};
             
             % Result
-            \node[below=1cm of decrypt] (result) {$m^* = m \oplus p_{diff}$};
+            \node[below=0.7cm of decrypt] (result) {$m^* = m \oplus p_{diff}$};
             
             % Arrows
             \draw[arrow] (msg) -- (alice);
@@ -454,7 +454,7 @@ OTP e cifrari a flusso simili forniscono confidenzialità ma \textbf{NON integri
             \draw[arrow] (decrypt) -- (result);
             
             % Labels
-            \node[below=2.5cm of encrypt, text width=8cm, align=center] {
+            \node[below=2cm of encrypt, text width=8cm, align=center] {
                 \small Mallory intercetta $c$ e lo modifica in $c^*$ senza conoscere $k$ o $m$
             };
             

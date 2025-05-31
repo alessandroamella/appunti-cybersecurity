@@ -47,6 +47,7 @@ I cifrari a blocchi (come AES, DES) operano su blocchi di dati di dimensione fis
     \centering
     \begin{tabular}{|p{0.2\textwidth}|p{0.5\textwidth}|p{0.25\textwidth}|}
         \hline
+        \rowcolor{bg_custom}
         \textbf{Modalità} & \textbf{Descrizione} & \textbf{Applicazione Tipica} \\
         \hline
         \textbf{ECB} (Electronic CodeBook) & Ogni blocco di testo in chiaro è codificato indipendentemente usando la stessa chiave. & Trasmissione sicura di valori singoli (es. una chiave di crittografia). \textbf{DA EVITARE} per dati generici. \\
@@ -93,19 +94,19 @@ La \textbf{Sicurezza Semantica} implica che un testo cifrato non dovrebbe rivela
 L'attaccante ($\text{Adv}$) osserva solo i testi cifrati (Ciphertext-Only Attack).
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=1.5cm and 2.5cm, text=primarytext]
+    \begin{tikzpicture}[node distance=2cm and 4cm, text=primarytext]
         \node[challenger] (charlie) {Charlie (Challenger)};
         \node[adversary, right=of charlie] (adv) {Adv};
 
-        \path (adv.west) edge[message_flow, bend left=15] node[above, midway, font=\footnotesize] {$m_0, m_1 \in \mathcal{M}$} (charlie.east);
-        \node[above=0.2cm of $(charlie.east)!0.5!(adv.west)$] (round1_text) [font=\scriptsize, text width=5cm, text centered] {Round 1: Charlie sceglie $k, Enc_k$\\Round 2: Adv sceglie $m_0, m_1$};
+        \path (adv.west) edge[message_flow, bend left=20] node[above=0.3cm, midway, font=\footnotesize] {$m_0, m_1 \in \mathcal{M}$} (charlie.east);
+        \node[above=0.8cm of $(charlie.east)!0.5!(adv.west)$] (round1_text) [font=\scriptsize, text width=5cm, text centered] {Round 1: Charlie sceglie $k, Enc_k$\\Round 2: Adv sceglie $m_0, m_1$};
 
-        \path (charlie.east) edge[message_flow, bend left=15] node[above, midway, font=\footnotesize] {$c = Enc_k(m_b)$} (adv.west);
-         \node[below=0.2cm of $(charlie.east)!0.5!(adv.west)$] (round3_text) [font=\scriptsize, text width=5cm, text centered] {Round 3: Charlie sceglie $b \xleftarrow{R} \{0,1\}$\\Round 4: Charlie crittografa $m_b$};
+        \path (charlie.east) edge[message_flow, bend right=20] node[below=0.3cm, midway, font=\footnotesize] {$c = Enc_k(m_b)$} (adv.west);
+        \node[below=0.8cm of $(charlie.east)!0.5!(adv.west)$] (round3_text) [font=\scriptsize, text width=5cm, text centered] {Round 3: Charlie sceglie $b \xleftarrow{R} \{0,1\}$\\Round 4: Charlie crittografa $m_b$};
 
-        \node[right=0.5cm of adv, font=\footnotesize] (b_prime) {$b' \in \{0,1\}$};
+        \node[right=1.5cm of adv, font=\footnotesize] (b_prime) {$b' \in \{0,1\}$};
         \path (adv.east) edge[message_flow, dashed] (b_prime.west);
-        \node[below=0.2cm of adv, font=\scriptsize, text width=3cm, text centered] (round5_text) {Round 5: Adv indovina $b'$ \\ Adv vince se $b=b'$};
+        \node[below=1cm of adv, font=\scriptsize, text width=3cm, text centered] (round5_text) {Round 5: Adv indovina $b'$ \\ Adv vince se $b=b'$};
     \end{tikzpicture}
     \caption{Gioco della Indistinguishability under Eavesdropping Attack (IND-EAV).}
     \label{fig:ind_eav_game}

@@ -292,7 +292,7 @@ TCP usa un "three-way handshake":
     \draw[myarrow] (c_estab.east) -- (s_synrec.west |- c_estab.east) node[midway, above, font=\tiny,align=center] {(3) ACK};
 
     % Highlighting SYN Flooding
-    \node[attacker, below right=0.5cm and -1cm of c_estab, text width=3cm, font=\tiny] (attack_note)
+    \node[attacker, below right=0.5cm and -1cm of c_estab, text width=3cm, font=\small] (attack_note)
         {SYN Flooding: L'attaccante invia molti SYN (1), il server risponde con SYN-ACK (2) e attende ACK (3) che non arriva. Le risorse del server si esauriscono.};
     \draw[myarrow, red!70!white, dashed] (attack_note.north west) .. controls +(west:1cm) and +(south:0.5cm) .. (c_synsent.south);
 \end{tikzpicture}
@@ -395,24 +395,54 @@ I dati sono incapsulati in strati multipli di crittografia.
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[scale=0.8, transform shape]
-        \node (source) {Source (Alice)};
-        \node[neutralnode, label={[white]above:Relay A Key}, minimum width=3cm, minimum height=2.5cm, right=1cm of source, fill=blue!60!black, opacity=0.8] (layerA) {};
-        \node[neutralnode, label={[white]above:Relay B Key}, minimum width=2.2cm, minimum height=1.8cm, fill=green!60!black, opacity=0.8] (layerB) at (layerA.center) {};
-        \node[neutralnode, label={[white]above:Relay C Key}, minimum width=1.4cm, minimum height=1.1cm, fill=red!60!black, opacity=0.8] (layerC) at (layerB.center) {};
-        \node[font=\tiny, fill=white, text=black, inner sep=1pt] (msg) at (layerC.center) {Messaggio};
+    \begin{tikzpicture}[scale=1.2]
+        % Source node
+        \node[goodnode] (source) {Source (Alice)};
+        
+        % Encryption layers with better spacing and size
+        \node[neutralnode, 
+            label={[font=\normalsize]above:Relay A Key}, 
+            minimum width=4cm, 
+            minimum height=3cm, 
+            right=2cm of source, 
+            fill=blue!60!black, 
+            opacity=0.8
+        ] (layerA) {};
+        
+        \node[neutralnode, 
+            label={[font=\normalsize]above:Relay B Key}, 
+            minimum width=3cm, 
+            minimum height=2.2cm, 
+            fill=green!60!black, 
+            opacity=0.8
+        ] (layerB) at (layerA.center) {};
+        
+        \node[neutralnode, 
+            label={[font=\normalsize]above:Relay C Key}, 
+            minimum width=2cm, 
+            minimum height=1.5cm, 
+            fill=red!60!black, 
+            opacity=0.8
+        ] (layerC) at (layerB.center) {};
+        
+        \node[font=\small, fill=white, text=black, inner sep=2pt] (msg) at (layerC.center) {Messaggio};
 
-        \node[below=0.8cm of layerA.south, xshift=-0.7cm] (RA) {Relay A};
-        \node[below=0.8cm of layerB.south, xshift=0cm] (RB) {Relay B};
-        \node[below=0.8cm of layerC.south, xshift=0.7cm] (RC) {Relay C};
-        \node[right=1cm of layerA] (dest) {Destinazione};
+        % Relay nodes with better spacing
+        \node[below=1.5cm of layerA.south, xshift=-1.5cm] (RA) {Relay A};
+        \node[below=1.8cm of layerB.south] (RB) {Relay B};
+        \node[below=2cm of layerC.south, xshift=1.5cm] (RC) {Relay C};
+        
+        % Destination node
+        \node[goodnode, right=2cm of layerA] (dest) {Destinazione};
 
+        % Arrows with better spacing
         \draw[myarrow] (source.east) -- (layerA.west);
-        \draw[myarrow] ($(layerA.east)+(0,0.3cm)$) -- node[above,font=\tiny]{A decifra} ($(dest.west)+(0,0.3cm)$);
-        \draw[myarrow] ($(layerA.east)+(0,0cm)$) -- node[above,font=\tiny]{B decifra} ($(dest.west)+(0,0cm)$);
-        \draw[myarrow] ($(layerA.east)+(0,-0.3cm)$) -- node[above,font=\tiny]{C decifra} ($(dest.west)+(0,-0.3cm)$);
+        \draw[myarrow] ($(layerA.east)+(0,0.6cm)$) -- node[above,font=\small]{A decifra} ($(dest.west)+(0,0.6cm)$);
+        \draw[myarrow] ($(layerA.east)+(0,0cm)$) -- node[above,font=\small]{B decifra} ($(dest.west)+(0,0cm)$);
+        \draw[myarrow] ($(layerA.east)+(0,-0.6cm)$) -- node[above,font=\small]{C decifra} ($(dest.west)+(0,-0.6cm)$);
 
-        \node[text width=4cm, font=\tiny, anchor=west, below right=0.1cm and 0.1cm of source.south east]
+        % Explanation text with better positioning and size
+        \node[text width=5cm, font=\small, anchor=west, below right=1.1cm and 0.5cm of source.south east]
              {Il messaggio è incapsulato: \\ $E_A(E_B(E_C(M)))$. \\ Ogni relay rimuove uno strato.};
     \end{tikzpicture}
     \caption{Crittografia a Cipolla (Onion Encryption) concettuale.}
