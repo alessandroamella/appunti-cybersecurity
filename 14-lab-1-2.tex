@@ -1,0 +1,512 @@
+\input{preambolo_comune}
+
+\title{Laboratorio 1 \& 2}
+\author{Alessandro Amella, Gemini e Claude}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Algoritmi Crittografici di Base (da Lab 1)}
+Questa sezione copre gli algoritmi fondamentali necessari per comprendere sistemi crittografici come RSA.
+
+\subsection{Massimo Comun Divisore (GCD) e Algoritmo Euclideo}
+\begin{itemize}
+    \item \textbf{GCD (Greatest Common Divisor):} Il più grande numero intero che divide entrambi i numeri dati senza lasciare resto.
+    \item \textbf{Algoritmo Euclideo:} Un metodo efficiente per calcolare il GCD di due interi \(a\) e \(b\). Lo pseudocodice è presentato nella Slide 11 del Lab 1.
+    \item \textbf{Passaggi dell'Algoritmo Euclideo Standard:}
+    \begin{enumerate}
+        \item Siano \(r_0 = a\) e \(r_1 = b\).
+        \item Si calcola \(r_i = r_{i-2} \pmod{r_{i-1}}\), che può essere scritto come \(r_{i-2} = q_i \cdot r_{i-1} + r_i\), dove \(q_i\) è il quoziente e \(r_i\) il resto.
+        \item Si continua finché un resto \(r_k = 0\).
+        \item L'ultimo resto non nullo, \(r_{k-1}\), è il \(\text{gcd}(a,b)\).
+    \end{enumerate}
+    \item \textbf{Esempio: Calcolo di \(\text{gcd}(93, 57)\)}
+    \begin{align*}
+        93 &= 1 \cdot 57 + 36 \\
+        57 &= 1 \cdot 36 + 21 \\
+        36 &= 1 \cdot 21 + 15 \\
+        21 &= 1 \cdot 15 + 6 \\
+        15 &= 2 \cdot 6 + 3 \\
+        6 &= 2 \cdot 3 + 0
+    \end{align*}
+    Quindi, \(\text{gcd}(93, 57) = 3\).
+\end{itemize}
+
+\paragraph{Pseudocodice Algoritmo Euclideo (da Slide 11 Lab 1):}
+\begin{minted}[frame=lines, framesep=2mm, baselinestretch=1.2, fontsize=\small,linenos]{text}
+Algorithm 6.1: EUCLIDEAN ALGORITHM(a, b)
+  r_0 <- a
+  r_1 <- b
+  m <- 1
+  while r_m != 0
+  do {
+    q_m <- floor(r_{m-1} / r_m)
+    r_{m+1} <- r_{m-1} - q_m * r_m
+    m <- m + 1
+  }
+  m <- m - 1
+  return (q_1, ..., q_m; r_m)
+  comment: r_m = gcd(a, b)
+\end{minted}
+
+\subsection{Algoritmo Euclideo Esteso}
+\begin{itemize}
+    \item \textbf{Scopo:} Oltre al GCD, l'Algoritmo Euclideo Esteso trova due interi \(s\) e \(t\) (noti come coefficienti di Bézout) tali che \(as + bt = \text{gcd}(a, b)\). Questo è cruciale per calcolare l'inverso moltiplicativo modulare.
+    \item \textbf{Metodo:} Si parte dalle equazioni dell'algoritmo euclideo standard e si lavora "all'indietro" per esprimere il GCD come combinazione lineare di \(a\) e \(b\). Alternativamente, si usa un metodo iterativo come descritto nello pseudocodice (Slide 12 Lab 1).
+    \item \textbf{Esempio: Trovare \(s, t\) per \(57s + 93t = \text{gcd}(93, 57) = 3\)}
+    Partendo dalle equazioni dell'esempio precedente:
+    \begin{align*}
+        3 &= 15 - 2 \cdot 6 \\
+          &= 15 - 2 \cdot (21 - 1 \cdot 15) = 15 - 2 \cdot 21 + 2 \cdot 15 = 3 \cdot 15 - 2 \cdot 21 \\
+          &= 3 \cdot (36 - 1 \cdot 21) - 2 \cdot 21 = 3 \cdot 36 - 5 \cdot 21 \\
+          &= 3 \cdot 36 - 5 \cdot (57 - 1 \cdot 36) = 3 \cdot 36 - 5 \cdot 57 + 5 \cdot 36 = 8 \cdot 36 - 5 \cdot 57 \\
+          &= 8 \cdot (93 - 1 \cdot 57) - 5 \cdot 57 = 8 \cdot 93 - 8 \cdot 57 - 5 \cdot 57 = 8 \cdot 93 - 13 \cdot 57
+    \end{align*}
+    Quindi, \(57(-13) + 93(8) = 3\). Abbiamo \(s = -13\) e \(t = 8\).
+\end{itemize}
+
+\paragraph{Pseudocodice Algoritmo Euclideo Esteso (da Slide 12 Lab 1):}
+\begin{minted}[frame=lines, framesep=2mm, baselinestretch=1.2, fontsize=\small,linenos]{text}
+Algorithm 6.2: EXTENDED EUCLIDEAN ALGORITHM(a, b)
+  a_0 <- a
+  b_0 <- b
+  t_0 <- 0
+  t <- 1
+  s_0 <- 1
+  s <- 0
+  q <- floor(a_0 / b_0)
+  r <- a_0 - q * b_0
+  while r > 0
+  do {
+    temp <- t_0 - q * t
+    t_0 <- t
+    t <- temp
+    temp <- s_0 - q * s
+    s_0 <- s
+    s <- temp
+    a_0 <- b_0
+    b_0 <- r
+    q <- floor(a_0 / b_0)
+    r <- a_0 - q * b_0
+  }
+  r <- b_0
+  return (r, s, t)
+  comment: r = gcd(a, b) and sa + tb = r
+  (Note: the 's' and 't' returned by this specific pseudocode are for a*s + b*t = gcd(a,b).
+   If 'a' is the modulus and 'b' is the number for which inverse is sought, then 't' is the inverse.
+   Carefully check which variable corresponds to which input in your implementation).
+\end{minted}
+
+\subsection{Inverso Moltiplicativo Modulare}
+\begin{itemize}
+    \item \textbf{Definizione:} Dato un intero \(b\) e un modulo \(n\), l'inverso moltiplicativo \(b^{-1} \pmod{n}\) è un intero tale che \((b \cdot b^{-1}) \equiv 1 \pmod{n}\).
+    \item \textbf{Esistenza:} L'inverso moltiplicativo di \(b\) modulo \(n\) esiste se e solo se \(\text{gcd}(b, n) = 1\).
+    \item \textbf{Calcolo (usando l'Algoritmo Euclideo Esteso):}
+    \begin{enumerate}
+        \item Trovare \(s\) e \(t\) tali che \(bs + nt = \text{gcd}(b, n)\).
+        \item Se \(\text{gcd}(b, n) = 1\), allora \(bs + nt = 1\).
+        \item Prendendo l'equazione modulo \(n\): \((bs + nt) \pmod{n} = 1 \pmod{n}\).
+        \item Poiché \(nt \pmod{n} = 0\), si ha \(bs \pmod{n} = 1\).
+        \item Quindi, \(s\) (o \(s \pmod{n}\) per ottenere un valore positivo nel range \([0, n-1]\)) è l'inverso moltiplicativo di \(b\) modulo \(n\). In questo caso \(s\) è il coefficiente di \(b\).
+    \end{enumerate}
+    \item \textbf{Esempio: Calcolo di \(17^{-1} \pmod{101}\)}
+    \begin{enumerate}
+        \item Calcoliamo \(\text{gcd}(101, 17)\) (dove \(n=101, b=17\)):
+        \begin{align*}
+            101 &= 5 \cdot 17 + 16 \\
+            17 &= 1 \cdot 16 + 1 \\
+            16 &= 16 \cdot 1 + 0
+        \end{align*}
+        \(\text{gcd}(101, 17) = 1\), quindi l'inverso esiste.
+        \item Usiamo l'Algoritmo Euclideo Esteso per trovare \(x,y\) tali che \(101x + 17y = 1\):
+        \begin{align*}
+            1 &= 17 - 1 \cdot 16 \\
+              &= 17 - 1 \cdot (101 - 5 \cdot 17) \\
+              &= 17 - 1 \cdot 101 + 5 \cdot 17 \\
+              &= 6 \cdot 17 - 1 \cdot 101
+        \end{align*}
+        Abbiamo \(17 \cdot 6 - 101 \cdot 1 = 1\). Quindi \(17 \cdot 6 \equiv 1 \pmod{101}\).
+        L'inverso moltiplicativo di \(17\) modulo \(101\) è \(6\).
+    \end{enumerate}
+\end{itemize}
+
+\paragraph{Pseudocodice Inverso Moltiplicativo (da Slide 13 Lab 1):}
+\begin{minted}[frame=lines, framesep=2mm, baselinestretch=1.2, fontsize=\small,linenos]{text}
+Algorithm 6.3: MULTIPLICATIVE INVERSE(a, b)
+  // Computes b^-1 mod a
+  a_0 <- a // modulus
+  b_0 <- b // number to find inverse for
+  t_0 <- 0
+  t <- 1
+  q <- floor(a_0 / b_0)
+  r <- a_0 - q * b_0
+  while r > 0
+  do {
+    temp <- (t_0 - q * t) mod a // Ensure temp is handled correctly for negative results
+    // A common way: temp = t_0 - q * t; temp = (temp % a + a) % a;
+    t_0 <- t
+    t <- temp
+    a_0 <- b_0
+    b_0 <- r
+    q <- floor(a_0 / b_0)
+    r <- a_0 - q * b_0
+  }
+  if b_0 != 1
+  then b has no inverse modulo a
+  else return (t)
+\end{minted}
+\textit{Nota Bene:} Nello pseudocodice sopra, \(a\) è il modulo e \(b\) è il numero di cui si cerca l'inverso. Il valore restituito \(t\) è \(b^{-1} \pmod{a}\). L'operazione `mod a` nel calcolo di `temp` è cruciale per mantenere i valori \(t\) nel range corretto per l'aritmetica modulare.
+
+\subsection{Esponenziazione Modulare (Square-and-Multiply)}
+\begin{itemize}
+    \item \textbf{Scopo:} Calcolare \(x^e \pmod{n}\) in modo efficiente, specialmente quando l'esponente \(e\) è grande.
+    \item \textbf{Algoritmo:}
+    \begin{enumerate}
+        \item Convertire l'esponente \(e\) in rappresentazione binaria.
+        \item Inizializzare un risultato \(z = 1\).
+        \item Scorrere i bit di \(e\) (dal più significativo al meno significativo, o viceversa a seconda dell'implementazione. Lo pseudocodice della slide 14 Lab 1 va da \(l-1\) \texttt{downto} 0, dove \(l\) è la lunghezza in bit di \(e\)).
+        \item Per ogni bit dell'esponente:
+        \begin{enumerate}
+            \item Quadrato: \(z = z^2 \pmod{n}\).
+            \item Se il bit corrente dell'esponente è 1: Moltiplicazione: \(z = (z \cdot x) \pmod{n}\).
+        \end{enumerate}
+    \end{enumerate}
+    \item \textbf{Esempio: Calcolo di \(5^{11} \pmod{13}\)}
+    \begin{enumerate}
+        \item Esponente \(e = 11\). In binario: \(1011_2\).
+        \item Inizializziamo \(z = 1\).
+        \item Passaggi (seguendo la logica "da sinistra a destra" per i bit di \(e=1011_2\)):
+        \begin{itemize}
+            \item Bit 1 (MSB):
+                \begin{itemize}
+                    \item Quadrato: \(z = 1^2 \pmod{13} = 1\).
+                    \item Moltiplica (poiché bit=1): \(z = (1 \cdot 5) \pmod{13} = 5\).
+                \end{itemize}
+            \item Bit 0:
+                \begin{itemize}
+                    \item Quadrato: \(z = 5^2 \pmod{13} = 25 \pmod{13} = 12\).
+                    \item (Non moltiplica, poiché bit=0).
+                \end{itemize}
+            \item Bit 1:
+                \begin{itemize}
+                    \item Quadrato: \(z = 12^2 \pmod{13} = 144 \pmod{13}\). Poiché \(144 = 11 \cdot 13 + 1\), \(z=1\).
+                    \item Moltiplica (poiché bit=1): \(z = (1 \cdot 5) \pmod{13} = 5\).
+                \end{itemize}
+            \item Bit 1 (LSB):
+                \begin{itemize}
+                    \item Quadrato: \(z = 5^2 \pmod{13} = 25 \pmod{13} = 12\).
+                    \item Moltiplica (poiché bit=1): \(z = (12 \cdot 5) \pmod{13} = 60 \pmod{13}\). Poiché \(60 = 4 \cdot 13 + 8\), \(z=8\).
+                \end{itemize}
+        \end{itemize}
+        \item Risultato: \(5^{11} \pmod{13} = 8\).
+    \end{enumerate}
+\end{itemize}
+
+\paragraph{Pseudocodice Square-and-Multiply (da Slide 14 Lab 1):}
+\begin{minted}[frame=lines, framesep=2mm, baselinestretch=1.2, fontsize=\small,linenos]{text}
+Algorithm 6.5: SQUARE-AND-MULTIPLY(x, c, n)
+  // Computes x^c mod n
+  // l represents the length in bit of the binary string representation
+  // of the integer exponent c = (c_{l-1} c_{l-2} ... c_1 c_0)_2
+  z <- 1
+  for i <- l - 1 downto 0
+  do {
+    z <- z^2 mod n
+    if c_i = 1
+    then z <- (z * x) mod n
+  }
+  return (z)
+\end{minted}
+
+\subsection{Crittosistema RSA}
+RSA è un sistema di crittografia asimmetrica ampiamente utilizzato.
+\begin{itemize}
+    \item \textbf{Generazione delle Chiavi (eseguita da Bob):}
+    \begin{enumerate}
+        \item Scegliere due numeri primi grandi distinti, \(p\) e \(q\).
+            \begin{itemize} \item Esempio (Slide 5 Lab 1): \(p = 101\), \(q = 113\). \end{itemize}
+        \item Calcolare il modulo \(n = p \cdot q\).
+            \begin{itemize} \item Esempio: \(n = 101 \cdot 113 = 11413\). \end{itemize}
+        \item Calcolare la funzione totiente di Eulero \(\phi(n) = (p-1)(q-1)\).
+            \begin{itemize} \item Esempio: \(\phi(n) = (101-1)(113-1) = 100 \cdot 112 = 11200\). \end{itemize}
+        \item Scegliere un esponente di cifratura (o chiave pubblica) \(b\) (comunemente \(e\)) tale che \(1 < b < \phi(n)\) e \(\text{gcd}(b, \phi(n)) = 1\).
+            \begin{itemize} \item Esempio (Slide 6 Lab 1): \(b = 3533\). Si deve verificare che \(\text{gcd}(3533, 11200) = 1\) usando l'Algoritmo Euclideo. \end{itemize}
+        \item Calcolare l'esponente di decifratura (o chiave privata) \(a\) (comunemente \(d\)) come l'inverso moltiplicativo di \(b\) modulo \(\phi(n)\). Cioè, \(ab \equiv 1 \pmod{\phi(n)}\). Si usa l'Algoritmo Euclideo Esteso.
+        \item \textbf{Chiave Pubblica:} La coppia \((n, b)\). Esempio: \((11413, 3533)\).
+        \item \textbf{Chiave Privata:} La coppia \((n, a)\) (o talvolta l'insieme \(\{p, q, a\}\)).
+    \end{enumerate}
+
+    \item \textbf{Cifratura (Alice invia un messaggio \(m\) a Bob):}
+    \begin{enumerate}
+        \item Alice ottiene la chiave pubblica di Bob \((n, b)\).
+        \item Il messaggio \(m\) deve essere un intero tale che \(0 \le m < n\).
+            \begin{itemize} \item Esempio (Slide 7 Lab 1): \(m = 9726\). \end{itemize}
+        \item Alice calcola il testo cifrato \(c = m^b \pmod{n}\).
+            \begin{itemize} \item Esempio: \(c = 9726^{3533} \pmod{11413}\). Si usa l'algoritmo Square-and-Multiply. \end{itemize}
+    \end{enumerate}
+
+    \item \textbf{Decifratura (Bob riceve \(c\)):}
+    \begin{enumerate}
+        \item Bob usa la sua chiave privata \(a\).
+        \item Bob calcola il testo in chiaro \(m = c^a \pmod{n}\). Si usa l'algoritmo Square-and-Multiply.
+    \end{enumerate}
+\end{itemize}
+
+\section{Ethical Hacking, Hashing e Password Cracking (da Lab 2)}
+
+\subsection{Concetti di Ethical Hacking}
+\begin{itemize}
+    \item \textbf{Hacker:} Persona con elevate competenze tecniche informatiche, che utilizza tali conoscenze per interagire con sistemi computerizzati, spesso superando ostacoli con metodi non standard.
+    \item \textbf{White Hat Hacker:} Un hacker etico che lavora per migliorare la sicurezza dei sistemi, spesso su incarico o partecipando a programmi di bug bounty.
+    \item \textbf{Black Hat Hacker:} Un hacker che agisce con intenti malevoli, per profitto personale, spionaggio, o danneggiamento.
+    \item \textbf{VAPT (Vulnerability Assessment and Penetration Testing):} Un processo metodico per identificare e, nel caso del penetration testing, sfruttare le vulnerabilità di un sistema. Le fasi tipiche sono:
+    \begin{enumerate}
+        \item Scope and Plan (Definizione dell'obiettivo e pianificazione)
+        \item Information Gathering (Raccolta di informazioni)
+        \item Vulnerability Analysis (Analisi delle vulnerabilità)
+        \item Exploitation (Sfruttamento delle vulnerabilità)
+        \item Reporting (Redazione del rapporto)
+    \end{enumerate}
+    \item \textbf{Bug Bounty Programs:} Programmi offerti da aziende che ricompensano economicamente i ricercatori di sicurezza per la scoperta e la segnalazione responsabile di vulnerabilità nei loro prodotti o servizi.
+    \item \textbf{CTF (Capture The Flag):} Competizioni di cybersecurity in cui i partecipanti risolvono sfide per trovare delle "flag" (stringhe di testo nascoste), testando e migliorando le proprie abilità in un ambiente controllato e legale.
+\end{itemize}
+\textit{Nota:} È fondamentale operare sempre in modo etico e con le dovute autorizzazioni quando si eseguono test di sicurezza.
+
+\subsection{Hidden Services e TOR}
+\begin{itemize}
+    \item \textbf{Onion Routing:} Una tecnica per la comunicazione anonima su una rete. I dati vengono incapsulati in più livelli di crittografia (come gli strati di una cipolla) e instradati attraverso una serie di nodi di rete (onion router). Ciascun router decifra (o "spella") uno strato di crittografia per rivelare il nodo successivo nella catena, senza conoscere l'origine o la destinazione finale del traffico (eccetto il nodo di ingresso e quello di uscita).
+    \item \textbf{TOR (The Onion Router):} La più nota implementazione software di onion routing. TOR instrada il traffico Internet attraverso un circuito di tre relay (nodi) scelti casualmente:
+    \begin{itemize}
+        \item \textbf{Entry Node (o Guard Node):} Conosce l'IP dell'utente ma non la destinazione finale.
+        \item \textbf{Middle Node:} Conosce solo il nodo precedente e quello successivo, ma né l'origine né la destinazione.
+        \item \textbf{Exit Node:} Conosce la destinazione finale ma (idealmente) non l'IP dell'utente originale. Può vedere il traffico in chiaro se non è ulteriormente crittografato (es. HTTPS).
+    \end{itemize}
+    \item \textbf{\texttt{.onion} Services (Hidden Services):} Siti web e altri servizi che sono accessibili solo attraverso la rete TOR. I loro indirizzi IP non sono pubblicamente noti e sono progettati per offrire anonimato sia al fornitore del servizio che all'utente. Hanno indirizzi con il TLD \texttt{.onion}.
+\end{itemize}
+L'anonimato offerto da TOR non è assoluto; ad esempio, identificarsi su un sito web (login) può compromettere l'anonimato.
+
+\subsection{Hashing}
+\begin{itemize}
+    \item \textbf{Funzione Hash:} Una funzione matematica che trasforma un input di dati di lunghezza arbitraria (messaggio, file, password) in una stringa di bit di lunghezza fissa, chiamata hash, digest o impronta digitale.
+    \item \textbf{Proprietà Ideali di una Funzione Hash Crittografica:}
+    \begin{itemize}
+        \item \textbf{Efficienza di calcolo:} Facile e veloce da calcolare per qualsiasi input.
+        \item \textbf{Output di lunghezza fissa:} Produce un hash della stessa dimensione indipendentemente dalla dimensione dell'input.
+        \item \textbf{Effetto valanga (Avalanche effect):} Una piccola modifica nell'input produce un hash drasticamente diverso.
+        \item \textbf{Resistenza alla preimmagine (Irreversibilità):} Dato un hash \(h\), è computazionalmente infattibile trovare un input \(m\) tale che \(\text{hash}(m) = h\).
+        \item \textbf{Resistenza alla seconda preimmagine:} Dato un input \(m_1\), è computazionalmente infattibile trovare un altro input \(m_2 \ne m_1\) tale che \(\text{hash}(m_1) = \text{hash}(m_2)\).
+        \item \textbf{Resistenza alle collisioni:} È computazionalmente infattibile trovare due input distinti \(m_1 \ne m_2\) tali che \(\text{hash}(m_1) = \text{hash}(m_2)\).
+    \end{itemize}
+    \item \textbf{Scopi Principali:}
+    \begin{itemize}
+        \item \textbf{Verifica dell'integrità dei dati:} Assicurarsi che i dati non siano stati alterati durante la trasmissione o l'archiviazione.
+        \item \textbf{Memorizzazione sicura delle password:} Invece di salvare le password in chiaro, i sistemi memorizzano i loro hash. Quando un utente effettua il login, la password fornita viene hashata e confrontata con l'hash memorizzato.
+    \end{itemize}
+    \item \textbf{Algoritmi Comuni:}
+    \begin{itemize}
+        \item \textbf{MD5 (Message Digest 5):} Produce un hash di 128 bit. Considerato insicuro a causa della scoperta di collisioni pratiche. Da non utilizzare per scopi di sicurezza.
+        \item \textbf{SHA-1 (Secure Hash Algorithm 1):} Produce un hash di 160 bit. Anch'esso considerato insicuro e deprecato.
+        \item \textbf{SHA-2 Family (SHA-224, SHA-256, SHA-384, SHA-512):} Una famiglia di algoritmi più sicuri che producono hash di lunghezze diverse. SHA-256 e SHA-512 sono ampiamente utilizzati.
+        \item \textbf{SHA-3 Family:} L'ultimo standard, con un design interno diverso da SHA-2.
+    \end{itemize}
+    \item \textbf{Uso di GNU coreutils (Slide 31 Lab 2):}
+    Su sistemi Linux, è possibile generare e verificare hash usando i comandi forniti da GNU coreutils.
+    \begin{itemize}
+        \item \textbf{Generare hash di un file:}
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+md5sum <nome_file>
+sha1sum <nome_file>
+sha256sum <nome_file>
+# etc.
+\end{minted}
+        \item \textbf{Generare hash di una stringa (input da stdin):}
+L'opzione \texttt{-n} di \texttt{echo} è importante per evitare che venga aggiunto un carattere di newline, che modificherebbe l'hash.
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+echo -n "testo_da_hashare" | md5sum
+echo -n "testo_da_hashare" | sha256sum
+\end{minted}
+        \item \textbf{Verificare un hash precalcolato di un file:}
+Il file di input per il comando di verifica deve contenere l'hash, seguito da \textbf{due spazi}, e poi il nome del file.
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+# Contenuto di un file check.md5:
+# d41d8cd98f00b204e9800998ecf8427e  file_vuoto.txt
+
+md5sum -c check.md5
+# Oppure direttamente:
+echo "d41d8cd98f00b204e9800998ecf8427e  file_vuoto.txt" | md5sum -c
+\end{minted}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Attacchi agli Algoritmi di Hash e Password Cracking}
+L'obiettivo è recuperare la password originale (plaintext) partendo dal suo hash. Anche se le funzioni hash sono progettate per essere irreversibili, diverse tecniche possono essere impiegate, specialmente contro implementazioni deboli o password comuni.
+
+\subsubsection{Precomputed Attacks (Rainbow Tables)}
+\begin{itemize}
+    \item \textbf{Idea di base:} Pre-calcolare gli hash di un gran numero di password comuni o probabili e memorizzarli in una tabella per una ricerca veloce (trade-off spazio/tempo).
+    \item \textbf{Hash Chains:} Una tecnica per ridurre lo spazio di archiviazione. Si generano catene:
+    \( \text{password}_{\text{start}} \xrightarrow{H} \text{hash}_1 \xrightarrow{R_1} \text{password}_1 \xrightarrow{H} \text{hash}_2 \xrightarrow{R_2} \dots \xrightarrow{R_k} \text{password}_{\text{end}} \)
+    Dove \(H\) è la funzione hash e \(R_i\) sono "reduction functions" che convertono un hash in una (potenziale) password dello stesso formato di quelle cercate. Vengono memorizzate solo le coppie \((\text{password}_{\text{start}}, \text{password}_{\text{end}})\).
+    \item \textbf{Rainbow Tables:} Un miglioramento delle hash chain che usa una famiglia diversa di reduction functions \(R_j\) per ogni "colonna" \(j\) della catena. Questo aiuta a mitigare il problema delle collisioni che possono far fondere le catene.
+    \item \textbf{Tool \texttt{rainbowcrack} (Slide 41 Lab 2):}
+    \begin{itemize}
+        \item \textbf{Generare tabelle (esempio MD5, minuscole, lunghezza 1-7):}
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+# rtgen <hash_algorithm> <charset> <min_len> <max_len> <table_index> <chain_len> <chain_num> <part_index>
+sudo rtgen md5 loweralpha 1 7 0 1000 100000 0
+\end{minted}
+        \item \textbf{Ordinare le tabelle generate:}
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+sudo rtsort /usr/share/rainbowcrack/ # (o il path dove sono state generate)
+\end{minted}
+        \item \textbf{Craccare un hash usando le tabelle:}
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+rcrack /usr/share/rainbowcrack/ -h <hash_da_craccare>
+# Esempio: rcrack /usr/share/rainbowcrack/ -h 098f6bcd4621d373cade4e832627b4f6
+\end{minted}
+    \end{itemize}
+    \item \textbf{Esercizio proposto (Slide 42 Lab 2):}
+    Tentare di craccare gli hash forniti usando \texttt{rainbowcrack} dopo aver generato tabelle appropriate (es. per \texttt{loweralpha}, lunghezza 1-7).
+    \begin{itemize}
+        \item Hash n1 (MD5): \texttt{6e6bc4e49dd477ebc98ef4046c067b5f} (potrebbe essere "example")
+        \item Hash n2 (MD5): \texttt{427ade9c15ec643751860eba9899355b} (potrebbe essere "secret")
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Salting}
+\begin{itemize}
+    \item \textbf{Definizione:} Un "salt" è una stringa di dati casuali unica che viene aggiunta a ciascuna password prima di calcolarne l'hash. La formula diventa: \(\text{hash}(\text{password} + \text{salt})\) o \(\text{hash}(\text{salt} + \text{password})\).
+    \item \textbf{Scopo:} Il salting rende inefficaci le rainbow table pre-calcolate generiche. Poiché ogni utente ha un salt diverso (memorizzato in chiaro insieme all'hash), due utenti con la stessa password avranno hash finali diversi. Un attaccante dovrebbe generare rainbow table specifiche per ogni salt.
+    \item \textbf{Limiti:} Il salting non protegge da attacchi di tipo dictionary o brute-force mirati a un singolo utente se l'attaccante ottiene sia l'hash che il salt (comune in caso di data leak). L'attaccante può semplicemente concatenare il salt noto alla password che sta provando prima di hasharla.
+\end{itemize}
+
+\subsubsection{Brute-Force Attack}
+Consiste nel provare sistematicamente tutte le possibili combinazioni di caratteri fino a trovare quella che produce l'hash target. Estremamente lento per password lunghe e complesse. Le "maschere" possono aiutare a ridurre lo spazio di ricerca se si ha un'idea della struttura della password.
+
+\subsubsection{Dictionary Attack}
+Consiste nel provare come password le parole contenute in una lista predefinita (wordlist). È più efficiente del brute-force se la password è una parola comune, una variazione di essa, o una password frequentemente utilizzata.
+\begin{itemize}
+    \item La wordlist \texttt{rockyou.txt} (spesso trovata in \texttt{/usr/share/wordlists/rockyou.txt.gz} su distribuzioni come Kali Linux) è una collezione molto grande di password reali trapelate, ed è un punto di partenza comune per questi attacchi. Va scompattata con:
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+sudo gunzip /usr/share/wordlists/rockyou.txt.gz
+\end{minted}
+\end{itemize}
+
+\subsubsection{Tool \texttt{hashcat}}
+\texttt{hashcat} è un tool avanzato e veloce per il cracking di password. Supporta un'ampia varietà di algoritmi di hash e diverse modalità di attacco.
+\begin{itemize}
+    \item \textbf{Primo Passo: Identificare il tipo di hash.} A volte si può dedurre dalla lunghezza o dal formato. Il comando \texttt{hashid <hash>} può fornire suggerimenti, ma non è sempre conclusivo. La documentazione di \texttt{hashcat} elenca i codici numerici per ogni tipo di hash supportato.
+    \item \textbf{Sintassi Base:}
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+hashcat [opzioni] <hash_o_file_hash> [wordlist_o_maschera]
+\end{minted}
+    \item \textbf{Opzioni Chiave (Slide 54 Lab 2):}
+    \begin{itemize}
+        \item \texttt{-m <mode>}: Specifica il tipo di hash (codice numerico). Esempi:
+        \begin{itemize}
+            \item \texttt{0} = MD5
+            \item \texttt{100} = SHA1
+            \item \texttt{1400} = SHA2-256
+            \item \texttt{1700} = SHA2-512
+            \item \texttt{10} = md5(\$pass.\$salt)
+            \item \texttt{20} = md5(\$salt.\$pass)
+            \item (Vedi Slide 55 Lab 2 o \texttt{hashcat --help} per la lista completa)
+        \end{itemize}
+        \item \texttt{-a <attack\_mode>}: Specifica la modalità di attacco. Esempi:
+        \begin{itemize}
+            \item \texttt{0} = Straight (Dictionary attack)
+            \item \texttt{1} = Combination (Combina parole da due wordlist)
+            \item \texttt{3} = Brute-force (Mask attack)
+            \item \texttt{6} = Hybrid dict + mask
+            \item \texttt{7} = Hybrid mask + dict
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Hash con Salt (Slide 57 Lab 2):}
+    Per \texttt{hashcat}, gli hash salati sono tipicamente forniti nel formato \texttt{HASH:SALT} all'interno del file di input o come stringa. Bisogna scegliere il \texttt{-m <mode>} corretto che supporti quel tipo di salting (es. \texttt{-m 10} per MD5 dove il salt è appeso alla password, \texttt{md5(password+salt)}).
+    \item \textbf{Rules (Slide 60-61 Lab 2):}
+    Le regole vengono usate negli attacchi dictionary (\texttt{-a 0}) per manipolare le parole dalla wordlist prima di testarle (es. aggiungere numeri, cambiare case, aggiungere simboli).
+    Si specificano con \texttt{-r <file\_delle\_regole>}. \texttt{hashcat} include diverse ruleset predefinite (es. in \texttt{/usr/share/hashcat/rules/}).
+    \item \textbf{Potfile:} \texttt{hashcat} salva le password craccate e i relativi hash in un file chiamato \texttt{hashcat.potfile} (solitamente in \texttt{\~/.local/share/hashcat/}). Questo evita di dover ricraccare hash già risolti.
+    \begin{itemize}
+        \item \texttt{hashcat --show <file\_hash>}: Mostra le password già craccate per gli hash nel file.
+        \item \texttt{hashcat --left <file\_hash>}: Mostra solo gli hash non ancora craccati.
+    \end{itemize}
+    \item \textbf{Esempi di Comandi \texttt{hashcat}:}
+    \begin{itemize}
+        \item \textbf{MD5 semplice, dictionary attack (Slide 56 Lab 2):}
+        Hash: \texttt{4d186321c1a7f0f354b297e8914ab240} (password: "hola")
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+hashcat -a 0 -m 0 "4d186321c1a7f0f354b297e8914ab240" /usr/share/wordlists/rockyou.txt
+\end{minted}
+        \item \textbf{MD5 con salt (\(hash:salt\)), dictionary attack (Slide 57 Lab 2):}
+        Hash: \texttt{ccee5504c9d889922b101124e9e43b71}, Salt: \texttt{1234} (password: "hola", mode \texttt{-m 10} è per \texttt{md5(\$pass.\$salt)})
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+hashcat -a 0 -m 10 "ccee5504c9d889922b101124e9e43b71:1234" /usr/share/wordlists/rockyou.txt
+\end{minted}
+        \item \textbf{MD5 semplice, dictionary attack con rules (Slide 61 Lab 2):}
+        Hash: \texttt{401518eee35b49f00bc0a3ab74c4915e} (password: "Hola123!")
+        (Supponendo che "hola" sia in \texttt{rockyou.txt}, una regola potrebbe trasformarla in "Hola123!")
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+hashcat -a 0 -m 0 -r /usr/share/hashcat/rules/best64.rule "401518eee35b49f00bc0a3ab74c4915e" /usr/share/wordlists/rockyou.txt
+# O usando una ruleset più aggressiva come TOXICv2.rule se best64 non basta
+# hashcat -a 0 -m 0 -r /usr/share/hashcat/rules/TOXICv2.rule "401518eee35b49f00bc0a3ab74c4915e" /usr/share/wordlists/rockyou.txt
+\end{minted}
+    \end{itemize}
+    \item \textbf{Esercizi Proposti con \texttt{hashcat} (Slides 58, 62-64 Lab 2):}
+    Questi esercizi richiedono di craccare hash, a volte con salt e a volte con hint sulla struttura della password, che possono guidare la scelta della modalità di attacco (dictionary + rules, mask attack).
+    \begin{itemize}
+        \item \textbf{Slide 58 (Hash con Salt):}
+        HASH: \texttt{6c00f2d6e1610bfc9b415daf80d45855f2c56443c2dc2f71e7ef27168d1f2857d6168f4d374ed8eca349f2debd18d4ccac339218ca70446adf999060395742b4} (sembra lungo, potrebbe essere SHA-512, controllare il mode di hashcat)
+        SALT: \texttt{hjt88q}
+        Assumendo sia SHA-512(\$pass.\$salt) mode \texttt{1710}:
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+# cat hash_salt.txt
+# 6c00f2d6e1610bfc9b415daf80d45855f2c56443c2dc2f71e7ef27168d1f2857d6168f4d374ed8eca349f2debd18d4ccac339218ca70446adf999060395742b4:hjt88q
+hashcat -a 0 -m 1710 hash_salt.txt /usr/share/wordlists/rockyou.txt
+\end{minted}
+        \item \textbf{Slide 62 (Hint: frase senza spazi + numeri alla fine):}
+        HASH: \texttt{0e8ae09ae169926a26b031c18c01bafa} (MD5?)
+        Si potrebbe usare un dictionary attack con rules che appendono numeri, o un mask attack se la "frase" è corta.
+        Esempio mask (se la frase fosse "test" e 2 numeri): \texttt{-a 3 -m 0 HASH ?l?l?l?l?d?d}
+        \item \textbf{Slide 63 (Hint: parola comune + numeri + carattere speciale):}
+        HASH: \texttt{c73fceaab80035a75ba3fd415ecb2735} (MD5?)
+        Dictionary attack con rules che aggiungono numeri e caratteri speciali.
+        \item \textbf{Slide 64 (Hint: parola comune con case INVERTITO + 1 o 2 numeri):}
+        HASH: \texttt{dc612dc12fb4540a88b88875c2bee3b4} (MD5?)
+        Dictionary attack con rules che invertono il case e aggiungono 1 o 2 numeri.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Esercitazioni Pratiche (OverTheWire - Bandit)}
+\begin{itemize}
+    \item \textbf{Scopo:} OverTheWire (\url{https://overthewire.org/wargames/bandit/}) offre una serie di "wargames" (CTF) per imparare comandi Linux e concetti base di sicurezza in modo progressivo. Il wargame Bandit è ideale per i principianti.
+    \item \textbf{Come Connettersi (Slide 67 Lab 2):}
+    Si usa SSH per connettersi al server del wargame. Per il livello 0, l'utente è \texttt{bandit0}.
+\begin{minted}[frame=lines, fontsize=\small, linenos]{bash}
+ssh bandit0@bandit.labs.overthewire.org -p 2220
+\end{minted}
+    La password per accedere a \texttt{banditN} si trova risolvendo il livello \texttt{bandit(N-1)}.
+    \item \textbf{Consigli:}
+    \begin{itemize}
+        \item Leggere attentamente la descrizione di ogni livello sul sito di OverTheWire.
+        \item Utilizzare i comandi Linux suggeriti o quelli che si ritengono utili (es. \texttt{ls}, \texttt{cat}, \texttt{find}, \texttt{grep}, \texttt{strings}, \texttt{file}, \texttt{man}, \texttt{nc}, \texttt{openssl}, \texttt{diff}, \texttt{xxd}, \texttt{base64}, \texttt{tr}).
+        \item Il comando \texttt{man <comando>} è fondamentale per capire come funziona un comando e quali opzioni offre.
+        \item L'obiettivo di ogni livello è trovare la password per accedere al livello successivo.
+    \end{itemize}
+\end{itemize}
+
+\section{Consigli Generali per l'Esame}
+\begin{itemize}
+    \item \textbf{Pratica, Pratica, Pratica:} Se possibile, eseguire effettivamente gli esercizi proposti, specialmente quelli relativi all'Algoritmo Euclideo (Esteso), calcolo dell'inverso moltiplicativo, passaggi di RSA, e l'utilizzo pratico di \texttt{hashcat} e \texttt{rainbowcrack}.
+    \item \textbf{Comprensione dei Concetti:} Non limitarsi a memorizzare comandi o formule. È cruciale capire \textit{perché} un certo algoritmo funziona in un determinato modo e \textit{quali} sono i suoi punti di forza e di debolezza.
+    \item \textbf{Rivedere gli Pseudocodici:} Comprendere la logica dietro gli pseudocodici forniti per gli algoritmi di base.
+    \item \textbf{Focus su \texttt{hashcat}:} Data l'enfasi nel Lab 2, assicurarsi di conoscere la sintassi di base, come specificare i tipi di hash (\texttt{-m}), le modalità di attacco (\texttt{-a}), come gestire gli hash con salt, e l'utilità delle rules (\texttt{-r}).
+    \item \textbf{Distinzioni Chiave:} Essere in grado di distinguere chiaramente tra hashing e cifratura, tra cifratura simmetrica e asimmetrica.
+    \item \textbf{Sicurezza delle Password:} Comprendere i rischi associati a password deboli, l'utilità del salting e i suoi limiti.
+\end{itemize}
+
+\end{document}

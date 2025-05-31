@@ -1,0 +1,388 @@
+\input{preambolo_comune}
+
+\title{Laboratorio 3 (parte 1 e 2)}
+\author{Alessandro Amella, Gemini e Claude}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Laboratorio \#3: Applied Cryptography}
+
+\subsection{Concetti Fondamentali}
+
+\subsubsection{AES (Advanced Encryption Standard)}
+L'AES è un cifrario simmetrico a blocchi ampiamente utilizzato.
+\begin{itemize}
+    \item \textbf{Dimensione Blocco:} 128 bit.
+    \item \textbf{Lunghezze Chiave:} 128, 192, o 256 bit.
+\end{itemize}
+
+\subsubsection*{Modalità Operative AES}
+Le modalità operative definiscono come i blocchi di dati vengono processati.
+\begin{itemize}
+    \item \textbf{ECB (Electronic CodeBook):}
+    \begin{itemize}
+        \item La modalità più semplice.
+        \item Ogni blocco di plaintext viene cifrato indipendentemente con la stessa chiave.
+        \item \textbf{Debolezza:} Blocchi di plaintext identici producono blocchi di ciphertext identici. Questo non nasconde i pattern dei dati, rendendolo insicuro per molte applicazioni (come dimostrato dall'esperimento Tux).
+    \end{itemize}
+    \item \textbf{CBC (Cipher Block Chaining):}
+    \begin{itemize}
+        \item Più sicura di ECB.
+        \item Utilizza un \textbf{IV (Initialization Vector)} casuale per il primo blocco.
+        \item Ogni blocco di plaintext viene sottoposto a XOR con il blocco di ciphertext precedente prima di essere cifrato. Questo crea una dipendenza ("chaining") tra i blocchi.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{OpenSSL}
+OpenSSL è una potente libreria e strumento da riga di comando per la crittografia e la gestione di certificati.
+\begin{itemize}
+    \item \textbf{Cifratura/Decifratura AES:}
+    \begin{minted}[fontsize=\small, baselinestretch=1.0, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+# Cifratura AES-256-ECB
+openssl aes-256-ecb -e -in plaintext.txt -out ciphertext.enc
+
+# Decifratura AES-256-ECB
+openssl aes-256-ecb -d -in ciphertext.enc -out decrypted.txt
+
+# Cifratura AES-256-CBC (con IV specificato)
+openssl aes-256-cbc -e -iv <IV_IN_HEX> -in plaintext.txt -out ciphertext.enc
+
+# Decifratura AES-256-CBC (con IV specificato)
+openssl aes-256-cbc -d -iv <IV_IN_HEX> -in ciphertext.enc -out decrypted.txt
+    \end{minted}
+    \item \textbf{PBKDF (Password-Based Key Derivation Function):}
+    OpenSSL usa la password fornita dall'utente per derivare una chiave crittografica della lunghezza richiesta (e un IV, se necessario e non fornito).
+    \begin{itemize}
+        \item \textbf{Salt:} Un valore casuale aggiunto alla password prima della derivazione della chiave. Previene attacchi basati su tabelle precalcolate (rainbow tables) per la stessa password e rende unica la chiave derivata anche se la password è la stessa usata altrove. Se non si usa \texttt{-nosalt}, OpenSSL genera un salt e lo prepone al ciphertext (con il prefisso "Salted\_\_").
+        \item Opzioni utili:
+        \begin{itemize}
+            \item \texttt{-e}: encrypt
+            \item \texttt{-d}: decrypt
+            \item \texttt{-p}: stampa la chiave derivata, il salt e l'IV (se usato)
+            \item \texttt{-nosalt}: disabilita l'uso del salt (sconsigliato)
+            \item \texttt{-pbkdf2}: usa l'algoritmo PBKDF2 (più robusto del default)
+            \item \texttt{-iter N}: specifica il numero di iterazioni per PBKDF2
+            \item \texttt{-iv HEX\_IV}: specifica l'IV in esadecimale (per CBC, OFB, CFB)
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Dimensione File Cifrati:}
+    Solitamente i file cifrati sono leggermente più grandi del plaintext a causa di:
+    \begin{itemize}
+        \item \textbf{Salt:} Se usato e memorizzato nell'header del file cifrato (tipicamente 8 byte per il salt + 8 byte per "Salted\_\_").
+        \item \textbf{Padding:} Necessario per assicurare che il plaintext sia un multiplo della dimensione del blocco (es. 128 bit per AES). Questo è rilevante per modalità come ECB e CBC.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Certificati TLS/SSL \& Let's Encrypt}
+I certificati TLS/SSL sono usati per autenticare i server e stabilire connessioni sicure (HTTPS).
+\begin{itemize}
+    \item \textbf{Let's Encrypt:} Una Certificate Authority (CA) gratuita, automatizzata e aperta.
+    \item \textbf{Verifica con OpenSSL:}
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+# Visualizza informazioni certificato (issuer, subject, date, ecc.)
+openssl s_client -connect nomesito.com:443 2>/dev/null | openssl x509 -noout -text
+
+# Visualizza dettagli connessione TLS (protocollo, cipher suite)
+openssl s_client -connect nomesito.com:443 2>/dev/null
+
+# Testa supporto per una specifica versione TLS (es. TLS 1.2)
+openssl s_client -connect nomesito.com:443 -tls1_2
+    \end{minted}
+    \item \textbf{Analisi con SSL Labs:} Il sito \url{https://www.ssllabs.com/ssltest/} fornisce un'analisi dettagliata della configurazione SSL/TLS di un server.
+\end{itemize}
+
+\subsubsection{PGP (Pretty Good Privacy) / GPG (GNU Privacy Guard)}
+GPG è l'implementazione open-source di OpenPGP.
+\begin{itemize}
+    \item Utilizza crittografia ibrida: asimmetrica per scambiare una chiave di sessione simmetrica, che viene poi usata per cifrare i dati.
+    \item Utile per cifrare file, email e verificare firme digitali.
+    \item Si basa su un modello di fiducia chiamato "Web of Trust" (alternativo al modello gerarchico delle CA).
+\end{itemize}
+
+\subsection{Esercizio 1: Check Certificates}
+\subsubsection{Obiettivo}
+Verificare i certificati SSL/TLS di siti web.
+
+\subsubsection{Procedura}
+\begin{enumerate}
+    \item \textbf{Trovare siti con/senza Let's Encrypt:}
+    \begin{itemize}
+        \item Usare il comando:
+        \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+openssl s_client -connect nomesito.com:443 2>/dev/null | openssl x509 -noout -text -issuer
+        \end{minted}
+        \item Cercare "Let's Encrypt" nel campo \texttt{Issuer}.
+    \end{itemize}
+    \item \textbf{Verificare versioni TLS supportate:}
+    \begin{itemize}
+        \item Per ogni versione TLS (es. \texttt{-tls1}, \texttt{-tls1\_1}, \texttt{-tls1\_2}, \texttt{-tls1\_3}):
+        \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+openssl s_client -connect nomesito.com:443 -<versione_tls>
+        \end{minted}
+        Se la connessione ha successo, la versione è supportata.
+        \item Oppure, analizzare l'output di:
+        \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+openssl s_client -connect nomesito.com:443 2>/dev/null
+        \end{minted}
+        cercando la riga "Protocol : TLSvX.Y".
+    \end{itemize}
+    \item \textbf{Analizzare con SSL Labs:}
+    \begin{itemize}
+        \item Visitare \url{https://www.ssllabs.com/ssltest/}.
+        \item Inserire l'hostname del sito da analizzare.
+        \item Commentare il rating generale, il supporto dei protocolli, la robustezza delle cipher suite, ecc.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Esercizio 2: Decrypt the Files}
+\subsubsection{Obiettivo Generale}
+Trovare le password originali partendo dagli hash forniti, poi usare le password per decifrare i file e trovare le flag.
+
+\subsubsection{Craccare gli Hash}
+\begin{enumerate}
+    \item \textbf{Identificare il tipo di Hash:} Basarsi sulla lunghezza dell'hash in caratteri esadecimali.
+    \begin{itemize}
+        \item MD5: 32 caratteri
+        \item SHA1: 40 caratteri
+        \item SHA256: 64 caratteri
+        \item SHA512: 128 caratteri
+    \end{itemize}
+    \item \textbf{Strumenti:}
+    \begin{itemize}
+        \item \textbf{Online:} CrackStation, MD5Online (utili per hash semplici o comuni).
+        \item \textbf{Offline:} John the Ripper (JtR), Hashcat. Richiedono una wordlist (es. \texttt{rockyou.txt}).
+        \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+# Esempio con John the Ripper (l'hash deve essere in un file)
+# john --wordlist=/path/to/rockyou.txt --format=raw-sha1 hash_file.txt
+        \end{minted}
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{File 1: \texttt{file1.aes-256-ecb.txt}}
+\begin{itemize}
+    \item \textbf{Algoritmo:} AES-256-ECB.
+    \item \textbf{Hash Password 1 (SHA1):} \texttt{9e02fdbbc6df842939b75a98e92e98317d29046c}
+    \item \textbf{Procedura:}
+    \begin{enumerate}
+        \item Craccare l'hash SHA1 per ottenere \texttt{PASSWORD\_1}.
+        \item Decifrare con OpenSSL:
+        \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+openssl aes-256-ecb -d -in file1.aes-256-ecb.txt -out file1.decrypted.txt
+# Verrà richiesta PASSWORD_1
+        \end{minted}
+        \item Ispezionare \texttt{file1.decrypted.txt} per la flag.
+    \end{enumerate}
+\end{itemize}
+
+\subsubsection{File 2: \texttt{file2.aes-256-cbc.txt}}
+\begin{itemize}
+    \item \textbf{Algoritmo:} AES-256-CBC.
+    \item \textbf{Hash Password 2a (MD5):} \texttt{977cd0822fe6f0a1ca64787f933820f3} (suggerimento: semplice, da wordlist diretta).
+    \item \textbf{Hash Password 2b (SHA512 con salt):} \texttt{3b2fd659c8f48db0688148fabe3cd9d37e928e9b...}
+    L'hash è stato calcolato su \texttt{PASSWORD\_2B + "kjsahdjhasd"}. Questo "salt" esterno deve essere considerato nel processo di cracking (non come parametro OpenSSL).
+    \item \textbf{Procedura:}
+    \begin{enumerate}
+        \item Craccare l'MD5 per ottenere \texttt{PASSWORD\_2A}.
+        \item Craccare lo SHA512 (considerando il salt \texttt{kjsahdjhasd} concatenato alla password prima dell'hashing) per ottenere \texttt{PASSWORD\_2B}.
+        \item Decifrare con OpenSSL (OpenSSL di solito deriva l'IV dalla password e dal salt interno al file, se presente):
+        \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+# Prova con PASSWORD_2A
+openssl aes-256-cbc -d -in file2.aes-256-cbc.txt -out file2a.decrypted.txt
+# Prova con PASSWORD_2B
+openssl aes-256-cbc -d -in file2.aes-256-cbc.txt -out file2b.decrypted.txt
+# Per debug, usare -p per vedere salt, chiave e IV usati da OpenSSL:
+# openssl aes-256-cbc -d -p -in file2.aes-256-cbc.txt
+        \end{minted}
+        \item Ispezionare i file decifrati per la flag.
+    \end{enumerate}
+\end{itemize}
+
+\subsubsection{File 3: \texttt{file3.enc.txt}}
+\begin{itemize}
+    \item \textbf{Algoritmo presunto:} GPG (data la natura degli esercizi).
+    \item \textbf{Hash Password 3 (SHA256):} \texttt{e547671ff6e7e1d7b5fc2141f6b63648b45a2df2d1a7270ed9f0773a79109007}
+    \item \textbf{Procedura:}
+    \begin{enumerate}
+        \item Craccare l'hash SHA256 per ottenere \texttt{PASSWORD\_3}.
+        \item Decifrare con GPG:
+        \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+# Modo batch (non interattivo, la password è fornita)
+gpg --pinentry-mode loopback --batch --passphrase "PASSWORD_3" \
+    -o file3.decrypted.txt file3.enc.txt
+
+# Modo interattivo (GPG chiederà la password)
+# gpg -d -o file3.decrypted.txt file3.enc.txt
+        \end{minted}
+        \item Ispezionare \texttt{file3.decrypted.txt} per la flag.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Esperimento Tux: Dimostrazione Debolezza ECB}
+\subsubsection{Obiettivo}
+Dimostrare visivamente che la modalità ECB non nasconde i pattern dei dati.
+\subsubsection{File}
+\texttt{tux.ppm} (immagine Portable PixMap).
+
+\subsubsection{Procedura}
+\begin{enumerate}
+    \item \textbf{Installare GIMP (se necessario):}
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+sudo apt update && sudo apt install gimp
+    \end{minted}
+    \item \textbf{Ispezionare il formato PPM (opzionale):}
+    Un file PPM (formato P6) ha un header testuale (3 righe: magic number P6, larghezza altezza, valore massimo colore) seguito dai dati raw dei pixel.
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+xxd -g 3 -c 15 tux.ppm | head
+    \end{minted}
+    \item \textbf{Separare header e body:}
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+head -n 3 tux.ppm > tux.header
+tail -n +4 tux.ppm > tux.body
+    \end{minted}
+    \item \textbf{Cifrare il body in modalità ECB:}
+    Usare una password semplice, es. \texttt{"testpassword"}.
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+openssl aes-256-ecb -e -in tux.body -out tux.body.ecb
+# Verrà richiesta la password
+    \end{minted}
+    \item \textbf{Riassemblare l'immagine cifrata:}
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+cat tux.header tux.body.ecb > tux.ecb.ppm
+    \end{minted}
+    \item \textbf{Visualizzare l'immagine cifrata \texttt{tux.ecb.ppm}:}
+    Aprire con GIMP. Si noterà che la sagoma di Tux è ancora riconoscibile.
+    \item \textbf{Opzionale: Prova con CBC:}
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+# Genera un IV casuale di 16 byte (32 caratteri hex)
+IV_HEX=$(openssl rand -hex 16)
+echo "Using IV: $IV_HEX"
+
+# Cifra con CBC usando la stessa password e l'IV generato
+openssl aes-256-cbc -e -iv "$IV_HEX" -in tux.body -out tux.body.cbc
+# Verrà richiesta la password (es. "testpassword")
+
+cat tux.header tux.body.cbc > tux.cbc.ppm
+    \end{minted}
+    Aprire \texttt{tux.cbc.ppm} con GIMP. L'immagine dovrebbe apparire come rumore casuale, dimostrando l'efficacia di CBC nel nascondere i pattern.
+\end{enumerate}
+
+\newpage
+\section{Laboratorio \#3A: Wireshark \& Network Attacks}
+
+\subsection{Concetti Fondamentali}
+
+\subsubsection{Wireshark}
+Wireshark è un analizzatore di protocolli di rete.
+\begin{itemize}
+    \item \textbf{Analisi:} Real-time o offline (da file \texttt{.pcap}, \texttt{.pcapng}).
+    \item \textbf{Interfaccia:} Mostra una lista di pacchetti catturati e permette di ispezionare i dettagli di ogni layer protocollare.
+    \item \textbf{Filtri (Display Filters):} Potenti per isolare pacchetti specifici. Esempi:
+    \begin{itemize}
+        \item \texttt{http}
+        \item \texttt{tcp.port == 80}
+        \item \texttt{ip.addr == 192.168.1.1}
+        \item \texttt{http.request.method == "GET"}
+        \item \texttt{tls.handshake.extension.type == "server\_name"} (per Server Name Indication)
+    \end{itemize}
+    \item \textbf{Follow Stream:} Permette di ricostruire e visualizzare la conversazione completa per protocolli come TCP, HTTP, TLS.
+\end{itemize}
+
+\subsubsection{Sicurezza Reti WiFi}
+\begin{itemize}
+    \item \textbf{WEP (Wired Equivalent Privacy):} Obsoleto e insicuro. Usa RC4 con IV corti (24 bit) che possono essere facilmente craccati.
+    \item \textbf{WPA/WPA2/WPA3 (Wi-Fi Protected Access):}
+    \begin{itemize}
+        \item \textbf{WPA/WPA2:} Usano TKIP (WPA) o AES-CCMP (WPA2). Vulnerabili ad attacchi offline sulla password (PSK - Pre-Shared Key) se questa è debole. L'attacco richiede la cattura del \textbf{4-way handshake} che avviene quando un client si connette all'AP.
+        \item \textbf{WPA3:} Introduce maggiore sicurezza, come la protezione contro attacchi di dizionario offline anche con password deboli (grazie a SAE - Simultaneous Authentication of Equals).
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Monitor Mode (Modalità Monitor)}
+Una modalità operativa delle schede di rete wireless che permette di catturare tutti i pacchetti WiFi trasmessi su un determinato canale, indipendentemente dal fatto che siano indirizzati o meno al MAC address della scheda.
+\begin{itemize}
+    \item Essenziale per lo sniffing del traffico WiFi, inclusa la cattura del 4-way handshake.
+    \item L'attivazione dipende dalla scheda wireless e dal driver. Strumenti come \texttt{airmon-ng} (parte della suite Aircrack-ng) possono aiutare.
+\end{itemize}
+
+\subsubsection{Aircrack-ng Suite}
+Una collezione di strumenti per l'auditing della sicurezza delle reti wireless.
+\begin{itemize}
+    \item \texttt{airmon-ng}: Per gestire la modalità monitor.
+    \item \texttt{airodump-ng}: Per catturare pacchetti e scoprire reti.
+    \item \texttt{aireplay-ng}: Per iniettare pacchetti (es. deautenticazione per forzare un handshake).
+    \item \texttt{aircrack-ng}: Per craccare chiavi WEP e password WPA/WPA2-PSK da file di cattura (\texttt{.cap}) contenenti il 4-way handshake, usando una wordlist.
+\end{itemize}
+
+\subsubsection{ARP Poisoning (ARP Spoofing)}
+Un attacco Man-in-the-Middle (MitM) su reti locali (LAN).
+\begin{itemize}
+    \item L'attaccante invia messaggi ARP falsificati per associare il proprio MAC address all'indirizzo IP della vittima (o del gateway).
+    \item Tutto il traffico della vittima destinato al gateway (e viceversa) passa attraverso l'attaccante, che può intercettarlo o modificarlo.
+\end{itemize}
+
+\subsection{Esercizio: Crack WiFi passwd}
+\subsubsection{Obiettivo}
+Trovare la password di una rete WiFi WPA/WPA2 analizzando un file di cattura del traffico (\texttt{WIFI-analisi1.cap}).
+
+\subsubsection{Procedura}
+\begin{enumerate}
+    \item \textbf{Preparare una Wordlist:}
+    Assicurarsi di avere una wordlist, es. \texttt{rockyou.txt}. Se è compressa (\texttt{.gz}), decomprimerla.
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+# Esempio (il percorso potrebbe variare):
+# sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
+    \end{minted}
+    \item \textbf{Opzionale: Ispezionare il file \texttt{.cap} con Wireshark:}
+    \begin{itemize}
+        \item Aprire \texttt{WIFI-analisi1.cap} in Wireshark.
+        \item Cercare i pacchetti del 4-way handshake (filtrando per \texttt{eapol}). Wireshark solitamente li identifica.
+        \item Identificare il BSSID (MAC address dell'Access Point) e l'ESSID (nome della rete) dai Beacon frames o Probe Responses.
+    \end{itemize}
+    \item \textbf{Usare \texttt{aircrack-ng}:}
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{bash}
+aircrack-ng -w /percorso/della/tua/wordlist.txt -b <BSSID_DELL_AP> WIFI-analisi1.cap
+    \end{minted}
+    Sostituire \texttt{<BSSID\_DELL\_AP>} con il MAC address dell'AP target. Se c'è una sola rete con handshake nel file, \texttt{aircrack-ng} potrebbe individuarla automaticamente e l'opzione \texttt{-b} potrebbe non essere strettamente necessaria (ma è buona prassi specificarla).
+    \item Se la password è presente nella wordlist, \texttt{aircrack-ng} la mostrerà come "KEY FOUND! [password]".
+\end{enumerate}
+
+\subsection{Esercizio: Detect the intruder}
+\subsubsection{Obiettivo}
+Analizzare il traffico nel file \texttt{s3cret.pcapng} per trovare una flag nel formato \texttt{CCIT\{flag\}}. L'indizio è che un "intruder" ha visitato una pagina web con estensione HTML.
+
+\subsubsection{Procedura}
+\begin{enumerate}
+    \item \textbf{Aprire \texttt{s3cret.pcapng} con Wireshark.}
+    \item \textbf{Filtrare per traffico HTTP:}
+    Applicare il display filter: \texttt{http}.
+    \item \textbf{Cercare richieste a pagine HTML:}
+    Si può raffinare il filtro:
+    \begin{minted}[fontsize=\small, frame=lines, framesep=2mm, breaklines, tabsize=4]{text}
+http.request.method == "GET" and http.request.uri contains ".html"
+    \end{minted}
+    \item \textbf{Ispezionare i pacchetti HTTP risultanti:}
+    \begin{itemize}
+        \item Controllare le richieste GET e le relative risposte (codice 200 OK).
+        \item La flag potrebbe trovarsi nell'URI, in un header HTTP (User-Agent, Cookie, header custom), o nel corpo della risposta HTML.
+    \end{itemize}
+    \item \textbf{Usare "Follow HTTP Stream":}
+    Fare click destro su un pacchetto HTTP sospetto (idealmente la risposta che contiene la pagina HTML) e selezionare "Follow" $\rightarrow$ "HTTP Stream".
+    \item Cercare la stringa \texttt{CCIT\{} all'interno del contenuto dello stream HTTP.
+\end{enumerate}
+
+\newpage
+\section{Consigli Generali per l'Esame}
+\begin{itemize}
+    \item \textbf{Familiarità con la CLI:} Esercitarsi con \texttt{openssl}, \texttt{gpg}, \texttt{aircrack-ng}, e comandi base di Linux (\texttt{head}, \texttt{tail}, \texttt{cat}, \texttt{xxd}, \texttt{grep}).
+    \item \textbf{Comprensione dei Concetti:} Non imparare solo i comandi a memoria. Capire il \textit{perché} si usa una certa modalità di cifratura, cos'è un IV, un salt, un 4-way handshake, il ruolo dei certificati, ecc.
+    \item \textbf{Cracking di Hash e Password:} Sapere come identificare i tipi di hash, usare tool online/offline e dove trovare wordlist comuni (es. in Kali Linux: \texttt{/usr/share/wordlists/}).
+    \item \textbf{Wireshark:} Allenarsi con i display filters e la funzione "Follow Stream". È uno strumento fondamentale per l'analisi di rete.
+    \item \textbf{Problem Solving:} Leggere attentamente i messaggi di errore. Se un comando non funziona come previsto, consultare le pagine \texttt{man} (\texttt{man <comando>}) o l'opzione \texttt{--help}. Ad esempio, un errore "bad decrypt" in OpenSSL solitamente indica una password errata, un IV errato (se specificato manualmente), o una modalità di cifratura/algoritmo non corretti.
+\end{itemize}
+
+\end{document}

@@ -55,6 +55,8 @@ FILES=(
   "11-acl.tex"
   "12-sicurezza-wireless.tex"
   "13-buffer-overflow.tex"
+  "14-lab-1-2.tex"
+  "15-lab-3.tex"
 )
 
 # Generate the appropriate preamble
@@ -191,6 +193,12 @@ Sentiti libero di utilizzare, condividere o contribuire a questi appunti attrave
 
 \chapter{Buffer Overflow}
 \input{13-buffer-overflow-content}
+
+\chapter{Laboratorio 1 \& 2}
+\input{14-lab-1-2-content}
+
+\chapter{Laboratorio 3 (parte 1 e 2)}
+\input{15-lab-3-content}
 
 \end{document}
 EOT
