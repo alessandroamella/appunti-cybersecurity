@@ -1,0 +1,155 @@
+\include{preambolo_comune}
+
+\title{Dimostrazione Perfect Secrecy dello Shift Cipher}
+\author{Alessandro Amella, Gemini e Claude}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Cos'è il Shift Cipher}
+
+Il \textbf{Shift Cipher} (o Cifrario di Cesare) è uno dei crittosistemi più semplici. L'idea è di "spostare" ogni lettera dell'alfabeto di un numero fisso di posizioni.
+
+\subsection{Esempio pratico}
+Se uso chiave $k = 3$:
+\begin{itemize}
+    \item A (posizione 0) $\to$ D (posizione 3)
+    \item B (posizione 1) $\to$ E (posizione 4)  
+    \item C (posizione 2) $\to$ F (posizione 5)
+    \item ...
+    \item X (posizione 23) $\to$ A (posizione 0, perché $(23+3) \bmod 26 = 0$)
+\end{itemize}
+
+Quindi "HELLO" diventa "KHOOR".
+
+\section{Notazione Matematica}
+
+\subsection{Gli insiemi P, C, K}
+\begin{itemize}
+    \item $P$ = \textbf{Plaintext space} = insieme di tutti i possibili messaggi in chiaro
+    \item $C$ = \textbf{Ciphertext space} = insieme di tutti i possibili messaggi cifrati  
+    \item $K$ = \textbf{Key space} = insieme di tutte le possibili chiavi
+\end{itemize}
+
+Per il Shift Cipher:
+\[P = C = K = \mathbb{Z}_{26} = \{0, 1, 2, \ldots, 25\}\]
+
+Questo significa:
+\begin{itemize}
+    \item Ogni lettera (A=0, B=1, ..., Z=25) può essere plaintext
+    \item Ogni lettera può essere ciphertext
+    \item Ogni numero da 0 a 25 può essere una chiave (shift)
+\end{itemize}
+
+\subsection{Le funzioni di cifratura e decifratura}
+
+\textbf{Cifratura}: $e_k(x) = (x + k) \bmod 26$
+\begin{itemize}
+    \item $x$ = lettera del plaintext (come numero 0-25)
+    \item $k$ = chiave (shift da applicare)  
+    \item Sommiamo $k$ a $x$ e prendiamo il resto della divisione per 26
+\end{itemize}
+
+\textbf{Decifratura}: $d_k(y) = (y - k) \bmod 26$  
+\begin{itemize}
+    \item $y$ = lettera del ciphertext
+    \item Sottraiamo $k$ per "annullare" lo shift
+\end{itemize}
+
+\subsection{Esempio numerico}
+Cifriamo "CAT" con chiave $k = 5$:
+\begin{align}
+C &= 2 \quad \to \quad e_5(2) = (2 + 5) \bmod 26 = 7 = H \\
+A &= 0 \quad \to \quad e_5(0) = (0 + 5) \bmod 26 = 5 = F \\  
+T &= 19 \quad \to \quad e_5(19) = (19 + 5) \bmod 26 = 24 = Y
+\end{align}
+
+Quindi "CAT" $\to$ "HFY".
+
+Per decifrare "HFY":
+\begin{align}
+H &= 7 \quad \to \quad d_5(7) = (7 - 5) \bmod 26 = 2 = C \\
+F &= 5 \quad \to \quad d_5(5) = (5 - 5) \bmod 26 = 0 = A \\
+Y &= 24 \quad \to \quad d_5(24) = (24 - 5) \bmod 26 = 19 = T  
+\end{align}
+
+\section{Perfect Secrecy: Definizione}
+
+\textbf{Definizione}: Un crittosistema ha Perfect Secrecy se osservare il ciphertext non dà \textit{nessuna informazione} sul plaintext originale.
+
+Matematicamente:
+\[\Pr[X = x \mid Y = y] = \Pr[X = x]\]
+
+Dove:
+\begin{itemize}
+    \item $X$ = variabile aleatoria del plaintext
+    \item $Y$ = variabile aleatoria del ciphertext  
+    \item $\Pr[X = x \mid Y = y]$ = probabilità che il plaintext sia $x$, sapendo che il ciphertext è $y$
+    \item $\Pr[X = x]$ = probabilità a priori che il plaintext sia $x$ (senza vedere il ciphertext)
+\end{itemize}
+
+\textbf{Intuizione}: Se queste due probabilità sono uguali, significa che vedere il ciphertext $y$ non cambia le nostre credenze sul plaintext!
+
+\section{Dimostrazione: Il Shift Cipher ha Perfect Secrecy}
+
+\subsection{Assunzioni}
+\begin{itemize}
+    \item Le chiavi sono scelte uniformemente: $\Pr[K = k] = \frac{1}{26}$ per ogni $k$
+    \item Il plaintext può essere qualsiasi lettera con qualche probabilità $\Pr[X = x]$
+\end{itemize}
+
+\subsection{Passo 1: Relazione chiave-plaintext-ciphertext}
+Per ogni coppia plaintext-ciphertext $(x, y)$, esiste \textbf{esattamente una chiave} che li collega:
+\[k = (y - x) \bmod 26\]
+
+\textbf{Esempio}: Se plaintext è C (=2) e ciphertext è H (=7), allora:
+\[k = (7 - 2) \bmod 26 = 5\]
+
+\subsection{Passo 2: Probabilità congiunta}
+\begin{align}
+\Pr[X = x, Y = y] &= \Pr[X = x] \cdot \Pr[K = (y-x) \bmod 26] \\
+&= \Pr[X = x] \cdot \frac{1}{26}
+\end{align}
+
+\subsection{Passo 3: Probabilità marginale del ciphertext}
+Un ciphertext $y$ può derivare da \textit{qualsiasi} plaintext $x$, basta usare la chiave giusta:
+\begin{align}
+\Pr[Y = y] &= \sum_{x=0}^{25} \Pr[X = x, Y = y] \\
+&= \sum_{x=0}^{25} \Pr[X = x] \cdot \frac{1}{26} \\
+&= \frac{1}{26} \sum_{x=0}^{25} \Pr[X = x] \\
+&= \frac{1}{26} \cdot 1 = \frac{1}{26}
+\end{align}
+
+\textbf{Insight importante}: Ogni ciphertext ha la stessa probabilità $\frac{1}{26}$, indipendentemente dalla distribuzione del plaintext!
+
+\subsection{Passo 4: Probabilità condizionale}
+\begin{align}
+\Pr[X = x \mid Y = y] &= \frac{\Pr[X = x, Y = y]}{\Pr[Y = y]} \\
+&= \frac{\Pr[X = x] \cdot \frac{1}{26}}{\frac{1}{26}} \\
+&= \Pr[X = x]
+\end{align}
+
+\section{Conclusione e Interpretazione}
+
+\textbf{Risultato}: Il Shift Cipher ha Perfect Secrecy quando le chiavi sono uniformemente distribuite.
+
+\textbf{Perché funziona?}
+\begin{itemize}
+    \item Ogni ciphertext può provenire da qualsiasi plaintext con uguale probabilità
+    \item La "maschera" della chiave casuale nasconde completamente l'informazione
+    \item Un attaccante che vede solo il ciphertext non può distinguere tra plaintext diversi
+\end{itemize}
+
+\textbf{Esempio pratico}: Se intercetti il ciphertext "H", potrebbe essere:
+\begin{itemize}
+    \item "A" cifrato con chiave 7
+    \item "B" cifrato con chiave 6  
+    \item "C" cifrato con chiave 5
+    \item ... (tutte le 26 possibilità sono ugualmente probabili!)
+\end{itemize}
+
+Senza informazioni aggiuntive, è impossibile determinare il plaintext originale. \qed
+
+\end{document}

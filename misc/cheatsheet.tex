@@ -1,0 +1,154 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{multicol}
+\usepackage[left=1cm,right=1cm,top=1cm,bottom=1cm]{geometry}
+\pagestyle{empty} % No page numbers
+
+\begin{document}
+\begin{multicols}{2}
+
+% --- INIZIO COLONNA 1 ---
+\section*{Funzioni Hash Crittografiche}
+Input $M$ lunghezza arbitraria $\rightarrow$ Output $h=H(M)$ lunghezza fissa.
+\textbf{Proprietà:}
+\begin{enumerate}
+    \item \textbf{Efficienza:} $H(M)$ facile da calcolare.
+    \item \textbf{Resistenza Preimmagine (One-way):} Dato $h$, difficile trovare $M$ t.c. $H(M)=h$.
+    \item \textbf{Resistenza 2a Preimmagine (Weak collision resistance):} Dato $M_1$, difficile trovare $M_2 \neq M_1$ t.c. $H(M_2)=H(M_1)$.
+    \item \textbf{Resistenza Collisioni (Strong collision resistance):} Difficile trovare $M_1 \neq M_2$ t.c. $H(M_1)=H(M_2)$.
+    (Birthday attack $\rightarrow$ collisioni in $O(\sqrt{N})$ tentativi, $N=$spazio output).
+    \item \textbf{Effetto Valanga:} Piccola $\Delta M \rightarrow$ grande $\Delta H(M)$.
+\end{enumerate}
+\textbf{Usi:} Integrità dati, firme digitali, memorizzazione password (con \texttt{salt}).
+\textbf{Algoritmi:} MD5 (rotto), SHA-1 (rotto), SHA-256, SHA-512.
+
+\section*{Buffer Overflow}
+\textbf{Definizione:} Scrittura dati oltre i limiti di un buffer allocato (su stack, heap).
+\textbf{Stack Buffer Overflow:}
+\begin{itemize}
+    \item \textbf{Causa:} Funzioni non sicure (es. \texttt{gets}, \texttt{strcpy} senza controllo limiti) copiano input utente in buffer locale su stack.
+    \item \textbf{Effetto:} Input troppo lungo sovrascrive dati adiacenti: variabili locali, Saved EBP, \textbf{Return Address (EIP/RIP)}.
+    \item \textbf{Attacco:}
+    \begin{enumerate}
+        \item Crash (DoS) se EIP sovrascritto con valore invalido.
+        \item Esecuzione codice arbitrario:
+        \begin{itemize}
+            \item Inserire \textbf{shellcode} (codice malevolo) nel buffer.
+            \item Sovrascrivere EIP con indirizzo dello shellcode su stack.
+            \item \textbf{NOP Sled:} Sequenza di NOP (\verb|\x90|) prima dello shellcode per aumentare prob. di colpire zona eseguibile se indirizzo non preciso.
+        \end{itemize}
+    \end{enumerate}
+\end{itemize}
+\textbf{Contromisure:}
+\begin{enumerate}
+    \item \textbf{Stack Canaries (StackGuard):} Valore casuale (``canary'') messo su stack prima di EIP. Controllato prima del \texttt{ret}. Se modificato $\rightarrow$ overflow $\rightarrow$ termina programma.
+    \item \textbf{NX Bit / DEP (Data Execution Prevention):} Stack non eseguibile. Pagine di memoria marcate W$\oplus$X (Write XOR Execute). Impedisce esecuzione shellcode da stack.
+    Bypass: ROP (Return-Oriented Programming), \texttt{ret2libc}.
+    \item \textbf{ASLR (Address Space Layout Randomization):} Randomizza indirizzi base di stack, heap, librerie. Rende difficile predire indirizzo shellcode/gadget ROP.
+    \item \textbf{Safe Coding Practices:} Usare funzioni sicure (\texttt{strncpy}, \texttt{fgets}), controlli limiti, validazione input.
+\end{enumerate}
+
+\section*{Sicurezza Wireless (Wi-Fi)}
+\textbf{WEP (Wired Equivalent Privacy):}
+\begin{itemize}
+    \item Standard: 802.11 (obsoleto).
+    \item Algoritmo: RC4 (stream cipher).
+    \item Chiave: $K_{\text{WEP}}$ (condivisa) + IV (24-bit, in chiaro). Keystream $RC4(IV || K_{\text{WEP}})$.
+    \item \textbf{Debolezze IV:}
+    \begin{itemize}
+        \item Corto (24-bit) $\rightarrow$ collisioni IV frequenti (Birthday Paradox dopo $\sim 2^{12}$ pacchetti).
+        \item Riutilizzo IV con stessa $K_{\text{WEP}} \rightarrow$ attacco Two-Time Pad.
+        \item IV \textit{deboli} in RC4.
+    \end{itemize}
+    \item \textbf{Attacchi:} FMS (Fluhrer, Mantin, Shamir) per recuperare $K_{\text{WEP}}$ da IV deboli, Replay, Statistical attacks.
+    \item \textbf{Estremamente Insicuro.}
+\end{itemize}
+\textbf{WPA/WPA2/WPA3 (Wi-Fi Protected Access):}
+\begin{itemize}
+    \item \textbf{WPA (TKIP):} \textit{Pezza} per WEP. RC4 + MIC (Michael) per integrità. Debole.
+    \item \textbf{WPA2 (CCMP/AES):} Usa AES in modalità CTR per confidenzialità, CBC-MAC per integrità. Sicuro.
+    \item \textbf{WPA3:} Miglioramenti, es. SAE (Simultaneous Authentication of Equals) contro attacchi dizionario offline su PSK.
+    \item \textbf{PSK (Pre-Shared Key):} Passphrase condivisa. Vulnerabile a dizionario/brute-force se passphrase debole (catturando 4-way handshake).
+    \item \textbf{Enterprise (802.1X):} Autenticazione per utente (RADIUS). Più sicuro.
+    \item \textbf{KRACK (Key Reinstallation Attack):} Vulnerabilità in WPA2 (handshake) permette forzare reinstallazione chiave di sessione, potenziale decifratura/iniezione.
+\end{itemize}
+\textbf{Attacchi Comuni Wireless:}
+\begin{itemize}
+    \item \textbf{Rogue AP:} AP malevolo che simula rete legittima.
+    \item \textbf{Deauthentication/Disassociation Attack:} Invio frame deauth/disassoc (non auth) per disconnettere client, forzare handshake.
+    \item \textbf{Jamming:} Disturbo segnale radio.
+    \item \textbf{Evil Twin:} Rogue AP con SSID di rete legittima.
+\end{itemize}
+
+% --- FINE COLONNA 1 ---
+\columnbreak
+% --- INIZIO COLONNA 2 ---
+
+\section*{Anonimato e Privacy}
+\textbf{Anonimato:} Proprietà che garantisce utente possa usare risorsa/servizio senza rivelare propria identità.
+\textbf{Onion Routing (es. Tor):}
+\begin{itemize}
+    \item Dati incapsulati in strati multipli di crittografia.
+    \item Percorso attraverso nodi (relay) scelti casualmente.
+    \item Ogni nodo decifra uno strato per rivelare hop successivo.
+    \item \textbf{Nodi Tor:}
+    \begin{itemize}
+        \item \textbf{Entry/Guard Node:} Conosce IP utente, non destinazione finale.
+        \item \textbf{Middle Node:} Non conosce IP utente né destinazione finale.
+        \item \textbf{Exit Node:} Conosce destinazione finale, non IP utente. Vede traffico in chiaro se non HTTPS.
+    \end{itemize}
+    \item \textbf{Servizi Onion (.onion):} Siti accessibili solo via Tor, anonimato per host.
+    \item \textbf{Leak:} DNS leaks, geolocalizzazione browser, identificazione a livello applicativo.
+\end{itemize}
+\textbf{Tecniche:} Proxy, MixNets (batching, reordering), VPN.
+
+\section*{Access Control (Sistemi Unix-like)}
+\textbf{ACL (Access Control List) vs Capabilities:}
+\begin{itemize}
+    \item \textbf{ACL:} Associata a oggetti (file). Lista (soggetto, permessi). Controllo all'accesso.
+    \item \textbf{Capabilities:} Associate a soggetti (processi). Lista (oggetto, permessi che può usare). Token di autorità.
+    \item \textbf{Vantaggi combinati:} ACL per policy granulari, Capabilities per principio minimo privilegio in processi.
+\end{itemize}
+\textbf{Modelli Access Control:}
+\begin{itemize}
+    \item \textbf{DAC (Discretionary AC):} Proprietario oggetto decide permessi. Es: Linux UGO.
+    \item \textbf{MAC (Mandatory AC):} Policy centrale (etichette sicurezza per soggetti/oggetti). Es: SELinux, Bell-LaPadula (Conf: No Read Up, No Write Down), Biba (Integ: No Read Down, No Write Up).
+    \item \textbf{RBAC (Role-Based AC):} Permessi associati a ruoli, utenti a ruoli.
+\end{itemize}
+\textbf{Linux Permissions (DAC):}
+\begin{itemize}
+    \item \textbf{UGO:} User (proprietario), Group, Others. Permessi: r (read), w (write), x (execute).
+    \item \texttt{chmod}: Cambia permessi (es. \texttt{chmod 751 file} $\rightarrow$ u=rwx, g=rx, o=x).
+    \item \textbf{SUID (Set User ID):} Bit su eseguibile. Se impostato, processo eseguito con UID del proprietario file (spesso root). Pericoloso!
+    \textit{Esempio:} \texttt{passwd} è SUID root per modificare \texttt{/etc/shadow}.
+    \item \textbf{SGID (Set Group ID):} Simile per GID. Su directory: nuovi file ereditano GID dir.
+    \item \textbf{Sticky Bit:} Su directory, solo proprietario file/dir o root può cancellare/rinominare file.
+    \item \textbf{Capabilities (Linux):} Divide privilegi root in unità granulari. Processo ottiene solo capability necessarie (Least Privilege).
+\end{itemize}
+
+\section*{Concetti Utili / Vario}
+\begin{itemize}
+    \item \textbf{Attacco Man-in-the-Middle (MitM):} Attaccante si interpone tra due parti comunicanti.
+    \item \textbf{Replay Attack:} Cattura e ritrasmissione dati validi. Contromisure: nonce, timestamp, challenge-response.
+    \item \textbf{Phishing/Ing. Sociale:} Manipolazione psicologica per ottenere info/azioni.
+    \item \textbf{Zero-Day:} Vulnerabilità non nota a vendor, exploit attivo. Finestra opportunità: tempo tra scoperta exploit e patch.
+    \item \textbf{Modalità ECB:} Illustrazione Pinguino \textit{Tux}, pattern visibili.
+    \item \textbf{Probabilità (Birthday Paradox):} In gruppo di $N$ persone, prob. alta di 2 con stesso compleanno. $\approx \sqrt{2 \cdot 365 \ln 2} \approx 23$. Per hash collisioni: $O(\sqrt{|\text{spazio hash}|})$.
+\end{itemize}
+
+\textbf{Strumenti Lab (Cenni):}
+\begin{itemize}
+    \item \textbf{OpenSSL:} \texttt{enc} (AES, DES), \texttt{pkeyutl} (RSA), \texttt{dgst} (hash, firme), \texttt{s\_client} (TLS).
+    \texttt{openssl aes-256-cbc -e -in P -out C -K <key\_hex> -iv <iv\_hex>}
+    \item \textbf{Wireshark:} Analisi traffico rete, filtri display (es. \texttt{ip.addr == X}, \texttt{tcp.port == Y}, \texttt{http.request.method == "GET"}). Follow Stream.
+    \item \textbf{Aircrack-ng suite:} \texttt{airodump-ng} (scoperta reti), \texttt{aireplay-ng} (deauth), \texttt{aircrack-ng} (crack WEP/WPA-PSK da .cap + wordlist).
+    \item \textbf{Hashcat/John the Ripper:} Cracking password da hash. Modi: dizionario, brute-force (mask), rules.
+\end{itemize}
+
+% --- FINE COLONNA 2 ---
+\end{multicols}
+\end{document}
